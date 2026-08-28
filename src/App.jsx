@@ -13,12 +13,6 @@ import Layout from "./Reusable/Layout";
 import ProtectedRoute from "./ProtectedRoute";
 
 import Dashboard from "./Pages/AdminDashboard/Dashboard";
-import UsersDashboard from "./UserDetail/UserManagement/UsersDashboard";
-import EquipmentDashboard from "./Pages/Equipment/EquipmentDashboard";
-import ProjectDashboard from "./Pages/Project/ProjectDashboard";
-import InventoryDashboard from "./Pages/Inventory/InventoryDashboard";
-import SafetyDashboard from "./Pages/Safety/SafetyDashboard";
-import ProductionDashboard from "./Pages/Production/ProductionDashboard";
 
 function App() {
   return (
@@ -34,14 +28,6 @@ function App() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         {/* Dashboard - "admin_only" for base access */}
         <Route path="/dashboard" element={<ProtectedRoute app="dashboard"><Dashboard /></ProtectedRoute>} />
-
-        {/* Feature Modules */}
-        <Route path="/users" element={<ProtectedRoute app="users"><UsersDashboard /></ProtectedRoute>} />
-        <Route path="/equipment" element={<ProtectedRoute app="equipment"><EquipmentDashboard /></ProtectedRoute>} />
-        <Route path="/project" element={<ProtectedRoute app="projects"><ProjectDashboard /></ProtectedRoute>} />
-        <Route path="/inventory" element={<ProtectedRoute app="inventory"><InventoryDashboard /></ProtectedRoute>} />
-        <Route path="/safety" element={<ProtectedRoute app="safety"><SafetyDashboard /></ProtectedRoute>} />
-        <Route path="/production" element={<ProtectedRoute app="production"><ProductionDashboard /></ProtectedRoute>} />
         <Route path="/security" element={<SecuritySettings />} />
       </Route>
     </Routes>

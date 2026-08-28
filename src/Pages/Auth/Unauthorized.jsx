@@ -20,45 +20,16 @@ export default function Unauthorized() {
         const roleName = userRole?.name?.toLowerCase() || (typeof user?.role === 'string' ? user.role.toLowerCase() : '');
         const isAdmin = isSuperuser || roleName.includes('admin');
 
-        // Check each app in order of standard navigation priority
-        const order = [
-            { path: '/dashboard', app: 'dashboard' },
-            { path: '/project', app: 'projects' },
-            { path: '/equipment', app: 'equipment' },
-            { path: '/safety', app: 'safety' },
-            { path: '/inventory', app: 'inventory' },
-            { path: '/production', app: 'production' },
-            { path: '/users', app: 'users' }
-        ];
+        if (isSuperuser || isAdmin) {
+            navigate("/dashboard");
+            return;
+        }
 
-        for (const item of order) {
-            if (isSuperuser || isAdmin) {
-                navigate(item.path);
-                return;
-            }
-
-            if (item.app === 'dashboard') {
-                const allPerms = Object.values(appPermissions).flat();
-                const dashPerm = allPerms.find(p => p.codename === 'view_dashboardaccess');
-                if (dashPerm && userPermIds.includes(dashPerm.id)) {
-                    navigate(item.path);
-                    return;
-                }
-            } else if (item.app === 'users') {
-                const allPerms = Object.values(appPermissions).flat();
-                const allowedCodenames = ['view_customuser', 'view_role', 'view_rolemodulepermission'];
-                const usersPerms = allPerms.filter(p => allowedCodenames.includes(p.codename));
-                if (usersPerms.some(p => userPermIds.includes(p.id))) {
-                    navigate(item.path);
-                    return;
-                }
-            } else {
-                const modulePerms = appPermissions?.[item.app] || [];
-                if (modulePerms.some(perm => userPermIds.includes(perm.id))) {
-                    navigate(item.path);
-                    return;
-                }
-            }
+        const allPerms = Object.values(appPermissions).flat();
+        const dashPerm = allPerms.find(p => p.codename === 'view_dashboardaccess');
+        if (dashPerm && userPermIds.includes(dashPerm.id)) {
+            navigate("/dashboard");
+            return;
         }
 
         // Fallback

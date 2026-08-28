@@ -57,11 +57,6 @@ const ProtectedRoute = ({ children, app }) => {
       if (dashPerm) {
         hasAccess = userPermIds.includes(dashPerm.id);
       }
-    } else if (app === 'users') {
-      // User Management: check for specific view_customuser, view_role, or view_rolemodulepermission permission
-      const allowedCodenames = ['view_customuser', 'view_role', 'view_rolemodulepermission'];
-      const usersPerms = allPerms.filter(p => allowedCodenames.includes(p.codename));
-      hasAccess = usersPerms.some(p => userPermIds.includes(p.id));
     } else {
       const modulePerms = appPermissions?.[app] || [];
       hasAccess = modulePerms.some(perm => userPermIds.includes(perm.id));

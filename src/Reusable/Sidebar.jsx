@@ -1,14 +1,6 @@
 import { useLocation, Link } from 'react-router-dom';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import {
-    UsersIcon,
-    BriefcaseIcon,
-    WrenchScrewdriverIcon,
-    ShieldCheckIcon,
-    ArchiveBoxIcon,
-    ChartBarSquareIcon,
-    Squares2X2Icon
-} from '@heroicons/react/24/solid';
+import { Squares2X2Icon } from '@heroicons/react/24/solid';
 import logo from "/assets/ABY.png";
 
 function classNames(...classes) {
@@ -20,12 +12,6 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
 
     const navigation = [
         { name: 'Dashboard', href: '/dashboard', icon: Squares2X2Icon, app: 'dashboard' },
-        { name: 'User Management', href: '/users', icon: UsersIcon, app: 'users' },
-        { name: 'Equipment Management', href: '/equipment', icon: BriefcaseIcon, app: 'equipment' },
-        { name: 'Project Management', href: '/project', icon: WrenchScrewdriverIcon, app: 'projects' },
-        { name: 'Safety Management', href: '/safety', icon: ShieldCheckIcon, app: 'safety' },
-        { name: 'Inventory Management', href: '/inventory', icon: ArchiveBoxIcon, app: 'inventory' },
-        { name: 'Production', href: '/production', icon: ChartBarSquareIcon, app: 'production' },
     ];
 
     const userRoleId = typeof user?.role === 'object' ? user?.role?.id : user?.role;
@@ -52,16 +38,8 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
             return false; // If there's no dashPerm defined, fallback to false for safety
         }
 
-        // User Management specific check (must have permission to view customuser, role, or rolemodulepermission)
-        if (itemApp === 'users') {
-            const allowedCodenames = ['view_customuser', 'view_role', 'view_rolemodulepermission'];
-            const usersPerms = allPerms.filter(p => allowedCodenames.includes(p.codename));
-            return usersPerms.some(p => userPermIds.includes(p.id));
-        }
-
         // Feature modules dynamic check
-        const permissionModule = itemApp === 'dashboard' ? 'users' : itemApp;
-        const modulePerms = appPermissions?.[permissionModule] || [];
+        const modulePerms = appPermissions?.[itemApp] || [];
 
         return modulePerms.some(perm => userPermIds.includes(perm.id));
     };
