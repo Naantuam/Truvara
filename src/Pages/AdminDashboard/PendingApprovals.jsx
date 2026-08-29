@@ -2,22 +2,22 @@ import { useState, useEffect } from "react";
 import api from "../../api";
 
 export default function PendingApprovals() {
-  const [approvals, setApprovals] = useState([]);
+  const [decisions, setDecisions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/approvals/pending/")
-      .then((res) => setApprovals(Array.isArray(res.data) ? res.data : res.data?.results || []))
+    api.get("/decisions/pending/")
+      .then((res) => setDecisions(Array.isArray(res.data) ? res.data : res.data?.results || []))
       .catch((err) => console.error("Failed to fetch pending approvals:", err))
       .finally(() => setLoading(false));
   }, []);
 
   const resolve = async (id, action) => {
     try {
-      await api.post(`/approvals/${id}/${action}/`);
-      setApprovals((prev) => prev.filter((item) => item.id !== id));
+      await api.post(`/decisions/${id}/${action}/`);
+      setDecisions((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
-      console.error(`Failed to ${action} approval ${id}:`, err);
+      console.error(`Failed to ${action} decision ${id}:`, err);
     }
   };
 
@@ -27,15 +27,15 @@ export default function PendingApprovals() {
 
       {loading ? (
         <p className="text-sm text-gray-400 py-6 text-center">Loading approvals...</p>
-      ) : approvals.length === 0 ? (
+      ) : decisions.length === 0 ? (
         <p className="text-sm text-gray-400 py-6 text-center">No pending approvals.</p>
       ) : (
         <div className="flex flex-col gap-3">
-          {approvals.map((item) => (
+          {decisions.map((item) => (
             <div key={item.id} className="border border-gray-100 rounded-lg p-4">
               <p className="font-medium text-gray-900">{item.title}</p>
               <p className="text-xs text-gray-500 mt-0.5">
-                By {item.requested_by} · {item.date}
+                By {item.owner} · {item.date}
               </p>
               <div className="flex gap-2 mt-3">
                 <button

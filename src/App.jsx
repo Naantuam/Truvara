@@ -13,6 +13,8 @@ import Layout from "./Reusable/Layout";
 import ProtectedRoute from "./ProtectedRoute";
 
 import Dashboard from "./Pages/AdminDashboard/Dashboard";
+import DecisionsPage from "./Pages/Decisions/DecisionsPage";
+import ApprovalsPage from "./Pages/Approvals/ApprovalsPage";
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         {/* Dashboard - "admin_only" for base access */}
         <Route path="/dashboard" element={<ProtectedRoute app="dashboard"><Dashboard /></ProtectedRoute>} />
+        <Route path="/decisions" element={<ProtectedRoute app="decisions"><DecisionsPage /></ProtectedRoute>} />
+        <Route path="/approvals" element={<ProtectedRoute app="approvals"><ApprovalsPage /></ProtectedRoute>} />
         <Route path="/security" element={<SecuritySettings />} />
       </Route>
     </Routes>

@@ -1,18 +1,31 @@
 import { useLocation, Link } from 'react-router-dom';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Squares2X2Icon } from '@heroicons/react/24/solid';
+import { FileText, CheckSquare } from 'lucide-react';
 import logo from "/assets/ABY.png";
 
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
 }
 
+const NAV_GROUPS = [
+    {
+        section: null,
+        items: [
+            { name: 'Dashboard', href: '/dashboard', icon: Squares2X2Icon, app: 'dashboard' },
+        ],
+    },
+    {
+        section: 'Governance',
+        items: [
+            { name: 'Decisions', href: '/decisions', icon: FileText, app: 'decisions' },
+            { name: 'Approvals', href: '/approvals', icon: CheckSquare, app: 'approvals' },
+        ],
+    },
+];
+
 export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appPermissions }) {
     const location = useLocation();
-
-    const navigation = [
-        { name: 'Dashboard', href: '/dashboard', icon: Squares2X2Icon, app: 'dashboard' },
-    ];
 
     const userRoleId = typeof user?.role === 'object' ? user?.role?.id : user?.role;
     const userRole = roles?.find(r => r.id === userRoleId);
@@ -44,7 +57,9 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
         return modulePerms.some(perm => userPermIds.includes(perm.id));
     };
 
-    const allowedNavigation = navigation.filter(item => hasAccess(item.app));
+    const allowedGroups = NAV_GROUPS
+        .map(group => ({ ...group, items: group.items.filter(item => hasAccess(item.app)) }))
+        .filter(group => group.items.length > 0);
 
     return (
         <div className="flex relative font-sans h-screen">
@@ -74,30 +89,39 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
                     </div>
 
                     {/* Navigation links */}
-                    <nav className="space-y-1">
-                        {allowedNavigation.map((item) => {
-                            const isActive = location.pathname.startsWith(item.href);
-                            return (
-                                <Link
-                                    key={item.name}
-                                    to={item.href}
-                                    className={classNames(
-                                        isActive
-                                            ? "bg-blue-700 text-white shadow-sm"
-                                            : "text-gray-600 hover:bg-gray-50 hover:text-blue-700",
-                                        "group flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200"
-                                    )}
-                                >
-                                    <item.icon
-                                        className={classNames(
-                                            isActive ? "text-white" : "text-gray-400 group-hover:text-blue-700",
-                                            "h-5 w-5 flex-shrink-0"
-                                        )}
-                                    />
-                                    {item.name}
-                                </Link>
-                            );
-                        })}
+                    <nav className="space-y-4">
+                        {allowedGroups.map((group) => (
+                            <div key={group.section || 'root'} className="space-y-1">
+                                {group.section && (
+                                    <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                        {group.section}
+                                    </p>
+                                )}
+                                {group.items.map((item) => {
+                                    const isActive = location.pathname.startsWith(item.href);
+                                    return (
+                                        <Link
+                                            key={item.name}
+                                            to={item.href}
+                                            className={classNames(
+                                                isActive
+                                                    ? "bg-blue-700 text-white shadow-sm"
+                                                    : "text-gray-600 hover:bg-gray-50 hover:text-blue-700",
+                                                "group flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200"
+                                            )}
+                                        >
+                                            <item.icon
+                                                className={classNames(
+                                                    isActive ? "text-white" : "text-gray-400 group-hover:text-blue-700",
+                                                    "h-5 w-5 flex-shrink-0"
+                                                )}
+                                            />
+                                            {item.name}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        ))}
                     </nav>
                 </div>
             </div>

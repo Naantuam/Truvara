@@ -1,5 +1,5 @@
 import React from "react";
-import logo from "../../../public/assets/ABY.png";
+const logo = "/assets/ABY.png";
 
 export default function Logo() {
   return <>

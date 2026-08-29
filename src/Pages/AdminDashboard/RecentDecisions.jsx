@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../api";
-
-const STATUS_STYLES = {
-  Approved: "bg-green-100 text-green-700",
-  "Pending Approval": "bg-orange-100 text-orange-700",
-  Draft: "bg-gray-100 text-gray-600",
-  Rejected: "bg-red-100 text-red-700",
-};
+import StatusBadge from "../../Reusable/StatusBadge";
 
 export default function RecentDecisions() {
   const [decisions, setDecisions] = useState([]);
@@ -44,9 +38,7 @@ export default function RecentDecisions() {
                 <td className="py-3 pr-4 text-gray-600">{decision.owner}</td>
                 <td className="py-3 pr-4 text-gray-600">{decision.date}</td>
                 <td className="py-3">
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_STYLES[decision.status] || "bg-gray-100 text-gray-600"}`}>
-                    {decision.status}
-                  </span>
+                  <StatusBadge status={decision.status} />
                 </td>
               </tr>
             ))}
