@@ -1,22 +1,24 @@
-import OperationsChart from './Chart'
-import CardInfo from './StatInfo';
-import RecentActivity from './RecentActivity';
-
+import DashboardStats from "./DashboardStats";
+import RecentDecisions from "./RecentDecisions";
+import PendingApprovals from "./PendingApprovals";
+import TeamActivity from "./TeamActivity";
 
 export default function Dashboard() {
-    return (
-        <>
-            <div className="flex-1 w-full h-full flex flex-col overflow-auto bg-gray-50">
-                <div className="w-full">
-                    <OperationsChart />
-                </div>
-                <div className="w-full mb-3">
-                    <CardInfo />
-                </div>
-                <div className="w-full mb-3">
-                    <RecentActivity />
-                </div>
-            </div>
-        </>
-    );
+  return (
+    <div className="w-full h-full overflow-auto bg-gray-50 p-6 flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-sm text-gray-500">Overview of your business operations</p>
+      </div>
+
+      <DashboardStats />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentDecisions />
+        <PendingApprovals />
+      </div>
+
+      <TeamActivity />
+    </div>
+  );
 }
