@@ -1,7 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Squares2X2Icon } from '@heroicons/react/24/solid';
-import { FileText, CheckSquare } from 'lucide-react';
+import { FileText, CheckSquare, Users, ListChecks } from 'lucide-react';
 import logo from "/assets/ABY.png";
 
 function classNames(...classes) {
@@ -20,6 +20,13 @@ const NAV_GROUPS = [
         items: [
             { name: 'Decisions', href: '/decisions', icon: FileText, app: 'decisions' },
             { name: 'Approvals', href: '/approvals', icon: CheckSquare, app: 'approvals' },
+        ],
+    },
+    {
+        section: 'Operations',
+        items: [
+            { name: 'Responsibilities', href: '/responsibilities', icon: Users, app: 'responsibilities' },
+            { name: 'Actions', href: '/actions', icon: ListChecks, app: 'actions' },
         ],
     },
 ];

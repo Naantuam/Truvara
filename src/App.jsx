@@ -15,6 +15,8 @@ import ProtectedRoute from "./ProtectedRoute";
 import Dashboard from "./Pages/AdminDashboard/Dashboard";
 import DecisionsPage from "./Pages/Decisions/DecisionsPage";
 import ApprovalsPage from "./Pages/Approvals/ApprovalsPage";
+import ResponsibilitiesPage from "./Pages/Responsibilities/ResponsibilitiesPage";
+import ActionsPage from "./Pages/Actions/ActionsPage";
 
 function App() {
   return (
@@ -32,6 +34,8 @@ function App() {
         <Route path="/dashboard" element={<ProtectedRoute app="dashboard"><Dashboard /></ProtectedRoute>} />
         <Route path="/decisions" element={<ProtectedRoute app="decisions"><DecisionsPage /></ProtectedRoute>} />
         <Route path="/approvals" element={<ProtectedRoute app="approvals"><ApprovalsPage /></ProtectedRoute>} />
+        <Route path="/responsibilities" element={<ProtectedRoute app="responsibilities"><ResponsibilitiesPage /></ProtectedRoute>} />
+        <Route path="/actions" element={<ProtectedRoute app="actions"><ActionsPage /></ProtectedRoute>} />
         <Route path="/security" element={<SecuritySettings />} />
       </Route>
     </Routes>
