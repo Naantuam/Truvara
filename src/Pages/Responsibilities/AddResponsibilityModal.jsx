@@ -2,17 +2,19 @@ import { useState } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 
 export default function AddResponsibilityModal({ open, onClose, onCreated }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState("");
+  const [roleTitle, setRoleTitle] = useState("");
   const [owner, setOwner] = useState("");
+  const [description, setDescription] = useState("");
   const [status, setStatus] = useState("Active");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
   const reset = () => {
-    setTitle("");
-    setDescription("");
+    setName("");
+    setRoleTitle("");
     setOwner("");
+    setDescription("");
     setStatus("Active");
     setError(null);
   };
@@ -27,7 +29,7 @@ export default function AddResponsibilityModal({ open, onClose, onCreated }) {
     setSubmitting(true);
     setError(null);
     try {
-      await onCreated({ title, description, owner, status });
+      await onCreated({ name, role_title: roleTitle, owner, description, status });
       reset();
       onClose();
     } catch (err) {
@@ -46,23 +48,12 @@ export default function AddResponsibilityModal({ open, onClose, onCreated }) {
 
           <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">Title</label>
+              <label className="text-sm font-medium text-gray-700">Department / Area</label>
               <input
                 type="text"
                 required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                required
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -74,6 +65,29 @@ export default function AddResponsibilityModal({ open, onClose, onCreated }) {
                 required
                 value={owner}
                 onChange={(e) => setOwner(e.target.value)}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700">Owner's Role Title</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Marketing Director"
+                value={roleTitle}
+                onChange={(e) => setRoleTitle(e.target.value)}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700">Description</label>
+              <textarea
+                required
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

@@ -1,14 +1,21 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { X } from "lucide-react";
 import api from "../../api";
 import StatusBadge from "../../Reusable/StatusBadge";
-import AddActionModal from "./AddActionModal";
+import ProgressDots from "./ProgressDots";
+import { STAGES } from "./stages";
+import UpdateProgressModal from "./UpdateProgressModal";
+
+const FILTERS = ["All", ...STAGES];
 
 export default function ActionsPage() {
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
+  const [filter, setFilter] = useState("All");
+  const [activeAction, setActiveAction] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const department = searchParams.get("department");
 
   useEffect(() => {
     api.get("/actions/")
@@ -18,80 +25,136 @@ export default function ActionsPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return actions;
-    return actions.filter(
-      (a) => a.title?.toLowerCase().includes(term) || a.assigned_to?.toLowerCase().includes(term)
-    );
-  }, [actions, search]);
+    let list = actions;
+    if (department) list = list.filter((a) => a.department === department);
+    if (filter !== "All") list = list.filter((a) => a.stage === filter);
+    return list;
+  }, [actions, filter, department]);
 
-  const handleCreated = async (payload) => {
-    const res = await api.post("/actions/", payload);
-    setActions((prev) => [res.data, ...prev]);
+  const inProgress = filtered.filter((a) => a.stage !== "Completed");
+  const completed = filtered.filter((a) => a.stage === "Completed");
+
+  const handleUpdated = async (id, payload) => {
+    const res = await api.put(`/actions/${id}/progress/`, payload);
+    setActions((prev) => prev.map((a) => (a.id === id ? { ...a, ...res.data } : a)));
   };
 
   return (
     <div className="w-full h-full overflow-auto bg-gray-50 p-6 flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Actions</h1>
-          <p className="text-sm text-gray-500">Track operational tasks and their progress</p>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Actions</h1>
+        <p className="text-sm text-gray-500">Track approved decisions through to completion</p>
+      </div>
+
+      {department && (
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          Filtered by department: <span className="font-medium text-gray-900">{department}</span>
+          <button onClick={() => setSearchParams({})} className="text-gray-400 hover:text-gray-600">
+            <X className="w-4 h-4" />
+          </button>
         </div>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" /> Add Action
-        </button>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+              filter === f ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            {f}
+          </button>
+        ))}
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search actions..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+      {loading ? (
+        <p className="text-sm text-gray-400 py-6 text-center">Loading actions...</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-sm text-gray-400 py-6 text-center">No actions found.</p>
+      ) : (
+        <>
+          {inProgress.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">In Progress ({inProgress.length})</h2>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs font-medium text-gray-400 uppercase border-b border-gray-100">
+                    <th className="pb-2 pr-4">Action</th>
+                    <th className="pb-2 pr-4">Progress</th>
+                    <th className="pb-2 pr-4">Est. Cost</th>
+                    <th className="pb-2 pr-4">Ordered</th>
+                    <th className="pb-2 pr-4">Expected</th>
+                    <th className="pb-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inProgress.map((a) => (
+                    <tr
+                      key={a.id}
+                      onClick={() => setActiveAction(a)}
+                      className="border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50"
+                    >
+                      <td className="py-3 pr-4">
+                        <p className="text-gray-900">{a.title}</p>
+                        <p className="text-xs text-gray-400">By {a.owner} · {a.ordered_date}</p>
+                      </td>
+                      <td className="py-3 pr-4"><ProgressDots stage={a.stage} /></td>
+                      <td className="py-3 pr-4 text-gray-900">${Number(a.estimated_cost || 0).toLocaleString()}</td>
+                      <td className="py-3 pr-4 text-gray-600">{a.ordered_date}</td>
+                      <td className="py-3 pr-4 text-gray-600">{a.expected_date}</td>
+                      <td className="py-3"><StatusBadge status={a.stage} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        {loading ? (
-          <p className="text-sm text-gray-400 py-6 text-center">Loading actions...</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-sm text-gray-400 py-6 text-center">No actions found.</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs font-medium text-gray-400 uppercase border-b border-gray-100">
-                <th className="pb-2 pr-4">Action</th>
-                <th className="pb-2 pr-4">Assigned To</th>
-                <th className="pb-2 pr-4">Due Date</th>
-                <th className="pb-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((a) => (
-                <tr key={a.id} className="border-b border-gray-50 last:border-0">
-                  <td className="py-3 pr-4 text-gray-900">{a.title}</td>
-                  <td className="py-3 pr-4 text-gray-600">{a.assigned_to}</td>
-                  <td className="py-3 pr-4 text-gray-600">{a.due_date || "—"}</td>
-                  <td className="py-3">
-                    <StatusBadge status={a.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+          {completed.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Completed ({completed.length})</h2>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs font-medium text-gray-400 uppercase border-b border-gray-100">
+                    <th className="pb-2 pr-4">Action</th>
+                    <th className="pb-2 pr-4">Est. Cost</th>
+                    <th className="pb-2 pr-4">Actual Cost</th>
+                    <th className="pb-2 pr-4">Variance</th>
+                    <th className="pb-2">Approved By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {completed.map((a) => {
+                    const variance = Number(a.actual_cost || 0) - Number(a.estimated_cost || 0);
+                    return (
+                      <tr
+                        key={a.id}
+                        onClick={() => setActiveAction(a)}
+                        className="border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50"
+                      >
+                        <td className="py-3 pr-4">
+                          <p className="text-gray-900">{a.title}</p>
+                          <p className="text-xs text-gray-400">{a.ordered_date}</p>
+                        </td>
+                        <td className="py-3 pr-4 text-gray-600">${Number(a.estimated_cost || 0).toLocaleString()}</td>
+                        <td className="py-3 pr-4 text-gray-600">${Number(a.actual_cost || 0).toLocaleString()}</td>
+                        <td className={`py-3 pr-4 font-medium ${variance <= 0 ? "text-green-600" : "text-red-600"}`}>
+                          {variance >= 0 ? "+" : ""}${variance.toLocaleString()}
+                        </td>
+                        <td className="py-3 text-gray-600">{a.approved_by}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
 
-      <AddActionModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreated={handleCreated}
-      />
+      <UpdateProgressModal action={activeAction} onClose={() => setActiveAction(null)} onUpdated={handleUpdated} />
     </div>
   );
 }

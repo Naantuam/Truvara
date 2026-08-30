@@ -1,14 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
-import { Search, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Plus, User } from "lucide-react";
 import api from "../../api";
-import StatusBadge from "../../Reusable/StatusBadge";
+import DepartmentAvatar from "./DepartmentAvatar";
 import AddResponsibilityModal from "./AddResponsibilityModal";
+import ResponsibilityDetailsModal from "./ResponsibilityDetailsModal";
 
 export default function ResponsibilitiesPage() {
   const [responsibilities, setResponsibilities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [detailsIndex, setDetailsIndex] = useState(null);
 
   useEffect(() => {
     api.get("/responsibilities/")
@@ -17,17 +19,9 @@ export default function ResponsibilitiesPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return responsibilities;
-    return responsibilities.filter(
-      (r) => r.title?.toLowerCase().includes(term) || r.owner?.toLowerCase().includes(term)
-    );
-  }, [responsibilities, search]);
-
   const handleCreated = async (payload) => {
     const res = await api.post("/responsibilities/", payload);
-    setResponsibilities((prev) => [res.data, ...prev]);
+    setResponsibilities((prev) => [...prev, res.data]);
   };
 
   return (
@@ -35,7 +29,7 @@ export default function ResponsibilitiesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Responsibilities</h1>
-          <p className="text-sm text-gray-500">Manage ownership areas across your organization</p>
+          <p className="text-sm text-gray-500">Track ownership and accountability across departments</p>
         </div>
         <button
           onClick={() => setModalOpen(true)}
@@ -45,52 +39,90 @@ export default function ResponsibilitiesPage() {
         </button>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search responsibilities..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+      {loading ? (
+        <p className="text-sm text-gray-400 py-6 text-center">Loading responsibilities...</p>
+      ) : responsibilities.length === 0 ? (
+        <p className="text-sm text-gray-400 py-6 text-center">No responsibilities found.</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {responsibilities.map((r, index) => (
+              <div key={r.id} className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col">
+                <div className="flex items-center gap-3">
+                  <DepartmentAvatar name={r.owner} index={index} />
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 truncate">{r.name}</p>
+                    <p className="text-sm text-gray-500 truncate">{r.owner}</p>
+                  </div>
+                </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        {loading ? (
-          <p className="text-sm text-gray-400 py-6 text-center">Loading responsibilities...</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-sm text-gray-400 py-6 text-center">No responsibilities found.</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs font-medium text-gray-400 uppercase border-b border-gray-100">
-                <th className="pb-2 pr-4">Responsibility</th>
-                <th className="pb-2 pr-4">Owner</th>
-                <th className="pb-2 pr-4">Created</th>
-                <th className="pb-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((r) => (
-                <tr key={r.id} className="border-b border-gray-50 last:border-0">
-                  <td className="py-3 pr-4 text-gray-900">{r.title}</td>
-                  <td className="py-3 pr-4 text-gray-600">{r.owner}</td>
-                  <td className="py-3 pr-4 text-gray-600">{r.date}</td>
-                  <td className="py-3">
-                    <StatusBadge status={r.status} />
-                  </td>
+                <p className="text-sm font-medium text-gray-800 mt-3">{r.role_title}</p>
+                <p className="text-sm text-gray-500 mt-1 line-clamp-2 flex-1">{r.description}</p>
+
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                  <div>
+                    <p className="text-xs text-gray-400">Active Actions</p>
+                    <p className="text-xl font-bold text-gray-900">{r.active_actions}</p>
+                  </div>
+                  <User className="w-5 h-5 text-gray-300" />
+                </div>
+
+                <div className="flex gap-4 mt-3">
+                  <button
+                    onClick={() => setDetailsIndex(index)}
+                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    View Details
+                  </button>
+                  <Link
+                    to={`/actions?department=${encodeURIComponent(r.name)}`}
+                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    View Actions
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Responsibility Matrix</h2>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs font-medium text-gray-400 uppercase border-b border-gray-100">
+                  <th className="pb-2 pr-4">Department</th>
+                  <th className="pb-2 pr-4">Owner</th>
+                  <th className="pb-2 pr-4">Role</th>
+                  <th className="pb-2 pr-4">Active Actions</th>
+                  <th className="pb-2">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody>
+                {responsibilities.map((r, index) => (
+                  <tr key={r.id} className="border-b border-gray-50 last:border-0">
+                    <td className="py-3 pr-4">
+                      <div className="flex items-center gap-2">
+                        <DepartmentAvatar name={r.owner} index={index} size="sm" />
+                        <span className="text-gray-900">{r.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 pr-4 text-gray-600">{r.owner}</td>
+                    <td className="py-3 pr-4 text-gray-600">{r.role_title}</td>
+                    <td className="py-3 pr-4 text-gray-600">{r.active_actions} actions</td>
+                    <td className="py-3 text-gray-600">{r.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
-      <AddResponsibilityModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreated={handleCreated}
+      <AddResponsibilityModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={handleCreated} />
+      <ResponsibilityDetailsModal
+        responsibility={detailsIndex !== null ? responsibilities[detailsIndex] : null}
+        index={detailsIndex}
+        onClose={() => setDetailsIndex(null)}
       />
     </div>
   );

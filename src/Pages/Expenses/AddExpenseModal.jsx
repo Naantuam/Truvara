@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 
-export default function AddExpenseModal({ open, onClose, onCreated }) {
-  const [title, setTitle] = useState("");
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState("");
-  const [category, setCategory] = useState("");
+export default function AddExpenseModal({ open, onClose, onCreated, initial = {} }) {
+  const [description, setDescription] = useState(initial.description || "");
+  const [amount, setAmount] = useState(initial.amount || "");
+  const [date, setDate] = useState(initial.date || "");
+  const [category, setCategory] = useState(initial.category || "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
   const reset = () => {
-    setTitle("");
+    setDescription("");
     setAmount("");
     setDate("");
     setCategory("");
@@ -27,7 +27,7 @@ export default function AddExpenseModal({ open, onClose, onCreated }) {
     setSubmitting(true);
     setError(null);
     try {
-      await onCreated({ title, amount, date, category });
+      await onCreated({ description, amount, date, category });
       reset();
       onClose();
     } catch (err) {
@@ -46,12 +46,12 @@ export default function AddExpenseModal({ open, onClose, onCreated }) {
 
           <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">Title</label>
+              <label className="text-sm font-medium text-gray-700">Description</label>
               <input
                 type="text"
                 required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -86,7 +86,7 @@ export default function AddExpenseModal({ open, onClose, onCreated }) {
               <input
                 type="text"
                 required
-                placeholder="e.g. Hardware, Software, Travel"
+                placeholder="e.g. Software, Technology, Travel"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"

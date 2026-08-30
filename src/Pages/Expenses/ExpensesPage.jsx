@@ -1,62 +1,134 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { DollarSign, TrendingUp, Package, TrendingDown, Upload, Plus, Paperclip } from "lucide-react";
 import api from "../../api";
-import StatusBadge from "../../Reusable/StatusBadge";
 import AddExpenseModal from "./AddExpenseModal";
+
+const TABS = ["All", "Manual", "From Actions"];
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState([]);
+  const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [tab, setTab] = useState("All");
+  const [category, setCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    api.get("/expenses/")
-      .then((res) => setExpenses(Array.isArray(res.data) ? res.data : res.data?.results || []))
+    Promise.all([
+      api.get("/expenses/").catch(() => ({ data: [] })),
+      api.get("/expenses/summary/").catch(() => ({ data: null })),
+    ])
+      .then(([expensesRes, summaryRes]) => {
+        setExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : expensesRes.data?.results || []);
+        setSummary(summaryRes.data);
+      })
       .catch((err) => console.error("Failed to fetch expenses:", err))
       .finally(() => setLoading(false));
   }, []);
 
+  const categories = useMemo(
+    () => ["All", ...new Set(expenses.map((e) => e.category).filter(Boolean))],
+    [expenses]
+  );
+
   const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return expenses;
-    return expenses.filter(
-      (e) => e.title?.toLowerCase().includes(term) || e.category?.toLowerCase().includes(term)
-    );
-  }, [expenses, search]);
+    let list = expenses;
+    if (tab === "Manual") list = list.filter((e) => e.source === "Manual");
+    if (tab === "From Actions") list = list.filter((e) => e.source === "Action");
+    if (category !== "All") list = list.filter((e) => e.category === category);
+    return list;
+  }, [expenses, tab, category]);
+
+  const total = filtered.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
   const handleCreated = async (payload) => {
     const res = await api.post("/expenses/", payload);
     setExpenses((prev) => [res.data, ...prev]);
   };
 
+  const handleUploadReceipt = () => {
+    alert("Receipt scanning isn't available yet — add the expense details manually.");
+    setModalOpen(true);
+  };
+
+  const cards = [
+    { label: "Total Expenses", sub: "All time", value: summary?.total, icon: DollarSign, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "This Month", sub: summary?.this_month_label, value: summary?.this_month, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
+    { label: "From Actions", sub: `${summary?.from_actions_count ?? 0} items`, value: summary?.from_actions, icon: Package, color: "text-purple-600", bg: "bg-purple-50" },
+    { label: "Manual", sub: `${summary?.manual_count ?? 0} items`, value: summary?.manual, icon: TrendingDown, color: "text-orange-600", bg: "bg-orange-50" },
+  ];
+
   return (
     <div className="w-full h-full overflow-auto bg-gray-50 p-6 flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Expenses</h1>
-          <p className="text-sm text-gray-500">Track and manage company spending</p>
+          <p className="text-sm text-gray-500">Track all expenses, including those from approved actions</p>
         </div>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" /> Add Expense
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleUploadReceipt}
+            className="flex items-center gap-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors"
+          >
+            <Upload className="w-4 h-4" /> Upload Receipt
+          </button>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Add Expense
+          </button>
+        </div>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search expenses..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {cards.map((card) => (
+          <div key={card.label} className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${card.bg} mb-3`}>
+              <card.icon className={`w-5 h-5 ${card.color}`} />
+            </div>
+            <p className="text-2xl font-bold text-gray-900">
+              {loading ? "—" : `$${Number(card.value || 0).toLocaleString()}`}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">{card.label}</p>
+            <p className="text-xs text-gray-400">{card.sub}</p>
+          </div>
+        ))}
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">All Expenses</h2>
+            <p className="text-sm text-gray-500">{filtered.length} entries · ${total.toLocaleString()} total</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+              {TABS.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`px-3 py-1.5 text-sm font-medium ${
+                    tab === t ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {categories.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {loading ? (
           <p className="text-sm text-gray-400 py-6 text-center">Loading expenses...</p>
         ) : filtered.length === 0 ? (
@@ -65,37 +137,61 @@ export default function ExpensesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs font-medium text-gray-400 uppercase border-b border-gray-100">
-                <th className="pb-2 pr-4">Expense</th>
-                <th className="pb-2 pr-4">Category</th>
                 <th className="pb-2 pr-4">Date</th>
+                <th className="pb-2 pr-4">Description</th>
+                <th className="pb-2 pr-4">Category</th>
+                <th className="pb-2 pr-4">Source</th>
                 <th className="pb-2 pr-4">Amount</th>
-                <th className="pb-2">Status</th>
+                <th className="pb-2 pr-4">Added By</th>
+                <th className="pb-2">Receipt</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((e) => (
                 <tr key={e.id} className="border-b border-gray-50 last:border-0">
-                  <td className="py-3 pr-4 text-gray-900">{e.title}</td>
-                  <td className="py-3 pr-4 text-gray-600">{e.category}</td>
                   <td className="py-3 pr-4 text-gray-600">{e.date}</td>
-                  <td className="py-3 pr-4 text-gray-900 font-medium">
-                    ${Number(e.amount || 0).toLocaleString()}
+                  <td className="py-3 pr-4">
+                    <p className="text-gray-900">{e.description}</p>
+                    {e.linked_action && (
+                      <Link to="/actions" className="text-xs text-blue-600 hover:underline">
+                        Action: {e.linked_action}
+                      </Link>
+                    )}
                   </td>
+                  <td className="py-3 pr-4">
+                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                      {e.category}
+                    </span>
+                  </td>
+                  <td className="py-3 pr-4 text-gray-600">
+                    {e.source === "Action" ? <span className="text-blue-600">Action</span> : "Manual"}
+                  </td>
+                  <td className="py-3 pr-4 text-gray-900 font-medium">${Number(e.amount || 0).toLocaleString()}</td>
+                  <td className="py-3 pr-4 text-gray-600">{e.added_by}</td>
                   <td className="py-3">
-                    <StatusBadge status={e.status} />
+                    {e.receipt_attached ? (
+                      <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                        <Paperclip className="w-3 h-3" /> Attached
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr className="border-t border-gray-200 font-bold text-gray-900">
+                <td className="pt-3" colSpan={4}>Total</td>
+                <td className="pt-3">${total.toLocaleString()}</td>
+                <td className="pt-3" colSpan={2}></td>
+              </tr>
+            </tfoot>
           </table>
         )}
       </div>
 
-      <AddExpenseModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreated={handleCreated}
-      />
+      <AddExpenseModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={handleCreated} />
     </div>
   );
 }

@@ -9,6 +9,10 @@ const STATUS_STYLES = {
   Open: "bg-blue-100 text-blue-700",
   "In Progress": "bg-orange-100 text-orange-700",
   Completed: "bg-green-100 text-green-700",
+  "Pending Order": "bg-gray-100 text-gray-600",
+  Ordered: "bg-blue-100 text-blue-700",
+  "In Transit": "bg-purple-100 text-purple-700",
+  Delivered: "bg-teal-100 text-teal-700",
 };
 
 export default function StatusBadge({ status }) {
