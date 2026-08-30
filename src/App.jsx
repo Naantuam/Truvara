@@ -18,6 +18,8 @@ import ApprovalsPage from "./Pages/Approvals/ApprovalsPage";
 import ResponsibilitiesPage from "./Pages/Responsibilities/ResponsibilitiesPage";
 import ActionsPage from "./Pages/Actions/ActionsPage";
 import ExpensesPage from "./Pages/Expenses/ExpensesPage";
+import ReportsPage from "./Pages/Reports/ReportsPage";
+import SettingsPage from "./Pages/Settings/SettingsPage";
 
 function App() {
   return (
@@ -38,7 +40,9 @@ function App() {
         <Route path="/responsibilities" element={<ProtectedRoute app="responsibilities"><ResponsibilitiesPage /></ProtectedRoute>} />
         <Route path="/actions" element={<ProtectedRoute app="actions"><ActionsPage /></ProtectedRoute>} />
         <Route path="/expenses" element={<ProtectedRoute app="expenses"><ExpensesPage /></ProtectedRoute>} />
-        <Route path="/security" element={<SecuritySettings />} />
+        <Route path="/reports" element={<ProtectedRoute app="reports"><ReportsPage /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+        <Route path="/security" element={<ProtectedRoute><SecuritySettings /></ProtectedRoute>} />
       </Route>
     </Routes>
   );

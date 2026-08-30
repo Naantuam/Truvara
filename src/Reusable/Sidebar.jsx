@@ -1,7 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Squares2X2Icon } from '@heroicons/react/24/solid';
-import { FileText, CheckSquare, Users, ListChecks, DollarSign } from 'lucide-react';
+import { FileText, CheckSquare, Users, ListChecks, DollarSign, BarChart3, Settings as SettingsIcon } from 'lucide-react';
 import logo from "/assets/ABY.png";
 
 function classNames(...classes) {
@@ -35,6 +35,13 @@ const NAV_GROUPS = [
             { name: 'Expenses', href: '/expenses', icon: DollarSign, app: 'expenses' },
         ],
     },
+    {
+        section: null,
+        items: [
+            { name: 'Reports', href: '/reports', icon: BarChart3, app: 'reports' },
+            { name: 'Settings', href: '/settings', icon: SettingsIcon, app: 'settings' },
+        ],
+    },
 ];
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appPermissions }) {
@@ -63,6 +70,9 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
             }
             return false; // If there's no dashPerm defined, fallback to false for safety
         }
+
+        // Settings is a self-service account page available to every authenticated user
+        if (itemApp === 'settings') return true;
 
         // Feature modules dynamic check
         const modulePerms = appPermissions?.[itemApp] || [];
@@ -103,8 +113,8 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
 
                     {/* Navigation links */}
                     <nav className="space-y-4">
-                        {allowedGroups.map((group) => (
-                            <div key={group.section || 'root'} className="space-y-1">
+                        {allowedGroups.map((group, index) => (
+                            <div key={group.section || `root-${index}`} className="space-y-1">
                                 {group.section && (
                                     <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">
                                         {group.section}
