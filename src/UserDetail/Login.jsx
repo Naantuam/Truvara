@@ -8,6 +8,7 @@ import Logo from "./AuthComponents/Logo";
 import InputField from "./AuthComponents/InputField";
 import { Mail, Lock } from "lucide-react";
 import api from "../api";
+import { AUTH_DISABLED } from "../config";
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -19,6 +20,12 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (AUTH_DISABLED) {
+      navigate("/dashboard");
+      return;
+    }
+
     setLoading(true);
 
     try {
