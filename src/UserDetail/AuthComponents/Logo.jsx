@@ -1,10 +1,9 @@
-import React from "react";
-const logo = "/assets/ABY.png";
+import BrandMark from "../../Reusable/BrandMark";
 
 export default function Logo() {
-  return <>
-  <div className="h-30 justify-center flex items-center">
-    <img src={logo} alt="Logo" className="w-40" />
+  return (
+    <div className="h-30 justify-center flex items-center">
+      <BrandMark size="lg" />
     </div>
-  </>
+  );
 }

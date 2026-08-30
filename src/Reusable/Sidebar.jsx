@@ -2,7 +2,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Squares2X2Icon } from '@heroicons/react/24/solid';
 import { FileText, CheckSquare, Users, ListChecks, DollarSign, BarChart3, Settings as SettingsIcon } from 'lucide-react';
-import logo from "/assets/ABY.png";
+import BrandMark from './BrandMark';
 
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
@@ -102,13 +102,9 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
                         <XMarkIcon className="h-6 w-6" />
                     </button>
 
-                    {/* Header with logo */}
-                    <div className="flex flex-col items-center pt-2">
-                        <img
-                            src={logo}
-                            alt="Logo"
-                            className="h-35 w-35 object-contain"
-                        />
+                    {/* Header with brand mark */}
+                    <div className="flex flex-col items-center pt-2 pb-4">
+                        <BrandMark size="sm" />
                     </div>
 
                     {/* Navigation links */}
