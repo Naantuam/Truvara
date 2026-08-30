@@ -3,12 +3,14 @@ import { CheckCircle2, XCircle, ChevronRight, User, DollarSign } from "lucide-re
 import api from "../../api";
 import StatusBadge from "../../Reusable/StatusBadge";
 import DecisionDetailsModal from "../../Reusable/DecisionDetailsModal";
+import RejectReasonModal from "./RejectReasonModal";
 
 export default function ApprovalsPage() {
   const [pending, setPending] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [detailsFor, setDetailsFor] = useState(null);
+  const [rejecting, setRejecting] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -23,14 +25,20 @@ export default function ApprovalsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const resolve = async (id, action) => {
+  const approve = async (id) => {
     try {
-      const res = await api.post(`/decisions/${id}/${action}/`);
+      const res = await api.post(`/decisions/${id}/approve/`);
       setPending((prev) => prev.filter((item) => item.id !== id));
       setHistory((prev) => [res.data, ...prev]);
     } catch (err) {
-      console.error(`Failed to ${action} decision ${id}:`, err);
+      console.error(`Failed to approve decision ${id}:`, err);
     }
+  };
+
+  const reject = async (id, rejection_reason) => {
+    const res = await api.post(`/decisions/${id}/reject/`, { rejection_reason });
+    setPending((prev) => prev.filter((item) => item.id !== id));
+    setHistory((prev) => [res.data, ...prev]);
   };
 
   return (
@@ -79,13 +87,13 @@ export default function ApprovalsPage() {
 
               <div className="flex gap-2 mt-4">
                 <button
-                  onClick={() => resolve(item.id, "approve")}
+                  onClick={() => approve(item.id)}
                   className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white text-sm font-medium rounded-lg py-2 hover:bg-green-700 transition-colors"
                 >
                   <CheckCircle2 className="w-4 h-4" /> Approve
                 </button>
                 <button
-                  onClick={() => resolve(item.id, "reject")}
+                  onClick={() => setRejecting(item)}
                   className="flex-1 flex items-center justify-center gap-2 border border-gray-300 text-red-600 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 transition-colors"
                 >
                   <XCircle className="w-4 h-4" /> Reject
@@ -148,6 +156,7 @@ export default function ApprovalsPage() {
       </div>
 
       <DecisionDetailsModal decision={detailsFor} onClose={() => setDetailsFor(null)} />
+      <RejectReasonModal decision={rejecting} onClose={() => setRejecting(null)} onRejected={reject} />
     </div>
   );
 }
