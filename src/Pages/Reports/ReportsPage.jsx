@@ -1,67 +1,178 @@
-import { useState } from "react";
-import { FileText, CheckSquare, ListChecks, DollarSign, Download } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Download } from "lucide-react";
+import {
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from "recharts";
 import api from "../../api";
 
-const REPORTS = [
-  { key: "decisions", label: "Decisions Report", description: "All logged decisions with status and resolution history.", icon: FileText },
-  { key: "approvals", label: "Approvals Report", description: "Approval turnaround times and outcomes.", icon: CheckSquare },
-  { key: "actions", label: "Actions Report", description: "Operational tasks by status and assignee.", icon: ListChecks },
-  { key: "expenses", label: "Expenses Report", description: "Company spending by category and date.", icon: DollarSign },
+const STATUS_COLORS = {
+  Approved: "#10b981",
+  "Pending Approval": "#f97316",
+  Draft: "#9ca3af",
+  Rejected: "#ef4444",
+};
+
+const STATS = [
+  { key: "total_decisions", label: "Total Decisions", goodDirection: "up", suffix: "" },
+  { key: "approval_rate", label: "Approval Rate", goodDirection: "up", suffix: "%" },
+  { key: "avg_response_time", label: "Avg. Response Time", goodDirection: "down", suffix: " days" },
 ];
 
 export default function ReportsPage() {
-  const [downloading, setDownloading] = useState(null);
-  const [error, setError] = useState(null);
+  const [range, setRange] = useState("6m");
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
-  const handleDownload = async (report) => {
-    setDownloading(report.key);
-    setError(null);
+  useEffect(() => {
+    setLoading(true);
+    api.get("/reports/summary/", { params: { range } })
+      .then((res) => setData(res.data))
+      .catch((err) => console.error("Failed to fetch report summary:", err))
+      .finally(() => setLoading(false));
+  }, [range]);
+
+  const handleExport = async () => {
+    setDownloading(true);
     try {
-      const res = await api.get(`/reports/${report.key}/export/`, { responseType: "blob" });
+      const res = await api.get("/reports/export/", { params: { range }, responseType: "blob" });
       const url = URL.createObjectURL(res.data);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${report.key}-report.csv`;
+      link.download = "business-report.csv";
       link.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error(`Failed to download ${report.key} report:`, err);
-      setError(`Couldn't generate the ${report.label.toLowerCase()}.`);
+      console.error("Failed to export report:", err);
     } finally {
-      setDownloading(null);
+      setDownloading(false);
     }
   };
 
   return (
     <div className="w-full h-full overflow-auto bg-gray-50 p-6 flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-        <p className="text-sm text-gray-500">Generate and export business reports</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
+          <p className="text-sm text-gray-500">Analytics and insights for your business</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <select
+            value={range}
+            onChange={(e) => setRange(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="3m">Last 3 Months</option>
+            <option value="6m">Last 6 Months</option>
+            <option value="12m">Last 12 Months</option>
+          </select>
+          <button
+            onClick={handleExport}
+            disabled={downloading}
+            className="flex items-center gap-2 bg-blue-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" /> {downloading ? "Exporting..." : "Export Report"}
+          </button>
+        </div>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {REPORTS.map((report) => (
-          <div key={report.key} className="bg-white rounded-xl border border-gray-200 p-5 flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <report.icon className="w-5 h-5 text-blue-600" />
+      {loading ? (
+        <p className="text-sm text-gray-400 py-6 text-center">Loading report data...</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Expenses by Month</h2>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data?.expenses_by_month || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
+                    <Tooltip />
+                    <Bar dataKey="amount" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">{report.label}</p>
-              <p className="text-sm text-gray-500 mt-1">{report.description}</p>
-              <button
-                onClick={() => handleDownload(report)}
-                disabled={downloading === report.key}
-                className="flex items-center gap-2 mt-3 text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50"
-              >
-                <Download className="w-4 h-4" />
-                {downloading === report.key ? "Generating..." : "Download CSV"}
-              </button>
+
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Decisions by Status</h2>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={data?.decisions_by_status || []}
+                      dataKey="value"
+                      nameKey="status"
+                      innerRadius={0}
+                      outerRadius={90}
+                      label={({ status, value }) => `${status}: ${value}%`}
+                    >
+                      {(data?.decisions_by_status || []).map((entry) => (
+                        <Cell key={entry.status} fill={STATUS_COLORS[entry.status] || "#9ca3af"} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Actions Completed</h2>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data?.actions_completed || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Approval Trends</h2>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data?.approval_trends || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="approved" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="rejected" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
-        ))}
-      </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {STATS.map((stat) => {
+              const entry = data?.stats?.[stat.key];
+              const delta = entry?.delta ?? 0;
+              const isGood = stat.goodDirection === "up" ? delta >= 0 : delta <= 0;
+              return (
+                <div key={stat.key} className="bg-white rounded-xl border border-gray-200 p-5">
+                  <p className="text-sm text-gray-500">{stat.label}</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-2">
+                    {entry?.value ?? "—"}{stat.suffix}
+                  </p>
+                  <p className={`text-xs font-medium mt-1 ${isGood ? "text-green-600" : "text-red-600"}`}>
+                    {delta >= 0 ? "+" : ""}{delta}{stat.suffix} from last period
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
