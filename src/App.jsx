@@ -17,6 +17,7 @@ import DecisionsPage from "./Pages/Decisions/DecisionsPage";
 import ApprovalsPage from "./Pages/Approvals/ApprovalsPage";
 import ResponsibilitiesPage from "./Pages/Responsibilities/ResponsibilitiesPage";
 import ActionsPage from "./Pages/Actions/ActionsPage";
+import ExpensesPage from "./Pages/Expenses/ExpensesPage";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/approvals" element={<ProtectedRoute app="approvals"><ApprovalsPage /></ProtectedRoute>} />
         <Route path="/responsibilities" element={<ProtectedRoute app="responsibilities"><ResponsibilitiesPage /></ProtectedRoute>} />
         <Route path="/actions" element={<ProtectedRoute app="actions"><ActionsPage /></ProtectedRoute>} />
+        <Route path="/expenses" element={<ProtectedRoute app="expenses"><ExpensesPage /></ProtectedRoute>} />
         <Route path="/security" element={<SecuritySettings />} />
       </Route>
     </Routes>

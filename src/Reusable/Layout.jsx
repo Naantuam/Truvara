@@ -36,7 +36,7 @@ export default function Layout() {
                 }
 
                 // 2. Fetch roles and permissions
-                const apps = ['decisions', 'approvals', 'responsibilities', 'actions'];
+                const apps = ['decisions', 'approvals', 'responsibilities', 'actions', 'expenses'];
                 const [rolesRes, ...permsResList] = await Promise.all([
                     api.get("/users/roles/").catch(() => ({ data: [] })),
                     ...apps.map(app => api.get(`/users/permissions/${app}/`).catch(() => ({ data: [] })))
