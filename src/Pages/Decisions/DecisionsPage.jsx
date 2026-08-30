@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, ChevronRight } from "lucide-react";
 import api from "../../api";
 import StatusBadge from "../../Reusable/StatusBadge";
+import DecisionDetailsModal from "../../Reusable/DecisionDetailsModal";
 import AddDecisionModal from "./AddDecisionModal";
 
 export default function DecisionsPage() {
@@ -9,6 +10,7 @@ export default function DecisionsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [detailsFor, setDetailsFor] = useState(null);
 
   useEffect(() => {
     api.get("/decisions/")
@@ -66,20 +68,31 @@ export default function DecisionsPage() {
             <thead>
               <tr className="text-left text-xs font-medium text-gray-400 uppercase border-b border-gray-100">
                 <th className="pb-2 pr-4">Decision</th>
-                <th className="pb-2 pr-4">Owner</th>
+                <th className="pb-2 pr-4">Submitted By</th>
+                <th className="pb-2 pr-4">Est. Cost</th>
                 <th className="pb-2 pr-4">Date</th>
                 <th className="pb-2">Status</th>
+                <th className="pb-2 w-6"></th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((decision) => (
-                <tr key={decision.id} className="border-b border-gray-50 last:border-0">
-                  <td className="py-3 pr-4 text-gray-900">{decision.title}</td>
+                <tr
+                  key={decision.id}
+                  onClick={() => setDetailsFor(decision)}
+                  className="border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50"
+                >
+                  <td className="py-3 pr-4">
+                    <p className="text-gray-900">{decision.title}</p>
+                    <p className="text-xs text-gray-400 truncate max-w-[280px]">{decision.description}</p>
+                  </td>
                   <td className="py-3 pr-4 text-gray-600">{decision.owner}</td>
+                  <td className="py-3 pr-4 text-gray-600">${Number(decision.estimated_cost || 0).toLocaleString()}</td>
                   <td className="py-3 pr-4 text-gray-600">{decision.date}</td>
                   <td className="py-3">
                     <StatusBadge status={decision.status} />
                   </td>
+                  <td className="py-3 text-gray-300"><ChevronRight className="w-4 h-4" /></td>
                 </tr>
               ))}
             </tbody>
@@ -92,6 +105,7 @@ export default function DecisionsPage() {
         onClose={() => setModalOpen(false)}
         onCreated={handleCreated}
       />
+      <DecisionDetailsModal decision={detailsFor} onClose={() => setDetailsFor(null)} />
     </div>
   );
 }

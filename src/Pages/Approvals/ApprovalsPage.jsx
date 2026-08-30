@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { CheckCircle2, XCircle, ChevronRight, User, DollarSign } from "lucide-react";
 import api from "../../api";
 import StatusBadge from "../../Reusable/StatusBadge";
-import DecisionDetailsModal from "./DecisionDetailsModal";
+import DecisionDetailsModal from "../../Reusable/DecisionDetailsModal";
 
 export default function ApprovalsPage() {
   const [pending, setPending] = useState([]);
@@ -39,55 +40,70 @@ export default function ApprovalsPage() {
         <p className="text-sm text-gray-500">Review and approve pending decision requests</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Pending Review Queue</h2>
-
-        {loading ? (
-          <p className="text-sm text-gray-400 py-6 text-center">Loading approvals...</p>
-        ) : pending.length === 0 ? (
-          <p className="text-sm text-gray-400 py-6 text-center">No pending approvals.</p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {pending.map((item) => (
-              <div key={item.id} className="border border-gray-100 rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <p className="font-medium text-gray-900">{item.title}</p>
-                  <p className="text-sm font-semibold text-gray-700">
-                    ${Number(item.estimated_cost || 0).toLocaleString()}
-                  </p>
-                </div>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  By {item.owner} · {item.date}
-                </p>
-                <p className="text-sm text-gray-600 mt-2 line-clamp-2">{item.description}</p>
-                <div className="flex gap-2 mt-3">
-                  <button
-                    onClick={() => resolve(item.id, "approve")}
-                    className="flex-1 bg-blue-600 text-white text-sm font-medium rounded-lg py-2 hover:bg-blue-700 transition-colors"
-                  >
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => resolve(item.id, "reject")}
-                    className="flex-1 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 transition-colors"
-                  >
-                    Reject
-                  </button>
-                  <button
-                    onClick={() => setDetailsFor(item)}
-                    className="px-4 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    Details
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="flex items-center gap-2">
+        <h2 className="text-lg font-bold text-gray-900">Pending Review</h2>
+        {!loading && (
+          <span className="bg-orange-100 text-orange-700 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            {pending.length}
+          </span>
         )}
       </div>
 
+      {loading ? (
+        <p className="text-sm text-gray-400 py-6 text-center">Loading approvals...</p>
+      ) : pending.length === 0 ? (
+        <p className="text-sm text-gray-400 py-6 text-center">No pending approvals.</p>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {pending.map((item) => (
+            <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-5 flex flex-col">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-bold text-gray-900">{item.title}</p>
+                <span className="bg-orange-100 text-orange-700 text-xs font-medium px-2 py-1 rounded-full flex-shrink-0">
+                  Pending
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 mt-2">{item.description}</p>
+
+              <div className="flex items-center gap-2 text-sm text-gray-500 mt-3">
+                <User className="w-4 h-4 text-gray-400" /> By {item.owner}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                <DollarSign className="w-4 h-4 text-gray-400" /> Est. <span className="font-semibold text-gray-900">${Number(item.estimated_cost || 0).toLocaleString()}</span>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-3 mt-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Justification</p>
+                <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+              </div>
+
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => resolve(item.id, "approve")}
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white text-sm font-medium rounded-lg py-2 hover:bg-green-700 transition-colors"
+                >
+                  <CheckCircle2 className="w-4 h-4" /> Approve
+                </button>
+                <button
+                  onClick={() => resolve(item.id, "reject")}
+                  className="flex-1 flex items-center justify-center gap-2 border border-gray-300 text-red-600 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 transition-colors"
+                >
+                  <XCircle className="w-4 h-4" /> Reject
+                </button>
+                <button
+                  onClick={() => setDetailsFor(item)}
+                  className="w-9 flex items-center justify-center border border-gray-300 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Approval History</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Decision History</h2>
 
         {loading ? (
           <p className="text-sm text-gray-400 py-6 text-center">Loading history...</p>
@@ -98,19 +114,29 @@ export default function ApprovalsPage() {
             <thead>
               <tr className="text-left text-xs font-medium text-gray-400 uppercase border-b border-gray-100">
                 <th className="pb-2 pr-4">Decision</th>
-                <th className="pb-2 pr-4">Submitter</th>
-                <th className="pb-2 pr-4">Resolved By</th>
-                <th className="pb-2 pr-4">Resolved Date</th>
+                <th className="pb-2 pr-4">Submitted By</th>
+                <th className="pb-2 pr-4">Est. Cost</th>
+                <th className="pb-2 pr-4">Date</th>
                 <th className="pb-2">Status</th>
               </tr>
             </thead>
             <tbody>
               {history.map((decision) => (
                 <tr key={decision.id} className="border-b border-gray-50 last:border-0">
-                  <td className="py-3 pr-4 text-gray-900">{decision.title}</td>
+                  <td className="py-3 pr-4">
+                    <p className="text-gray-900">{decision.title}</p>
+                    {decision.status === "Approved" && decision.resolved_by && (
+                      <p className="text-xs text-green-600 mt-0.5">Approved by {decision.resolved_by}</p>
+                    )}
+                    {decision.status === "Rejected" && decision.rejection_reason && (
+                      <p className="text-xs text-red-600 mt-0.5 truncate max-w-[280px]">
+                        Reason: {decision.rejection_reason}
+                      </p>
+                    )}
+                  </td>
                   <td className="py-3 pr-4 text-gray-600">{decision.owner}</td>
-                  <td className="py-3 pr-4 text-gray-600">{decision.resolved_by}</td>
-                  <td className="py-3 pr-4 text-gray-600">{decision.resolved_date}</td>
+                  <td className="py-3 pr-4 text-gray-600">${Number(decision.estimated_cost || 0).toLocaleString()}</td>
+                  <td className="py-3 pr-4 text-gray-600">{decision.date}</td>
                   <td className="py-3">
                     <StatusBadge status={decision.status} />
                   </td>

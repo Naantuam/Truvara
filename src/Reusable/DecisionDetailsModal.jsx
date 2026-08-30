@@ -1,5 +1,5 @@
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
-import StatusBadge from "../../Reusable/StatusBadge";
+import StatusBadge from "./StatusBadge";
 
 export default function DecisionDetailsModal({ decision, onClose }) {
   return (
@@ -16,6 +16,14 @@ export default function DecisionDetailsModal({ decision, onClose }) {
               <p className="text-xs text-gray-500 mt-1">
                 Submitted by {decision.owner} · {decision.date}
               </p>
+
+              {decision.status === "Approved" && decision.resolved_by && (
+                <p className="text-sm text-green-600 mt-2">Approved by {decision.resolved_by}</p>
+              )}
+              {decision.status === "Rejected" && decision.rejection_reason && (
+                <p className="text-sm text-red-600 mt-2">Reason: {decision.rejection_reason}</p>
+              )}
+
               <p className="text-sm font-medium text-gray-700 mt-4">Justification</p>
               <p className="text-sm text-gray-600 mt-1">{decision.description}</p>
               <p className="text-sm font-medium text-gray-700 mt-4">Estimated Cost</p>
