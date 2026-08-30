@@ -3,6 +3,9 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import TopBar from "./Topbar";
 import api from "../api";
+import { AUTH_DISABLED } from "../config";
+
+const TEST_USER = { username: "Test User", email: "test@example.com", is_superuser: true };
 
 export default function Layout() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -19,6 +22,12 @@ export default function Layout() {
     const [loadingAuth, setLoadingAuth] = useState(true);
 
     useEffect(() => {
+        if (AUTH_DISABLED) {
+            setUser(TEST_USER);
+            setLoadingAuth(false);
+            return;
+        }
+
         const fetchAuthData = async () => {
             setLoadingAuth(true);
             try {

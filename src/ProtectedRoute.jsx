@@ -1,15 +1,18 @@
 import React from "react";
 import { Navigate, useOutletContext } from "react-router-dom";
+import { AUTH_DISABLED } from "./config";
 
 const ProtectedRoute = ({ children, app }) => {
+  const context = useOutletContext();
+
+  if (AUTH_DISABLED) return children;
+
   const token = localStorage.getItem("access_token") || localStorage.getItem("token");
 
   // If no token, redirect to login
   if (!token) {
     return <Navigate to="/" replace />;
   }
-
-  const context = useOutletContext();
 
   // If no context yet (e.g. Layout is still fetching), we just render children 
   // or return null/loading. To prevent flicker, Layout handles loading state globally.
