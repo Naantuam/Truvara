@@ -1,6 +1,28 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Truvara brand palette — sampled directly from the logo (green #1D4230, gold #C39C55) */
+@theme {
+  --color-brand-50: #eaf2ed;
+  --color-brand-100: #cfe3d7;
+  --color-brand-300: #6fa688;
+  --color-brand-400: #3d7856;
+  --color-brand-500: #295f41;
+  --color-brand-600: #1d4230;
+  --color-brand-700: #163325;
+  --color-brand-900: #0e211a;
+  --color-brand-950: #091712;
+
+  --color-gold-50: #fbf3e2;
+  --color-gold-100: #f4e4bf;
+  --color-gold-300: #e0c489;
+  --color-gold-400: #d0ac69;
+  --color-gold-500: #c39c55;
+  --color-gold-600: #a67f3e;
+  --color-gold-900: #3d2e15;
+  --color-gold-950: #2e2210;
+}
+
 
 /* In your main App or wrapper container */
 .page-wrapper {

@@ -12,7 +12,7 @@ export default function SettingsRow({ label, value, onSave, type = "text", linkT
           <p className="text-sm text-gray-900 dark:text-gray-100">{label}</p>
           <p className="text-sm text-gray-500 dark:text-gray-400">{value}</p>
         </div>
-        <Link to={linkTo} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+        <Link to={linkTo} className="text-sm font-medium text-brand-600 dark:text-gold-400 hover:text-brand-700 dark:hover:text-gold-300">
           Edit
         </Link>
       </div>
@@ -33,11 +33,11 @@ export default function SettingsRow({ label, value, onSave, type = "text", linkT
             type={type}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
         <div className="flex gap-2 flex-shrink-0">
-          <button onClick={handleSave} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+          <button onClick={handleSave} className="text-sm font-medium text-brand-600 dark:text-gold-400 hover:text-brand-700 dark:hover:text-gold-300">
             Save
           </button>
           <button
@@ -57,7 +57,7 @@ export default function SettingsRow({ label, value, onSave, type = "text", linkT
         <p className="text-sm text-gray-900 dark:text-gray-100">{label}</p>
         <p className="text-sm text-gray-500 dark:text-gray-400">{value}</p>
       </div>
-      <button onClick={() => setEditing(true)} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+      <button onClick={() => setEditing(true)} className="text-sm font-medium text-brand-600 dark:text-gold-400 hover:text-brand-700 dark:hover:text-gold-300">
         Edit
       </button>
     </div>

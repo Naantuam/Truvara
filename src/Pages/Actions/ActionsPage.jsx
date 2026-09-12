@@ -62,7 +62,7 @@ export default function ActionsPage() {
             onClick={() => setFilter(f)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
               filter === f
-                ? "bg-blue-600 text-white border-blue-600"
+                ? "bg-brand-600 text-white border-brand-600"
                 : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
             }`}
           >
@@ -78,7 +78,7 @@ export default function ActionsPage() {
       ) : (
         <>
           {inProgress.length > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
               <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">In Progress ({inProgress.length})</h2>
               <table className="w-full text-sm">
                 <thead>
@@ -115,7 +115,7 @@ export default function ActionsPage() {
           )}
 
           {completed.length > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
               <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Completed ({completed.length})</h2>
               <table className="w-full text-sm">
                 <thead>

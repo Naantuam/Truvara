@@ -26,7 +26,7 @@ const InputField = ({ id, type = "text", placeholder, value, onChange, Icon }) =
           placeholder={placeholder}
           value={value}
           onChange={onChange}
-          className={`w-full p-2 sm:p-3 rounded-xl bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          className={`w-full p-2 sm:p-3 rounded-xl bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 ${
             Icon ? "pl-10 sm:pl-10" : ""
           } ${isPassword ? "pr-10" : ""}`} // extra space for the eye icon
         />

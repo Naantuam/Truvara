@@ -24,7 +24,7 @@ export default function TeamActivity() {
   }, []);
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
       <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Team Activity</h2>
 
       {loading ? (
@@ -35,7 +35,7 @@ export default function TeamActivity() {
         <ul className="flex flex-col gap-4">
           {activity.map((item) => (
             <li key={item.id} className="flex gap-3">
-              <span className="w-2 h-2 mt-1.5 rounded-full bg-blue-600 flex-shrink-0" />
+              <span className="w-2 h-2 mt-1.5 rounded-full bg-brand-600 flex-shrink-0" />
               <div>
                 <p className="text-sm text-gray-800 dark:text-gray-200">
                   <span className="font-semibold">{item.actor}</span> {item.action}

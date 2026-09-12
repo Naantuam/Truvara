@@ -22,7 +22,7 @@ export default function PendingApprovals() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
       <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Pending Approvals</h2>
 
       {loading ? (
@@ -40,7 +40,7 @@ export default function PendingApprovals() {
               <div className="flex gap-2 mt-3">
                 <button
                   onClick={() => resolve(item.id, "approve")}
-                  className="flex-1 bg-blue-600 text-white text-sm font-medium rounded-lg py-2 hover:bg-blue-700 transition-colors"
+                  className="flex-1 bg-brand-600 text-white text-sm font-medium rounded-lg py-2 hover:bg-brand-700 transition-colors"
                 >
                   Approve
                 </button>

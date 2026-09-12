@@ -94,19 +94,19 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
                     }`}
             >
                 {/* Container for content with internal padding */}
-                <div className="px-3 py-6 h-full overflow-y-auto relative">
+                <div className="px-3 pt-2 pb-6 h-full overflow-y-auto relative">
 
                     {/* Close button - Visible on Mobile AND Desktop now */}
                     <button
                         onClick={() => setSidebarOpen(false)}
-                        className="absolute top-4 right-4 p-1 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100 transition-colors z-50"
+                        className="absolute top-2 right-2 p-1 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100 transition-colors z-50"
                         title="Close Sidebar"
                     >
                         <XMarkIcon className="h-6 w-6" />
                     </button>
 
                     {/* Header with brand mark */}
-                    <div className="flex flex-col items-center gap-3 pt-6 pb-4">
+                    <div className="flex flex-col items-center gap-2 pt-1 pb-3">
                         <SunMoonToggle theme={theme} onToggle={toggleTheme} />
                         <BrandMark variant={theme} className="w-32 h-auto" />
                     </div>
@@ -128,14 +128,14 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
                                             to={item.href}
                                             className={classNames(
                                                 isActive
-                                                    ? "bg-blue-700 text-white shadow-sm"
-                                                    : "text-gray-600 hover:bg-gray-50 hover:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-400",
+                                                    ? "bg-brand-600 text-white shadow-sm"
+                                                    : "text-gray-600 hover:bg-brand-50 hover:text-brand-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gold-400",
                                                 "group flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200"
                                             )}
                                         >
                                             <item.icon
                                                 className={classNames(
-                                                    isActive ? "text-white" : "text-gray-400 group-hover:text-blue-700 dark:text-gray-500 dark:group-hover:text-blue-400",
+                                                    isActive ? "text-white" : "text-gray-400 group-hover:text-brand-700 dark:text-gray-500 dark:group-hover:text-gold-400",
                                                     "h-5 w-5 flex-shrink-0"
                                                 )}
                                             />

@@ -28,4 +28,3 @@ const AuthCard = ({ children }) => {
 };
 
 export default AuthCard;
-// bg-gradient-to-b from-sky-300 to-blue-600

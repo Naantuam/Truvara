@@ -53,9 +53,9 @@ export default function ExpensesPage() {
   };
 
   const cards = [
-    { label: "Total Expenses", sub: "All time", value: summary?.total, icon: DollarSign, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950" },
+    { label: "Total Expenses", sub: "All time", value: summary?.total, icon: DollarSign, color: "text-gold-600 dark:text-gold-400", bg: "bg-gold-50 dark:bg-gold-950" },
     { label: "This Month", sub: summary?.this_month_label, value: summary?.this_month, icon: TrendingUp, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950" },
-    { label: "From Actions", sub: `${summary?.from_actions_count ?? 0} items`, value: summary?.from_actions, icon: Package, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950" },
+    { label: "From Actions", sub: `${summary?.from_actions_count ?? 0} items`, value: summary?.from_actions, icon: Package, color: "text-brand-600 dark:text-brand-400", bg: "bg-brand-50 dark:bg-brand-950" },
     { label: "Manual", sub: `${summary?.manual_count ?? 0} items`, value: summary?.manual, icon: TrendingDown, color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950" },
   ];
 
@@ -75,7 +75,7 @@ export default function ExpensesPage() {
           </button>
           <button
             onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 bg-gold-500 text-gray-900 text-sm font-medium rounded-lg px-4 py-2 hover:bg-gold-600 transition-colors"
           >
             <Plus className="w-4 h-4" /> Add Expense
           </button>
@@ -84,7 +84,7 @@ export default function ExpensesPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((card) => (
-          <div key={card.label} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div key={card.label} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${card.bg} mb-3`}>
               <card.icon className={`w-5 h-5 ${card.color}`} />
             </div>
@@ -97,7 +97,7 @@ export default function ExpensesPage() {
         ))}
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">All Expenses</h2>
@@ -111,7 +111,7 @@ export default function ExpensesPage() {
                   onClick={() => setTab(t)}
                   className={`px-3 py-1.5 text-sm font-medium ${
                     tab === t
-                      ? "bg-blue-600 text-white"
+                      ? "bg-gold-500 text-gray-900"
                       : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                   }`}
                 >
@@ -122,7 +122,7 @@ export default function ExpensesPage() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500"
             >
               {categories.map((c) => (
                 <option key={c}>{c}</option>
@@ -155,7 +155,7 @@ export default function ExpensesPage() {
                   <td className="py-3 pr-4">
                     <p className="text-gray-900 dark:text-gray-100">{e.description}</p>
                     {e.linked_action && (
-                      <Link to="/actions" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                      <Link to="/actions" className="text-xs text-gold-600 dark:text-gold-400 hover:underline">
                         Action: {e.linked_action}
                       </Link>
                     )}
@@ -166,7 +166,7 @@ export default function ExpensesPage() {
                     </span>
                   </td>
                   <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
-                    {e.source === "Action" ? <span className="text-blue-600 dark:text-blue-400">Action</span> : "Manual"}
+                    {e.source === "Action" ? <span className="text-gold-600 dark:text-gold-400">Action</span> : "Manual"}
                   </td>
                   <td className="py-3 pr-4 text-gray-900 dark:text-gray-100 font-medium">${Number(e.amount || 0).toLocaleString()}</td>
                   <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{e.added_by}</td>

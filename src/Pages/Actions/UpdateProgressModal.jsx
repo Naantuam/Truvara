@@ -27,7 +27,7 @@ export default function UpdateProgressModal({ action, onClose, onUpdated }) {
     <Dialog open={Boolean(action)} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-md bg-white dark:bg-gray-900 rounded-xl p-6">
+        <DialogPanel className="w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6">
           {action && (
             <>
               <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">{action.title}</DialogTitle>
@@ -39,7 +39,7 @@ export default function UpdateProgressModal({ action, onClose, onUpdated }) {
                   <select
                     value={stage}
                     onChange={(e) => setStage(e.target.value)}
-                    className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   >
                     {STAGES.map((s) => (
                       <option key={s}>{s}</option>
@@ -55,7 +55,7 @@ export default function UpdateProgressModal({ action, onClose, onUpdated }) {
                     step="0.01"
                     value={actualCost}
                     onChange={(e) => setActualCost(e.target.value)}
-                    className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
 
@@ -65,7 +65,7 @@ export default function UpdateProgressModal({ action, onClose, onUpdated }) {
                     rows={2}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
 
@@ -82,7 +82,7 @@ export default function UpdateProgressModal({ action, onClose, onUpdated }) {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 bg-blue-600 text-white text-sm font-medium rounded-lg py-2 hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="flex-1 bg-brand-600 text-white text-sm font-medium rounded-lg py-2 hover:bg-brand-700 transition-colors disabled:opacity-50"
                   >
                     {submitting ? "Saving..." : "Save Progress"}
                   </button>

@@ -33,7 +33,7 @@ export default function ResponsibilitiesPage() {
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 bg-brand-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-brand-700 transition-colors"
         >
           <Plus className="w-4 h-4" /> Add Responsibility
         </button>
@@ -47,7 +47,7 @@ export default function ResponsibilitiesPage() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {responsibilities.map((r, index) => (
-              <div key={r.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 flex flex-col">
+              <div key={r.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5 flex flex-col">
                 <div className="flex items-center gap-3">
                   <DepartmentAvatar name={r.owner} index={index} />
                   <div className="min-w-0">
@@ -70,13 +70,13 @@ export default function ResponsibilitiesPage() {
                 <div className="flex gap-4 mt-3">
                   <button
                     onClick={() => setDetailsIndex(index)}
-                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                    className="text-sm font-medium text-brand-600 dark:text-gold-400 hover:text-brand-700 dark:hover:text-gold-300"
                   >
                     View Details
                   </button>
                   <Link
                     to={`/actions?department=${encodeURIComponent(r.name)}`}
-                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                    className="text-sm font-medium text-brand-600 dark:text-gold-400 hover:text-brand-700 dark:hover:text-gold-300"
                   >
                     View Actions
                   </Link>
@@ -85,7 +85,7 @@ export default function ResponsibilitiesPage() {
             ))}
           </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Responsibility Matrix</h2>
             <table className="w-full text-sm">
               <thead>

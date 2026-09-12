@@ -41,7 +41,7 @@ export default function AddExpenseModal({ open, onClose, onCreated, initial = {}
     <Dialog open={open} onClose={handleClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-md bg-white dark:bg-gray-900 rounded-xl p-6">
+        <DialogPanel className="w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6">
           <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">Add Expense</DialogTitle>
 
           <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
@@ -52,7 +52,7 @@ export default function AddExpenseModal({ open, onClose, onCreated, initial = {}
                 required
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500"
               />
             </div>
 
@@ -66,7 +66,7 @@ export default function AddExpenseModal({ open, onClose, onCreated, initial = {}
                   step="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500"
                 />
               </div>
               <div>
@@ -76,7 +76,7 @@ export default function AddExpenseModal({ open, onClose, onCreated, initial = {}
                   required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500"
                 />
               </div>
             </div>
@@ -89,7 +89,7 @@ export default function AddExpenseModal({ open, onClose, onCreated, initial = {}
                 placeholder="e.g. Software, Technology, Travel"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500"
               />
             </div>
 
@@ -106,7 +106,7 @@ export default function AddExpenseModal({ open, onClose, onCreated, initial = {}
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 bg-blue-600 text-white text-sm font-medium rounded-lg py-2 hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="flex-1 bg-gold-500 text-gray-900 text-sm font-medium rounded-lg py-2 hover:bg-gold-600 transition-colors disabled:opacity-50"
               >
                 {submitting ? "Saving..." : "Save Expense"}
               </button>

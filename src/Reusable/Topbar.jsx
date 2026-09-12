@@ -85,7 +85,7 @@ export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { },
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setAnnouncementsOpen(!announcementsOpen)}
-              className="relative text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors p-1.5 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="relative text-gray-500 hover:text-brand-600 dark:text-gray-400 dark:hover:text-gold-400 transition-colors p-1.5 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800"
             >
               <EnvelopeIcon className="h-6 w-6" />
             </button>
@@ -101,7 +101,7 @@ export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { },
                 {isAdmin && (
                   <div className="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
                     <textarea
-                      className="flex-1 border border-gray-200 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-400 resize-none"
+                      className="flex-1 border border-gray-200 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-400 resize-none"
                       rows={2}
                       placeholder="Type a new announcement..."
                       value={newMessage}
@@ -109,7 +109,7 @@ export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { },
                     ></textarea>
                     <button
                       onClick={handleSendAnnouncement}
-                      className="bg-blue-600 text-white rounded-lg px-3 py-2 hover:bg-blue-700 transition flex items-center justify-center self-end"
+                      className="bg-brand-600 text-white rounded-lg px-3 py-2 hover:bg-brand-700 transition flex items-center justify-center self-end"
                       title="Send"
                     >
                       <Send className="w-4 h-4" />
@@ -120,7 +120,7 @@ export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { },
                 {/* Messages List */}
                 <div className="flex-1 overflow-y-auto p-2 bg-white dark:bg-gray-800 min-h-[150px] max-h-[300px]">
                   {loadingMsg ? (
-                    <div className="flex justify-center items-center h-full text-blue-600">
+                    <div className="flex justify-center items-center h-full text-brand-600">
                       <Loader2 className="w-6 h-6 animate-spin" />
                     </div>
                   ) : announcements.length === 0 ? (
@@ -128,9 +128,9 @@ export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { },
                   ) : (
                     <div className="space-y-2">
                       {announcements.map(ann => (
-                        <div key={ann.id} className="bg-blue-50 dark:bg-blue-950 border border-blue-100 dark:border-blue-900 p-3 rounded-lg">
+                        <div key={ann.id} className="bg-gold-50 dark:bg-gold-950 border border-gold-100 dark:border-gold-900 p-3 rounded-lg">
                           <div className="flex justify-between items-start mb-1">
-                            <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900 px-2 py-0.5 rounded-full">{ann.created_by_name}</span>
+                            <span className="text-[10px] font-bold text-gold-600 dark:text-gold-300 bg-gold-100 dark:bg-gold-900 px-2 py-0.5 rounded-full">{ann.created_by_name}</span>
                             <span className="text-[10px] text-gray-500 dark:text-gray-400">{new Date(ann.created_at).toLocaleDateString()}</span>
                           </div>
                           <p className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap">{ann.message}</p>
@@ -142,7 +142,7 @@ export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { },
 
                 {announcements.length > 0 && (
                   <div className="border-t border-gray-100 dark:border-gray-700 p-2 text-center bg-gray-50 dark:bg-gray-900">
-                    <button className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline">View All</button>
+                    <button className="text-xs text-brand-600 dark:text-gold-400 font-bold hover:underline">View All</button>
                   </div>
                 )}
               </div>
@@ -161,14 +161,14 @@ export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { },
               {loadingAuth ? (
                 <div className="h-3 w-16 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
               ) : (
-                <span className="text-[10px] uppercase tracking-wider font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-full mt-1">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-gold-600 dark:text-gold-400 bg-gold-50 dark:bg-gold-950 px-2 py-0.5 rounded-full mt-1">
                   {roleLabel}
                 </span>
               )}
             </div>
 
             <div className="relative group cursor-pointer">
-              <div className="text-gray-400 bg-gray-50 dark:bg-gray-800 dark:text-gray-500 rounded-full p-1 border border-gray-100 dark:border-gray-700 group-hover:border-blue-200 group-hover:text-blue-500 transition-all">
+              <div className="text-gray-400 bg-gray-50 dark:bg-gray-800 dark:text-gray-500 rounded-full p-1 border border-gray-100 dark:border-gray-700 group-hover:border-brand-300 group-hover:text-brand-500 transition-all">
                 {user?.picture ? (
                   <img src={user.picture} alt="Profile" className="h-9 w-9 rounded-full object-cover" />
                 ) : (

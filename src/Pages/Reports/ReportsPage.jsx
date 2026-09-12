@@ -65,7 +65,7 @@ export default function ReportsPage() {
           <select
             value={range}
             onChange={(e) => setRange(e.target.value)}
-            className="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="3m">Last 3 Months</option>
             <option value="6m">Last 6 Months</option>
@@ -74,7 +74,7 @@ export default function ReportsPage() {
           <button
             onClick={handleExport}
             disabled={downloading}
-            className="flex items-center gap-2 bg-blue-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 bg-brand-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-brand-700 transition-colors disabled:opacity-50"
           >
             <Download className="w-4 h-4" /> {downloading ? "Exporting..." : "Export Report"}
           </button>
@@ -86,7 +86,7 @@ export default function ReportsPage() {
       ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
               <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Expenses by Month</h2>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -95,13 +95,13 @@ export default function ReportsPage() {
                     <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
                     <Tooltip />
-                    <Bar dataKey="amount" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="amount" fill="#c39c55" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
               <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Decisions by Status</h2>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -124,7 +124,7 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
               <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Actions Completed</h2>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -139,7 +139,7 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
               <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Approval Trends</h2>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -163,7 +163,7 @@ export default function ReportsPage() {
               const delta = entry?.delta ?? 0;
               const isGood = stat.goodDirection === "up" ? delta >= 0 : delta <= 0;
               return (
-                <div key={stat.key} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+                <div key={stat.key} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
                   <p className="text-sm text-gray-500 dark:text-gray-400">{stat.label}</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                     {entry?.value ?? "—"}{stat.suffix}

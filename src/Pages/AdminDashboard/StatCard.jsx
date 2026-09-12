@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export default function StatCard({ icon: Icon, iconColor, iconBg, value, label, href }) {
   const content = (
-    <div className="flex flex-col gap-4 w-full h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+    <div className="flex flex-col gap-4 w-full h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4">
       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${iconBg}`}>
         <Icon className={`w-5 h-5 ${iconColor}`} />
       </div>
