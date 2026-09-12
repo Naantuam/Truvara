@@ -38,12 +38,12 @@ export default function Unauthorized() {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
-            <div className="bg-red-50 p-4 rounded-full mb-6">
-                <ShieldExclamationIcon className="w-16 h-16 text-red-500" />
+            <div className="bg-red-50 dark:bg-red-950 p-4 rounded-full mb-6">
+                <ShieldExclamationIcon className="w-16 h-16 text-red-500 dark:text-red-400" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Access Denied</h1>
-            <p className="text-gray-600 max-w-md mb-8">
-                You do not have the required permissions to view this page or perform this action. 
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Access Denied</h1>
+            <p className="text-gray-600 dark:text-gray-400 max-w-md mb-8">
+                You do not have the required permissions to view this page or perform this action.
                 If you believe this is a mistake, please contact your administrator.
             </p>
             <button
@@ -54,7 +54,7 @@ export default function Unauthorized() {
             </button>
             <button
                 onClick={handleHomeClick}
-                className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                className="px-6 py-2 bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
             >
                 Home
             </button>

@@ -22,19 +22,19 @@ export default function PendingApprovals() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h2 className="text-lg font-bold text-gray-900 mb-4">Pending Approvals</h2>
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Pending Approvals</h2>
 
       {loading ? (
-        <p className="text-sm text-gray-400 py-6 text-center">Loading approvals...</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading approvals...</p>
       ) : decisions.length === 0 ? (
-        <p className="text-sm text-gray-400 py-6 text-center">No pending approvals.</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No pending approvals.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {decisions.map((item) => (
-            <div key={item.id} className="border border-gray-100 rounded-lg p-4">
-              <p className="font-medium text-gray-900">{item.title}</p>
-              <p className="text-xs text-gray-500 mt-0.5">
+            <div key={item.id} className="border border-gray-100 dark:border-gray-800 rounded-lg p-4">
+              <p className="font-medium text-gray-900 dark:text-gray-100">{item.title}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 By {item.owner} · {item.date}
               </p>
               <div className="flex gap-2 mt-3">
@@ -46,7 +46,7 @@ export default function PendingApprovals() {
                 </button>
                 <button
                   onClick={() => resolve(item.id, "reject")}
-                  className="flex-1 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 transition-colors"
+                  className="flex-1 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   Reject
                 </button>

@@ -33,11 +33,11 @@ export default function DecisionsPage() {
   };
 
   return (
-    <div className="w-full h-full overflow-auto bg-gray-50 p-6 flex flex-col gap-6">
+    <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Decisions</h1>
-          <p className="text-sm text-gray-500">Track and manage company decisions</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Decisions</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Track and manage company decisions</p>
         </div>
         <button
           onClick={() => setModalOpen(true)}
@@ -54,19 +54,19 @@ export default function DecisionsPage() {
           placeholder="Search decisions..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
         {loading ? (
-          <p className="text-sm text-gray-400 py-6 text-center">Loading decisions...</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading decisions...</p>
         ) : filtered.length === 0 ? (
-          <p className="text-sm text-gray-400 py-6 text-center">No decisions found.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No decisions found.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs font-medium text-gray-400 uppercase border-b border-gray-100">
+              <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
                 <th className="pb-2 pr-4">Decision</th>
                 <th className="pb-2 pr-4">Submitted By</th>
                 <th className="pb-2 pr-4">Est. Cost</th>
@@ -80,19 +80,19 @@ export default function DecisionsPage() {
                 <tr
                   key={decision.id}
                   onClick={() => setDetailsFor(decision)}
-                  className="border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50"
+                  className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
                 >
                   <td className="py-3 pr-4">
-                    <p className="text-gray-900">{decision.title}</p>
-                    <p className="text-xs text-gray-400 truncate max-w-[280px]">{decision.description}</p>
+                    <p className="text-gray-900 dark:text-gray-100">{decision.title}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[280px]">{decision.description}</p>
                   </td>
-                  <td className="py-3 pr-4 text-gray-600">{decision.owner}</td>
-                  <td className="py-3 pr-4 text-gray-600">${Number(decision.estimated_cost || 0).toLocaleString()}</td>
-                  <td className="py-3 pr-4 text-gray-600">{decision.date}</td>
+                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.owner}</td>
+                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">${Number(decision.estimated_cost || 0).toLocaleString()}</td>
+                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.date}</td>
                   <td className="py-3">
                     <StatusBadge status={decision.status} />
                   </td>
-                  <td className="py-3 text-gray-300"><ChevronRight className="w-4 h-4" /></td>
+                  <td className="py-3 text-gray-300 dark:text-gray-600"><ChevronRight className="w-4 h-4" /></td>
                 </tr>
               ))}
             </tbody>

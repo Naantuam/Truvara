@@ -27,19 +27,19 @@ export default function UpdateProgressModal({ action, onClose, onUpdated }) {
     <Dialog open={Boolean(action)} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-md bg-white rounded-xl p-6">
+        <DialogPanel className="w-full max-w-md bg-white dark:bg-gray-900 rounded-xl p-6">
           {action && (
             <>
-              <DialogTitle className="text-lg font-bold text-gray-900">{action.title}</DialogTitle>
-              <p className="text-sm text-gray-500 mt-1">Est. Cost: ${Number(action.estimated_cost || 0).toLocaleString()}</p>
+              <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">{action.title}</DialogTitle>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Est. Cost: ${Number(action.estimated_cost || 0).toLocaleString()}</p>
 
               <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Stage</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Stage</label>
                   <select
                     value={stage}
                     onChange={(e) => setStage(e.target.value)}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {STAGES.map((s) => (
                       <option key={s}>{s}</option>
@@ -48,34 +48,34 @@ export default function UpdateProgressModal({ action, onClose, onUpdated }) {
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Actual Cost</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Actual Cost</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={actualCost}
                     onChange={(e) => setActualCost(e.target.value)}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Notes</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
                   <textarea
                     rows={2}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
-                {error && <p className="text-sm text-red-600">{error}</p>}
+                {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
                 <div className="flex gap-2 mt-2">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 transition-colors"
+                    className="flex-1 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Cancel
                   </button>

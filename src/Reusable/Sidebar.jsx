@@ -3,6 +3,8 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Squares2X2Icon } from '@heroicons/react/24/solid';
 import { FileText, CheckSquare, Users, ListChecks, DollarSign, BarChart3, Settings as SettingsIcon } from 'lucide-react';
 import BrandMark from './BrandMark';
+import SunMoonToggle from './SunMoonToggle';
+import useTheme from './useTheme';
 
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
@@ -46,6 +48,7 @@ const NAV_GROUPS = [
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appPermissions }) {
     const location = useLocation();
+    const { theme, toggleTheme } = useTheme();
 
     const userRoleId = typeof user?.role === 'object' ? user?.role?.id : user?.role;
     const userRole = roles?.find(r => r.id === userRoleId);
@@ -87,7 +90,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
     return (
         <div className="flex relative font-sans h-screen">
             <div
-                className={`fixed top-0 left-0 h-screen w-55 bg-white transform transition-transform duration-300 ease-in-out shadow-md z-50 flex flex-col ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+                className={`fixed top-0 left-0 h-screen w-55 bg-white dark:bg-gray-900 transform transition-transform duration-300 ease-in-out shadow-md z-50 flex flex-col ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
                     }`}
             >
                 {/* Container for content with internal padding */}
@@ -96,15 +99,16 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
                     {/* Close button - Visible on Mobile AND Desktop now */}
                     <button
                         onClick={() => setSidebarOpen(false)}
-                        className="absolute top-4 right-4 p-1 text-gray-500 hover:text-gray-800 transition-colors z-50"
+                        className="absolute top-4 right-4 p-1 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100 transition-colors z-50"
                         title="Close Sidebar"
                     >
                         <XMarkIcon className="h-6 w-6" />
                     </button>
 
                     {/* Header with brand mark */}
-                    <div className="flex flex-col items-center pt-2 pb-4">
-                        <BrandMark size="sm" />
+                    <div className="flex flex-col items-center gap-3 pt-6 pb-4">
+                        <SunMoonToggle theme={theme} onToggle={toggleTheme} />
+                        <BrandMark variant={theme} className="w-32 h-auto" />
                     </div>
 
                     {/* Navigation links */}
@@ -112,7 +116,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
                         {allowedGroups.map((group, index) => (
                             <div key={group.section || `root-${index}`} className="space-y-1">
                                 {group.section && (
-                                    <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                    <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                                         {group.section}
                                     </p>
                                 )}
@@ -125,13 +129,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appP
                                             className={classNames(
                                                 isActive
                                                     ? "bg-blue-700 text-white shadow-sm"
-                                                    : "text-gray-600 hover:bg-gray-50 hover:text-blue-700",
+                                                    : "text-gray-600 hover:bg-gray-50 hover:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-400",
                                                 "group flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200"
                                             )}
                                         >
                                             <item.icon
                                                 className={classNames(
-                                                    isActive ? "text-white" : "text-gray-400 group-hover:text-blue-700",
+                                                    isActive ? "text-white" : "text-gray-400 group-hover:text-blue-700 dark:text-gray-500 dark:group-hover:text-blue-400",
                                                     "h-5 w-5 flex-shrink-0"
                                                 )}
                                             />

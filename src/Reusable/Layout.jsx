@@ -85,7 +85,7 @@ export default function Layout() {
     }, []);
 
     return (
-        <div className="h-screen font-sans flex flex-col relative">
+        <div className="h-screen font-sans flex flex-col relative bg-gray-50 dark:bg-gray-950">
             {/* Fixed TopBar */}
             <TopBar 
                 sidebarOpen={sidebarOpen} 

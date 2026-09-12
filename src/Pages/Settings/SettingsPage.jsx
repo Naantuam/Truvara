@@ -32,8 +32,8 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="w-full h-full overflow-auto bg-gray-50 p-6">
-        <p className="text-sm text-gray-400 py-6 text-center">Loading settings...</p>
+      <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6">
+        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading settings...</p>
       </div>
     );
   }
@@ -46,36 +46,36 @@ export default function SettingsPage() {
   const team = settings?.team || {};
 
   return (
-    <div className="w-full h-full overflow-auto bg-gray-50 p-6 flex flex-col gap-6">
+    <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-500">Manage your account and application preferences</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Manage your account and application preferences</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
         <div className="flex items-center gap-2 mb-2">
-          <User className="w-5 h-5 text-gray-500" />
-          <h2 className="text-lg font-bold text-gray-900">Profile</h2>
+          <User className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Profile</h2>
         </div>
         <SettingsRow label="Full Name" value={profile.full_name} onSave={(v) => patchSection("profile", { full_name: v })} />
         <SettingsRow label="Email" value={profile.email} type="email" onSave={(v) => patchSection("profile", { email: v })} />
         <SettingsRow label="Role" value={profile.role} onSave={(v) => patchSection("profile", { role: v })} />
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
         <div className="flex items-center gap-2 mb-2">
-          <Building2 className="w-5 h-5 text-gray-500" />
-          <h2 className="text-lg font-bold text-gray-900">Company</h2>
+          <Building2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Company</h2>
         </div>
         <SettingsRow label="Company Name" value={company.name} onSave={(v) => patchSection("company", { name: v })} />
         <SettingsRow label="Industry" value={company.industry} onSave={(v) => patchSection("company", { industry: v })} />
         <SettingsRow label="Company Size" value={company.size} onSave={(v) => patchSection("company", { size: v })} />
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
         <div className="flex items-center gap-2 mb-2">
-          <Bell className="w-5 h-5 text-gray-500" />
-          <h2 className="text-lg font-bold text-gray-900">Notifications</h2>
+          <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Notifications</h2>
         </div>
         <SettingsToggle
           label="Email Notifications"
@@ -94,10 +94,10 @@ export default function SettingsPage() {
         />
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
         <div className="flex items-center gap-2 mb-2">
-          <Shield className="w-5 h-5 text-gray-500" />
-          <h2 className="text-lg font-bold text-gray-900">Security</h2>
+          <Shield className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Security</h2>
         </div>
         <SettingsToggle
           label="Two-Factor Authentication"
@@ -112,15 +112,15 @@ export default function SettingsPage() {
         <SettingsRow label="Password Last Changed" value={security.password_last_changed} linkTo="/security" />
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
         <div className="flex items-center gap-2 mb-2">
-          <CreditCard className="w-5 h-5 text-gray-500" />
-          <h2 className="text-lg font-bold text-gray-900">Billing</h2>
+          <CreditCard className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Billing</h2>
         </div>
-        <div className="flex items-center justify-between py-3 border-b border-gray-100">
+        <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
           <div>
-            <p className="text-sm text-gray-900">Current Plan</p>
-            <p className="text-sm text-gray-500">{billing.plan_name} - ${billing.price}/month</p>
+            <p className="text-sm text-gray-900 dark:text-gray-100">Current Plan</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{billing.plan_name} - ${billing.price}/month</p>
           </div>
           <button
             onClick={() => alert("Plan upgrades aren't available yet.")}
@@ -129,16 +129,16 @@ export default function SettingsPage() {
             Upgrade Plan
           </button>
         </div>
-        <p className="text-sm text-gray-500 pt-3">Next billing date: {billing.next_billing_date}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 pt-3">Next billing date: {billing.next_billing_date}</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
         <div className="flex items-center gap-2 mb-2">
-          <Users className="w-5 h-5 text-gray-500" />
-          <h2 className="text-lg font-bold text-gray-900">Team Members</h2>
+          <Users className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Team Members</h2>
         </div>
         <div className="flex items-center justify-between py-3">
-          <p className="text-sm text-gray-500">{team.active_count ?? 0} active team members</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{team.active_count ?? 0} active team members</p>
           <button
             onClick={() => setInviteOpen(true)}
             className="bg-blue-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors"

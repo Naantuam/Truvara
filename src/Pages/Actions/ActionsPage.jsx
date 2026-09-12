@@ -40,16 +40,16 @@ export default function ActionsPage() {
   };
 
   return (
-    <div className="w-full h-full overflow-auto bg-gray-50 p-6 flex flex-col gap-6">
+    <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Actions</h1>
-        <p className="text-sm text-gray-500">Track approved decisions through to completion</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Actions</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Track approved decisions through to completion</p>
       </div>
 
       {department && (
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          Filtered by department: <span className="font-medium text-gray-900">{department}</span>
-          <button onClick={() => setSearchParams({})} className="text-gray-400 hover:text-gray-600">
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          Filtered by department: <span className="font-medium text-gray-900 dark:text-gray-100">{department}</span>
+          <button onClick={() => setSearchParams({})} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -61,7 +61,9 @@ export default function ActionsPage() {
             key={f}
             onClick={() => setFilter(f)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-              filter === f ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+              filter === f
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
             }`}
           >
             {f}
@@ -70,17 +72,17 @@ export default function ActionsPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-gray-400 py-6 text-center">Loading actions...</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading actions...</p>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-gray-400 py-6 text-center">No actions found.</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No actions found.</p>
       ) : (
         <>
           {inProgress.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">In Progress ({inProgress.length})</h2>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">In Progress ({inProgress.length})</h2>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs font-medium text-gray-400 uppercase border-b border-gray-100">
+                  <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
                     <th className="pb-2 pr-4">Action</th>
                     <th className="pb-2 pr-4">Progress</th>
                     <th className="pb-2 pr-4">Est. Cost</th>
@@ -94,16 +96,16 @@ export default function ActionsPage() {
                     <tr
                       key={a.id}
                       onClick={() => setActiveAction(a)}
-                      className="border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50"
+                      className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
                     >
                       <td className="py-3 pr-4">
-                        <p className="text-gray-900">{a.title}</p>
-                        <p className="text-xs text-gray-400">By {a.owner} · {a.ordered_date}</p>
+                        <p className="text-gray-900 dark:text-gray-100">{a.title}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">By {a.owner} · {a.ordered_date}</p>
                       </td>
                       <td className="py-3 pr-4"><ProgressDots stage={a.stage} /></td>
-                      <td className="py-3 pr-4 text-gray-900">${Number(a.estimated_cost || 0).toLocaleString()}</td>
-                      <td className="py-3 pr-4 text-gray-600">{a.ordered_date}</td>
-                      <td className="py-3 pr-4 text-gray-600">{a.expected_date}</td>
+                      <td className="py-3 pr-4 text-gray-900 dark:text-gray-100">${Number(a.estimated_cost || 0).toLocaleString()}</td>
+                      <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{a.ordered_date}</td>
+                      <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{a.expected_date}</td>
                       <td className="py-3"><StatusBadge status={a.stage} /></td>
                     </tr>
                   ))}
@@ -113,11 +115,11 @@ export default function ActionsPage() {
           )}
 
           {completed.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Completed ({completed.length})</h2>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Completed ({completed.length})</h2>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs font-medium text-gray-400 uppercase border-b border-gray-100">
+                  <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
                     <th className="pb-2 pr-4">Action</th>
                     <th className="pb-2 pr-4">Est. Cost</th>
                     <th className="pb-2 pr-4">Actual Cost</th>
@@ -132,18 +134,18 @@ export default function ActionsPage() {
                       <tr
                         key={a.id}
                         onClick={() => setActiveAction(a)}
-                        className="border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50"
+                        className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
                       >
                         <td className="py-3 pr-4">
-                          <p className="text-gray-900">{a.title}</p>
-                          <p className="text-xs text-gray-400">{a.ordered_date}</p>
+                          <p className="text-gray-900 dark:text-gray-100">{a.title}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">{a.ordered_date}</p>
                         </td>
-                        <td className="py-3 pr-4 text-gray-600">${Number(a.estimated_cost || 0).toLocaleString()}</td>
-                        <td className="py-3 pr-4 text-gray-600">${Number(a.actual_cost || 0).toLocaleString()}</td>
-                        <td className={`py-3 pr-4 font-medium ${variance <= 0 ? "text-green-600" : "text-red-600"}`}>
+                        <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">${Number(a.estimated_cost || 0).toLocaleString()}</td>
+                        <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">${Number(a.actual_cost || 0).toLocaleString()}</td>
+                        <td className={`py-3 pr-4 font-medium ${variance <= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
                           {variance >= 0 ? "+" : ""}${variance.toLocaleString()}
                         </td>
-                        <td className="py-3 text-gray-600">{a.approved_by}</td>
+                        <td className="py-3 text-gray-600 dark:text-gray-400">{a.approved_by}</td>
                       </tr>
                     );
                   })}

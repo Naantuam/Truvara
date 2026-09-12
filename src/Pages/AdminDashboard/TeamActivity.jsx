@@ -24,24 +24,24 @@ export default function TeamActivity() {
   }, []);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h2 className="text-lg font-bold text-gray-900 mb-4">Team Activity</h2>
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Team Activity</h2>
 
       {loading ? (
-        <p className="text-sm text-gray-400 py-6 text-center">Loading activity...</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading activity...</p>
       ) : activity.length === 0 ? (
-        <p className="text-sm text-gray-400 py-6 text-center">No recent activity.</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No recent activity.</p>
       ) : (
         <ul className="flex flex-col gap-4">
           {activity.map((item) => (
             <li key={item.id} className="flex gap-3">
               <span className="w-2 h-2 mt-1.5 rounded-full bg-blue-600 flex-shrink-0" />
               <div>
-                <p className="text-sm text-gray-800">
+                <p className="text-sm text-gray-800 dark:text-gray-200">
                   <span className="font-semibold">{item.actor}</span> {item.action}
                   {item.target ? ` "${item.target}"` : ""}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">{getRelativeTime(item.created_at)}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{getRelativeTime(item.created_at)}</p>
               </div>
             </li>
           ))}

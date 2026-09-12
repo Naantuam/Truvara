@@ -5,6 +5,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import api from "../../api";
+import useTheme from "../../Reusable/useTheme";
 
 const STATUS_COLORS = {
   Approved: "#10b981",
@@ -20,6 +21,9 @@ const STATS = [
 ];
 
 export default function ReportsPage() {
+  const { theme } = useTheme();
+  const gridStroke = theme === "dark" ? "#374151" : "#f0f0f0";
+  const tickFill = theme === "dark" ? "#9ca3af" : "#9ca3af";
   const [range, setRange] = useState("6m");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,17 +55,17 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="w-full h-full overflow-auto bg-gray-50 p-6 flex flex-col gap-6">
+    <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-          <p className="text-sm text-gray-500">Analytics and insights for your business</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Analytics and insights for your business</p>
         </div>
         <div className="flex items-center gap-3">
           <select
             value={range}
             onChange={(e) => setRange(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="3m">Last 3 Months</option>
             <option value="6m">Last 6 Months</option>
@@ -78,18 +82,18 @@ export default function ReportsPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-gray-400 py-6 text-center">Loading report data...</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading report data...</p>
       ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Expenses by Month</h2>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Expenses by Month</h2>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data?.expenses_by_month || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
                     <Tooltip />
                     <Bar dataKey="amount" fill="#2563eb" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -97,8 +101,8 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Decisions by Status</h2>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Decisions by Status</h2>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -120,14 +124,14 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Actions Completed</h2>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Actions Completed</h2>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data?.actions_completed || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
                     <Tooltip />
                     <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
                   </LineChart>
@@ -135,14 +139,14 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Approval Trends</h2>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Approval Trends</h2>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data?.approval_trends || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
                     <Tooltip />
                     <Legend />
                     <Bar dataKey="approved" fill="#10b981" radius={[4, 4, 0, 0]} />
@@ -159,12 +163,12 @@ export default function ReportsPage() {
               const delta = entry?.delta ?? 0;
               const isGood = stat.goodDirection === "up" ? delta >= 0 : delta <= 0;
               return (
-                <div key={stat.key} className="bg-white rounded-xl border border-gray-200 p-5">
-                  <p className="text-sm text-gray-500">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-2">
+                <div key={stat.key} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{stat.label}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                     {entry?.value ?? "—"}{stat.suffix}
                   </p>
-                  <p className={`text-xs font-medium mt-1 ${isGood ? "text-green-600" : "text-red-600"}`}>
+                  <p className={`text-xs font-medium mt-1 ${isGood ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
                     {delta >= 0 ? "+" : ""}{delta}{stat.suffix} from last period
                   </p>
                 </div>
