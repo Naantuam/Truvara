@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BMS System — Client Questionnaire</title>
+<style>
+  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #1a1a1a; margin: 2cm; }
+  h1 { font-size: 20pt; color: #1e3a8a; margin-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1e3a8a; margin-top: 22pt; margin-bottom: 6pt; border-bottom: 1px solid #cbd5e1; padding-bottom: 3pt; }
+  h3 { font-size: 11.5pt; margin-top: 14pt; margin-bottom: 4pt; }
+  p { margin: 6pt 0; }
+  ul { margin: 4pt 0 10pt 0; padding-left: 20pt; }
+  li { margin: 3pt 0; }
+  .intro { color: #444444; font-style: italic; }
+  .recommendation { background: #eff6ff; border-left: 3px solid #2563eb; padding: 8pt 12pt; margin: 8pt 0; }
+  .question { font-weight: bold; margin-top: 8pt; }
+  hr { border: none; border-top: 1px solid #cbd5e1; margin: 20pt 0; }
+  .pending { color: #6b7280; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>BMS System — Client Questionnaire</h1>
+<p class="intro">Questions for the client, grouped by topic. Usability and product concerns first; security, RBAC, ABAC, and data-integrity questions to be appended after that discussion.</p>
+
+<h2>1. Scope &amp; Complexity</h2>
+<p>Before anything else, we want to make sure the actual size of this request is visible. What's described across the PRDs and the Figma prototype isn't a single app &mdash; it's a small platform, made up of the following pieces.</p>
+
+<h3>Three distinct product surfaces, not one</h3>
+<ul>
+  <li>An <strong>Admin/Owner experience</strong> &mdash; full visibility across every module (the only one designed so far)</li>
+  <li>A <strong>Manager experience</strong> &mdash; approvals and department-scoped visibility, distinct from Admin</li>
+  <li>An <strong>Employee experience</strong> &mdash; self-service only: own decisions, own actions, own expenses</li>
+  <li>A <strong>customer sign-up/onboarding experience</strong> &mdash; creating a company, choosing a plan, inviting a first team (doesn't exist yet, in any form)</li>
+</ul>
+
+<h3>Seven core business modules, each with its own data model, workflows, and screens</h3>
+<ul>
+  <li>Decisions &mdash; logging, search, approval routing</li>
+  <li>Approvals &mdash; review queue, approve/reject with reasons, history</li>
+  <li>Responsibilities &mdash; department directory, ownership mapping</li>
+  <li>Actions &mdash; a 5-stage procurement pipeline, progress tracking, cost variance</li>
+  <li>Expenses &mdash; manual and action-generated entries, categorization, receipts</li>
+  <li>Reports &mdash; cross-module analytics and charts</li>
+  <li>Settings &mdash; account, company, notifications, security, billing, team management</li>
+</ul>
+
+<h3>Platform-level systems, invisible in a demo but required for a real product</h3>
+<ul>
+  <li>Multi-tenant architecture &mdash; every company's data fully isolated from every other's</li>
+  <li>Authentication &mdash; login, MFA, password reset, account activation, session management</li>
+  <li>Authorization &mdash; role-based (and possibly attribute-based) permissions enforced consistently across every module above</li>
+  <li>Notifications &mdash; without this, the approval workflow doesn't actually function day to day</li>
+  <li>Audit logging &mdash; an immutable trail across every action in the system</li>
+  <li>File storage &mdash; for expense receipts, with retention and access-control rules</li>
+  <li>Billing &mdash; plan management, usage limits, upgrade/downgrade flows</li>
+  <li>A backend API &mdash; none of the above exists yet; the current build is frontend-only</li>
+</ul>
+
+<h3>Non-functional requirements, rarely visible, always required</h3>
+<ul>
+  <li>Security posture: encryption at rest/in transit, PII handling, tenant data isolation</li>
+  <li>Compliance: audit retention rules, possibly SOC2/GDPR depending on target customers</li>
+  <li>Performance: pagination and sorting once real usage data accumulates</li>
+  <li>Accessibility: keyboard navigation, screen reader support</li>
+</ul>
+
+<p>We're not raising this to negotiate budget or timeline yet &mdash; only so everyone is looking at the same picture before those conversations happen.</p>
+
+<h2>2. Specification Conflicts</h2>
+<p>The two PRD documents provided describe different data models for what's meant to be the same product &mdash; different schemas for decisions, different approaches to responsibilities, different levels of detail on actions and expenses. The Figma prototype ended up blending both (some pages match one document, some match the other), which means neither PRD was ever fully implemented end-to-end, and neither is fully "the plan" on its own.</p>
+<p class="question">Question: Which document should we treat as authoritative going forward &mdash; or do these need to be reconciled into a single spec before more work proceeds?</p>
+
+<h2>3. Product Identity &amp; Design</h2>
+<p>Beyond individual screens, the product currently has no logo, no brand color rationale, and no visual identity distinct from generic SMB dashboard software. We had to build a placeholder text mark just to replace a missing image file referenced in the original project &mdash; there was never an actual logo asset anywhere in the project materials.</p>
+<p class="question">Question: Do you have existing brand guidelines, a logo, or a design system we should be working from? Or should product identity/branding be treated as its own design phase before more screens get built?</p>
+
+<h2>4. User Roles &amp; Experiences</h2>
+<p>Everything designed and verified so far &mdash; across every module &mdash; represents a single Administrator's view. The PRD implies at least three roles (Employee, Manager, Admin) and explicitly restricts some actions (like Approvals) to Manager/Admin only. But there is no design anywhere &mdash; not in the PRDs, not in Figma &mdash; for what an Employee or a Manager actually sees. This isn't a small gap: it likely means most screens in this system need a second (or third) version.</p>
+<p class="question">Question: Can you provide or commission designs for the Employee and Manager experiences, or should we propose scoped-down versions of each screen for your review?</p>
+
+<h2>5. Customer Onboarding / SMB Signup</h2>
+<p>If this product is meant to be sold to other small businesses (which the Billing, Upgrade Plan, and Team-invite UI all imply), there needs to be a way for a brand-new company to sign up, create their account, choose a plan, and invite their first users. That flow does not exist anywhere &mdash; not in either PRD, not in Figma. Right now, "Login" is the only entry point into the system.</p>
+<p class="question">Question: Is self-service signup actually part of the plan, or will new companies be onboarded manually by your team instead? This significantly changes how much needs to be built.</p>
+
+<h2>6. Platform</h2>
+<div class="recommendation">
+<strong>Our recommendation:</strong> build BMS as a responsive web application only for the initial release &mdash; no native iOS/Android app, no desktop (Electron-style) app. The two workflows that most benefit from "native" &mdash; approving a request on the go, photographing a receipt &mdash; are both fully achievable on mobile web without the cost of a separate native build.
+</div>
+<p class="question">Question: Does this match your expectations, or is there a specific reason (app-store presence, offline access, push notifications) that requires a native app?</p>
+
+<h2>7. Data Lineage / Traceability</h2>
+<p>The data model already implies a real causal chain: a Decision gets approved &rarr; generates an Action &rarr; the Action completes &rarr; auto-generates an Expense. If enforced and made visible end-to-end, that chain <em>is</em> the product's story &mdash; a full paper trail for every dollar spent, back to who decided it and why. Right now, nothing in the design surfaces that chain beyond a single link from an expense back to its originating action.</p>
+<p class="question">Question: Do you expect a dedicated view where someone can trace this full chain end-to-end (e.g. "show me everything connected to this decision &mdash; who approved it, what action it created, what it ultimately cost, and when") &mdash; or is a simple one-way link sufficient?</p>
+
+<h2>8. Data Storage &amp; Retention</h2>
+<ul>
+  <li>Should the system be hosted centrally by you (single shared infrastructure across all customer companies), or self-hosted separately per customer?</li>
+  <li>What's the expected backup / disaster-recovery policy?</li>
+  <li>Audit logs are meant to be "immutable" &mdash; for how long should they be retained? Do they ever get archived or purged?</li>
+  <li>Where should uploaded receipt files be stored (a specific cloud provider, on-prem, no preference)?</li>
+</ul>
+
+<h2>9. Missing Operational Features</h2>
+<p>A few features are implied by the data model or the UI but have no defined behavior:</p>
+<ul>
+  <li><strong>Notifications</strong> &mdash; nothing tells an approver a request is waiting on them. Without this, the approval workflow may not get used in practice.</li>
+  <li><strong>Budget overrun handling</strong> &mdash; Actions show cost variance in red when over budget, but nothing acts on that signal (no alert, no escalation). What should happen when a project goes over budget?</li>
+  <li><strong>Recurring expenses</strong> &mdash; the current design treats every expense (including things like monthly rent) as a one-off manual entry. Should recurring expenses be supported, or is manual re-entry acceptable?</li>
+  <li><strong>Approval delegation</strong> &mdash; nothing addresses what happens when the person who needs to approve something is unavailable.</li>
+  <li><strong>Editing and deleting records</strong> &mdash; as currently specified, decisions, expenses, and responsibility records can be created but never corrected or removed. Is that intentional, or is an edit/delete capability expected?</li>
+</ul>
+
+<h2>10. Confirming What's Already Out of Scope</h2>
+<p>Some features appear to have been intentionally deferred rather than forgotten &mdash; for example, automatic receipt scanning (OCR), Slack/Teams notifications, and automated budget-threshold alerts.</p>
+<p class="question">Question: Can you confirm these are genuinely out of scope for the first release, and not something you're expecting to see?</p>
+
+<h2>11. Assumptions Made So Far, Pending Your Review</h2>
+<p>A significant portion of the detailed behavior in the current build &mdash; specific form fields, what's required to reject a decision, what happens when a list is empty, what an export button actually does &mdash; was decided by us while filling gaps that neither PRD nor the Figma prototype addressed. None of these specific decisions have been reviewed or approved by you yet.</p>
+<p class="question">Question: Before backend work locks these decisions in permanently, can we walk through them with you to confirm they match what you actually want?</p>
+
+<hr>
+
+<h2>12. Security, RBAC, ABAC, Data Integrity &amp; Confidentiality</h2>
+<p class="pending">(To be added.)</p>
+
+</body>
+</html>
