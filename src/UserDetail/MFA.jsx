@@ -81,10 +81,10 @@ const Mfa = () => {
         {/* Top Section */}
         <div className="flex flex-col items-center mt-4 md:mt-0">
           <Logo />
-          <h2 className="text-xl font-bold text-white text-center mt-6">
+          <h2 className="text-xl font-bold text-gray-900 text-center mt-6">
             2-Step Verification
           </h2>
-          <p className="text-sm text-gray-300 text-center mt-2 mb-2">
+          <p className="text-sm text-gray-500 text-center mt-2 mb-2">
             We sent a verification code to <strong>{email}</strong>.
           </p>
         </div>
@@ -101,7 +101,7 @@ const Mfa = () => {
             />
 
             {message && (
-              <p className="text-sm text-center text-yellow-400">
+              <p className="text-sm text-center text-gold-600">
                 {message}
               </p>
             )}
@@ -120,7 +120,7 @@ const Mfa = () => {
             <button
               onClick={handleResend}
               disabled={resending}
-              className="text-sm text-gray-400 hover:text-white transition-colors"
+              className="text-sm text-gray-500 hover:text-gold-600 transition-colors"
             >
               {resending ? "Sending..." : "Didn't receive a code? Resend"}
             </button>

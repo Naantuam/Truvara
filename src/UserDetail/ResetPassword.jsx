@@ -47,17 +47,17 @@ export default function ResetPassword() {
       <AuthCard>
         <div className="flex flex-col items-center justify-center mt-4 md:mt-0">
           <Logo />
-          <h1 className="text-white text-xl font-bold text-center mt-6 mb-2">
+          <h1 className="text-gray-900 text-xl font-bold text-center mt-6 mb-2">
             Reset Your Password
           </h1>
-          <p className="text-gray-300 text-sm text-center mb-6">
+          <p className="text-gray-500 text-sm text-center mb-6">
             Enter a new password for your account.
           </p>
         </div>
 
         <div className="flex-grow flex flex-col justify-center py-6">
           {message && (
-            <p className={`text-sm text-center mb-6 ${success ? 'text-green-400' : 'text-red-400'}`}>
+            <p className={`text-sm text-center mb-6 ${success ? 'text-green-600' : 'text-red-600'}`}>
               {message}
             </p>
           )}

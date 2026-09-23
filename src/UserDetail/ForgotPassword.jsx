@@ -35,10 +35,10 @@ const ForgotPassword = () => {
         {/* Top Section */}
         <div className="flex flex-col items-center mt-4 md:mt-0">
           <Logo />
-          <h2 className="text-xl font-bold text-white text-center mt-6">
+          <h2 className="text-xl font-bold text-gray-900 text-center mt-6">
             Forgot Password?
           </h2>
-          <p className="text-sm text-gray-300 text-center mt-2">
+          <p className="text-sm text-gray-500 text-center mt-2">
             Enter your email to reset your password
           </p>
         </div>
@@ -47,7 +47,7 @@ const ForgotPassword = () => {
         <div className="flex-grow flex flex-col justify-center py-8">
           {message ? (
             <div className="text-center">
-              <p className="text-gray-200 text-sm mb-6">{message}</p>
+              <p className="text-gray-600 text-sm mb-6">{message}</p>
               <AuthButton label="Back to Login" onClick={() => window.location.href = "/"} />
             </div>
           ) : (

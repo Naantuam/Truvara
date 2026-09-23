@@ -93,7 +93,7 @@ const Login = () => {
         <div className="flex flex-col items-center justify-center mt-4 md:mt-0">
           <Logo />
           {/* Mobile-only heading */}
-          <h1 className="md:hidden text-white text-xl font-bold text-center mt-6">
+          <h1 className="md:hidden text-gray-900 text-xl font-bold text-center mt-6">
             Sign in to Truvara
           </h1>
         </div>

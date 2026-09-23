@@ -68,15 +68,15 @@ export default function ActivateAccount() {
       <AuthCard>
         <div className="flex flex-col items-center justify-center mt-4 md:mt-0">
           <Logo />
-          <h1 className="text-white text-xl font-bold text-center mt-6 mb-2">
+          <h1 className="text-gray-900 text-xl font-bold text-center mt-6 mb-2">
             Activate Your Account
           </h1>
-          <p className="text-gray-300 text-sm text-center mb-6">{message}</p>
+          <p className="text-gray-500 text-sm text-center mb-6">{message}</p>
         </div>
 
         {loadingStatus && (
-          <div className="flex justify-center text-white pb-6">
-             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+          <div className="flex justify-center text-gray-400 pb-6">
+             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-600"></div>
           </div>
         )}
 

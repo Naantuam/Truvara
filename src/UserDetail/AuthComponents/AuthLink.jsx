@@ -5,7 +5,7 @@ const AuthLink = ({ to, children }) => {
   return (
     <Link
       to={to}
-      className="text-sm text-white hover:text-gold-400 hover:underline"
+      className="text-sm text-gray-600 hover:text-gold-600 hover:underline"
     >
       {children}
     </Link>
