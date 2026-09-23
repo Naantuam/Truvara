@@ -1,0 +1,38 @@
+{
+  "name": "truvara-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Truvara MVP backend - modular monolith (Governance, Operations, Finance, Dashboard) on one Role->Permission->Scope RBAC foundation",
+  "scripts": {
+    "predev": "node scripts/resolve-db-host.js",
+    "dev": "HOSTALIASES=$(pwd)/.hostaliases node --dns-result-order=ipv4first --watch src/server.js",
+    "prestart": "node scripts/resolve-db-host.js",
+    "start": "HOSTALIASES=$(pwd)/.hostaliases node --dns-result-order=ipv4first src/server.js",
+    "prisma:generate": "prisma generate",
+    "preprisma:migrate": "node scripts/resolve-db-host.js",
+    "prisma:migrate": "HOSTALIASES=$(pwd)/.hostaliases NODE_OPTIONS=--dns-result-order=ipv4first prisma migrate dev",
+    "preprisma:deploy": "node scripts/resolve-db-host.js",
+    "prisma:deploy": "HOSTALIASES=$(pwd)/.hostaliases NODE_OPTIONS=--dns-result-order=ipv4first prisma migrate deploy",
+    "preprisma:seed": "node scripts/resolve-db-host.js",
+    "prisma:seed": "HOSTALIASES=$(pwd)/.hostaliases node --dns-result-order=ipv4first prisma/seed.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.6.0",
+    "argon2": "^0.41.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "prisma": "^6.6.0",
+    "supertest": "^7.0.0",
+    "vitest": "^3.0.5"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  }
+}

@@ -1,0 +1,287 @@
+// Truvara MVP schema.
+// Relationship chain this schema protects (work-scope §7):
+//   Company -> User -> Department -> Decision -> Action/Task -> Transaction -> Document -> Audit Event
+// RBAC shape (agreed with Precious): Role -> Permission -> Scope, decoupled from job titles,
+// so new roles (Accountant, Finance Officer, Director, Investor, Admin...) are data, not code changes.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Tenancy ----------
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  departments  Department[]
+  users        User[]
+  memberships  CompanyMembership[]
+  decisions    Decision[]
+  tasks        Task[]
+  transactions Transaction[]
+  documents    Document[]
+  auditEvents  AuditEvent[]
+
+  @@map("companies")
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  companyId String   @map("company_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company     Company             @relation(fields: [companyId], references: [id])
+  decisions   Decision[]
+  memberships CompanyMembership[]
+
+  @@unique([companyId, name])
+  @@map("departments")
+}
+
+// ---------- Identity & RBAC (Role -> Permission -> Scope) ----------
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  fullName     String   @map("full_name")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Convenience pointer to a user's main company; authorization NEVER relies on this
+  // alone -- every tenant check goes through CompanyMembership + the verified JWT claim.
+  primaryCompanyId String?  @map("primary_company_id")
+  primaryCompany   Company? @relation(fields: [primaryCompanyId], references: [id])
+
+  memberships          CompanyMembership[]
+  decisionsCreated     Decision[]    @relation("DecisionCreator")
+  decisionsApproved    Decision[]    @relation("DecisionApprover")
+  tasksAssigned        Task[]        @relation("TaskAssignee")
+  transactionsRecorded Transaction[] @relation("TransactionRecorder")
+  documentsUploaded    Document[]    @relation("DocumentUploader")
+  auditEvents          AuditEvent[]
+
+  @@map("users")
+}
+
+// A named bundle of permissions (Owner/Founder, Manager, Team Member at MVP).
+// Adding a role later (Accountant, Director, Investor...) is inserting a row here
+// and wiring RolePermission rows -- not a code change.
+model Role {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  isSystem    Boolean @default(false) @map("is_system")
+
+  rolePermissions RolePermission[]
+  memberships     CompanyMembership[]
+
+  @@map("roles")
+}
+
+// Namespaced action strings, e.g. "governance:decision:approve", "finance:transaction:create".
+model Permission {
+  id          String  @id @default(uuid())
+  code        String  @unique
+  description String?
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @map("role_id")
+  permissionId String @map("permission_id")
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+enum ScopeType {
+  COMPANY
+  DEPARTMENT
+  ASSIGNED_ONLY
+}
+
+// The "Scope" in Role -> Permission -> Scope: how far a role's permissions reach
+// for THIS user in THIS company (whole company, one department, or only records
+// assigned to them).
+model CompanyMembership {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  companyId    String    @map("company_id")
+  roleId       String    @map("role_id")
+  scopeType    ScopeType @default(COMPANY) @map("scope_type")
+  departmentId String?   @map("department_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user       User        @relation(fields: [userId], references: [id])
+  company    Company     @relation(fields: [companyId], references: [id])
+  role       Role        @relation(fields: [roleId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+
+  @@unique([userId, companyId])
+  @@map("company_memberships")
+}
+
+// ---------- Governance ----------
+
+// Work-scope §5.2 minimum decision lifecycle, collapsed to 7 states
+// (Create Decision is the action that produces a Draft row, not a state of its own).
+enum DecisionStatus {
+  DRAFT
+  SUBMITTED
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  EXECUTING
+  COMPLETED
+}
+
+model Decision {
+  id              String         @id @default(uuid())
+  companyId       String         @map("company_id")
+  departmentId    String?        @map("department_id")
+  title           String
+  description     String?
+  proposedAction  String?        @map("proposed_action")
+  stakeholders    String?
+  priority        String?
+  status          DecisionStatus @default(DRAFT)
+  creatorId       String         @map("creator_id")
+  approverId      String?        @map("approver_id")
+  expectedAmount  Decimal?       @map("expected_amount") @db.Decimal(14, 2)
+  rejectionReason String?        @map("rejection_reason")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  approvedAt      DateTime?      @map("approved_at")
+
+  company      Company       @relation(fields: [companyId], references: [id])
+  department   Department?   @relation(fields: [departmentId], references: [id])
+  creator      User          @relation("DecisionCreator", fields: [creatorId], references: [id])
+  approver     User?         @relation("DecisionApprover", fields: [approverId], references: [id])
+  tasks        Task[]
+  transactions Transaction[]
+  documents    Document[]
+
+  @@index([companyId, status])
+  @@map("decisions")
+}
+
+// ---------- Operations ----------
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  OVERDUE
+  COMPLETED
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  companyId   String     @map("company_id")
+  decisionId  String?    @map("decision_id")
+  title       String
+  description String?
+  assigneeId  String?    @map("assignee_id")
+  status      TaskStatus @default(PENDING)
+  priority    String?
+  dueDate     DateTime?  @map("due_date")
+  completedAt DateTime?  @map("completed_at")
+  outcome     String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  company      Company       @relation(fields: [companyId], references: [id])
+  decision     Decision?     @relation(fields: [decisionId], references: [id])
+  assignee     User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  transactions Transaction[]
+
+  @@index([companyId, status])
+  @@map("tasks")
+}
+
+// ---------- Finance ----------
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model Transaction {
+  id           String          @id @default(uuid())
+  companyId    String          @map("company_id")
+  // Not every transaction originates from Governance (work-scope §5.4) -- decisionId/taskId
+  // are optional so a standalone customer payment can still be recorded.
+  decisionId   String?         @map("decision_id")
+  taskId       String?         @map("task_id")
+  type         TransactionType
+  amount       Decimal         @db.Decimal(14, 2)
+  currency     String          @default("NGN")
+  narration    String?
+  counterparty String?
+  category     String?
+  recordedById String          @map("recorded_by_id")
+  occurredAt   DateTime        @map("occurred_at")
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  company    Company    @relation(fields: [companyId], references: [id])
+  decision   Decision?  @relation(fields: [decisionId], references: [id])
+  task       Task?      @relation(fields: [taskId], references: [id])
+  recordedBy User       @relation("TransactionRecorder", fields: [recordedById], references: [id])
+  documents  Document[]
+
+  @@index([companyId, type])
+  @@map("transactions")
+}
+
+model Document {
+  id            String   @id @default(uuid())
+  companyId     String   @map("company_id")
+  decisionId    String?  @map("decision_id")
+  transactionId String?  @map("transaction_id")
+  fileName      String   @map("file_name")
+  fileUrl       String   @map("file_url")
+  uploadedById  String   @map("uploaded_by_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  company     Company      @relation(fields: [companyId], references: [id])
+  decision    Decision?    @relation(fields: [decisionId], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+  uploadedBy  User         @relation("DocumentUploader", fields: [uploadedById], references: [id])
+
+  @@map("documents")
+}
+
+// ---------- Audit (append-only; DB grants for this table should exclude UPDATE/DELETE) ----------
+
+model AuditEvent {
+  id         String   @id @default(uuid())
+  companyId  String   @map("company_id")
+  actorId    String?  @map("actor_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  changes    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id])
+  actor   User?   @relation(fields: [actorId], references: [id])
+
+  @@index([companyId, entityType, entityId])
+  @@map("audit_events")
+}
