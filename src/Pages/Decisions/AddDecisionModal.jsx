@@ -4,14 +4,16 @@ import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 export default function AddDecisionModal({ open, onClose, onCreated }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [estimatedCost, setEstimatedCost] = useState("");
+  const [proposedAction, setProposedAction] = useState("");
+  const [expectedAmount, setExpectedAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
   const reset = () => {
     setTitle("");
     setDescription("");
-    setEstimatedCost("");
+    setProposedAction("");
+    setExpectedAmount("");
     setError(null);
   };
 
@@ -25,7 +27,12 @@ export default function AddDecisionModal({ open, onClose, onCreated }) {
     setSubmitting(true);
     setError(null);
     try {
-      await onCreated({ title, description, estimated_cost: estimatedCost || 0 });
+      await onCreated({
+        title,
+        description,
+        proposedAction: proposedAction || undefined,
+        expectedAmount: expectedAmount ? Number(expectedAmount) : undefined,
+      });
       reset();
       onClose();
     } catch (err) {
@@ -41,6 +48,9 @@ export default function AddDecisionModal({ open, onClose, onCreated }) {
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <DialogPanel className="w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6">
           <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">Add Decision</DialogTitle>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            This saves as a draft. Submit it for approval afterward from the Decisions list.
+          </p>
 
           <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
             <div>
@@ -66,13 +76,24 @@ export default function AddDecisionModal({ open, onClose, onCreated }) {
             </div>
 
             <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Proposed Action <span className="text-gray-400 font-normal">(optional)</span></label>
+              <textarea
+                rows={2}
+                value={proposedAction}
+                onChange={(e) => setProposedAction(e.target.value)}
+                placeholder="What specifically will be done if approved"
+                className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+
+            <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Estimated Cost</label>
               <input
                 type="number"
                 min="0"
                 step="0.01"
-                value={estimatedCost}
-                onChange={(e) => setEstimatedCost(e.target.value)}
+                value={expectedAmount}
+                onChange={(e) => setExpectedAmount(e.target.value)}
                 className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>

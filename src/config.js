@@ -1,3 +1,3 @@
-// TEMPORARY: the backend's authentication (login/MFA/permissions) isn't built yet.
-// Set to false once real auth is wired up — this switch is the single place that re-enables it.
-export const AUTH_DISABLED = true;
+// Real backend auth (login/refresh/me + RBAC) is live as of Sprint 1.
+// Flip back to true only for offline UI-only testing with no backend running.
+export const AUTH_DISABLED = false;

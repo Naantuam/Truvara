@@ -1,112 +1,104 @@
-import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import { X } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useSearchParams, useOutletContext } from "react-router-dom";
+import { Plus, X, Loader2 } from "lucide-react";
 import api from "../../api";
 import StatusBadge from "../../Reusable/StatusBadge";
-import ProgressDots from "./ProgressDots";
-import { STAGES } from "./stages";
-import UpdateProgressModal from "./UpdateProgressModal";
-
-const FILTERS = ["All", ...STAGES];
+import { taskStatusLabel, TASKS_CACHE_KEY, fetchTasks } from "../../taskHelpers";
+import useCachedResource from "../../useCachedResource";
+import AddActionModal from "./AddActionModal";
+import TaskDetailsModal from "./TaskDetailsModal";
 
 export default function ActionsPage() {
-  const [actions, setActions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("All");
-  const [activeAction, setActiveAction] = useState(null);
+  const { user } = useOutletContext() || {};
+  const { data: tasks, setData: setTasks, loading } = useCachedResource(TASKS_CACHE_KEY, fetchTasks);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [activeTask, setActiveTask] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const department = searchParams.get("department");
-
-  useEffect(() => {
-    api.get("/actions/")
-      .then((res) => setActions(Array.isArray(res.data) ? res.data : res.data?.results || []))
-      .catch((err) => console.error("Failed to fetch actions:", err))
-      .finally(() => setLoading(false));
-  }, []);
+  const assigneeFilter = searchParams.get("assignee");
 
   const filtered = useMemo(() => {
-    let list = actions;
-    if (department) list = list.filter((a) => a.department === department);
-    if (filter !== "All") list = list.filter((a) => a.stage === filter);
-    return list;
-  }, [actions, filter, department]);
+    const list = tasks || [];
+    if (!assigneeFilter) return list;
+    return list.filter((t) => t.assignee?.id === assigneeFilter);
+  }, [tasks, assigneeFilter]);
 
-  const inProgress = filtered.filter((a) => a.stage !== "Completed");
-  const completed = filtered.filter((a) => a.stage === "Completed");
+  const active = filtered.filter((t) => t.status !== "COMPLETED");
+  const completed = filtered.filter((t) => t.status === "COMPLETED");
+  const assigneeName = assigneeFilter ? (tasks || []).find((t) => t.assignee?.id === assigneeFilter)?.assignee?.fullName : null;
 
-  const handleUpdated = async (id, payload) => {
-    const res = await api.put(`/actions/${id}/progress/`, payload);
-    setActions((prev) => prev.map((a) => (a.id === id ? { ...a, ...res.data } : a)));
+  const handleCreated = async (payload) => {
+    const res = await api.post("/tasks/", payload);
+    setTasks((prev) => [res.data, ...(prev || [])]);
+  };
+
+  const handleStatusChanged = async (id, status, outcome) => {
+    const res = await api.post(`/tasks/${id}/status/`, { status, outcome });
+    setTasks((prev) => (prev || []).map((t) => (t.id === id ? res.data : t)));
+    setActiveTask(res.data);
   };
 
   return (
     <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Actions</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Track approved decisions through to completion</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Actions</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Track approved decisions through to completion</p>
+        </div>
+        <button
+          onClick={() => setModalOpen(true)}
+          className="flex items-center gap-2 bg-brand-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-brand-700 transition-colors"
+        >
+          <Plus className="w-4 h-4" /> Add Action
+        </button>
       </div>
 
-      {department && (
+      {assigneeFilter && (
         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-          Filtered by department: <span className="font-medium text-gray-900 dark:text-gray-100">{department}</span>
+          Filtered by assignee: <span className="font-medium text-gray-900 dark:text-gray-100">{assigneeName || "…"}</span>
           <button onClick={() => setSearchParams({})} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-              filter === f
-                ? "bg-brand-600 text-white border-brand-600"
-                : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-            }`}
-          >
-            {f}
-          </button>
-        ))}
-      </div>
-
       {loading ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading actions...</p>
+        <div className="flex items-center justify-center gap-2 py-6 text-gray-400 dark:text-gray-500">
+          <Loader2 className="w-4 h-4 animate-spin" /> Loading actions...
+        </div>
       ) : filtered.length === 0 ? (
         <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No actions found.</p>
       ) : (
         <>
-          {inProgress.length > 0 && (
+          {active.length > 0 && (
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">In Progress ({inProgress.length})</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Active ({active.length})</h2>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
                     <th className="pb-2 pr-4">Action</th>
-                    <th className="pb-2 pr-4">Progress</th>
-                    <th className="pb-2 pr-4">Est. Cost</th>
-                    <th className="pb-2 pr-4">Ordered</th>
-                    <th className="pb-2 pr-4">Expected</th>
+                    <th className="pb-2 pr-4">Assigned To</th>
+                    <th className="pb-2 pr-4">Priority</th>
+                    <th className="pb-2 pr-4">Due</th>
                     <th className="pb-2">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {inProgress.map((a) => (
+                  {active.map((t) => (
                     <tr
-                      key={a.id}
-                      onClick={() => setActiveAction(a)}
+                      key={t.id}
+                      onClick={() => setActiveTask(t)}
                       className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
                     >
                       <td className="py-3 pr-4">
-                        <p className="text-gray-900 dark:text-gray-100">{a.title}</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">By {a.owner} · {a.ordered_date}</p>
+                        <p className="text-gray-900 dark:text-gray-100">{t.title}</p>
+                        {t.decision && <p className="text-xs text-gray-400 dark:text-gray-500">From: {t.decision.title}</p>}
                       </td>
-                      <td className="py-3 pr-4"><ProgressDots stage={a.stage} /></td>
-                      <td className="py-3 pr-4 text-gray-900 dark:text-gray-100">${Number(a.estimated_cost || 0).toLocaleString()}</td>
-                      <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{a.ordered_date}</td>
-                      <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{a.expected_date}</td>
-                      <td className="py-3"><StatusBadge status={a.stage} /></td>
+                      <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{t.assignee?.fullName || "Unassigned"}</td>
+                      <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{t.priority || "—"}</td>
+                      <td className={`py-3 pr-4 ${t.isOverdue ? "text-red-600 dark:text-red-400 font-medium" : "text-gray-600 dark:text-gray-400"}`}>
+                        {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "—"}{t.isOverdue && " (Overdue)"}
+                      </td>
+                      <td className="py-3"><StatusBadge status={taskStatusLabel(t.status)} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -121,34 +113,22 @@ export default function ActionsPage() {
                 <thead>
                   <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
                     <th className="pb-2 pr-4">Action</th>
-                    <th className="pb-2 pr-4">Est. Cost</th>
-                    <th className="pb-2 pr-4">Actual Cost</th>
-                    <th className="pb-2 pr-4">Variance</th>
-                    <th className="pb-2">Approved By</th>
+                    <th className="pb-2 pr-4">Assigned To</th>
+                    <th className="pb-2">Outcome</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {completed.map((a) => {
-                    const variance = Number(a.actual_cost || 0) - Number(a.estimated_cost || 0);
-                    return (
-                      <tr
-                        key={a.id}
-                        onClick={() => setActiveAction(a)}
-                        className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
-                      >
-                        <td className="py-3 pr-4">
-                          <p className="text-gray-900 dark:text-gray-100">{a.title}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">{a.ordered_date}</p>
-                        </td>
-                        <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">${Number(a.estimated_cost || 0).toLocaleString()}</td>
-                        <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">${Number(a.actual_cost || 0).toLocaleString()}</td>
-                        <td className={`py-3 pr-4 font-medium ${variance <= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                          {variance >= 0 ? "+" : ""}${variance.toLocaleString()}
-                        </td>
-                        <td className="py-3 text-gray-600 dark:text-gray-400">{a.approved_by}</td>
-                      </tr>
-                    );
-                  })}
+                  {completed.map((t) => (
+                    <tr
+                      key={t.id}
+                      onClick={() => setActiveTask(t)}
+                      className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
+                    >
+                      <td className="py-3 pr-4 text-gray-900 dark:text-gray-100">{t.title}</td>
+                      <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{t.assignee?.fullName || "Unassigned"}</td>
+                      <td className="py-3 text-gray-600 dark:text-gray-400 truncate max-w-[280px]">{t.outcome || "—"}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -156,7 +136,8 @@ export default function ActionsPage() {
         </>
       )}
 
-      <UpdateProgressModal action={activeAction} onClose={() => setActiveAction(null)} onUpdated={handleUpdated} />
+      <AddActionModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={handleCreated} />
+      <TaskDetailsModal task={activeTask} user={user} onClose={() => setActiveTask(null)} onStatusChanged={handleStatusChanged} />
     </div>
   );
 }

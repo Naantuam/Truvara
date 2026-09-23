@@ -1,25 +1,22 @@
-import { useState, useEffect } from "react";
-import api from "../../api";
+import { Loader2 } from "lucide-react";
 import StatusBadge from "../../Reusable/StatusBadge";
+import useCachedResource from "../../useCachedResource";
+import { DECISIONS_CACHE_KEY, fetchDecisions, decisionStatusLabel } from "../../decisionHelpers";
 
 export default function RecentDecisions() {
-  const [decisions, setDecisions] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api.get("/decisions/recent/")
-      .then((res) => setDecisions(Array.isArray(res.data) ? res.data : res.data?.results || []))
-      .catch((err) => console.error("Failed to fetch recent decisions:", err))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: decisions, loading } = useCachedResource(DECISIONS_CACHE_KEY, fetchDecisions);
+  // Already ordered newest-first by the backend -- just take the top few.
+  const recent = (decisions || []).slice(0, 5);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
       <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Recent Decisions</h2>
 
       {loading ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading decisions...</p>
-      ) : decisions.length === 0 ? (
+        <div className="flex items-center justify-center gap-2 py-6 text-gray-400 dark:text-gray-500">
+          <Loader2 className="w-4 h-4 animate-spin" /> Loading decisions...
+        </div>
+      ) : recent.length === 0 ? (
         <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No decisions logged yet.</p>
       ) : (
         <table className="w-full text-sm">
@@ -32,13 +29,13 @@ export default function RecentDecisions() {
             </tr>
           </thead>
           <tbody>
-            {decisions.map((decision) => (
+            {recent.map((decision) => (
               <tr key={decision.id} className="border-b border-gray-50 dark:border-gray-800/60 last:border-0">
                 <td className="py-3 pr-4 text-gray-900 dark:text-gray-100 truncate max-w-[200px]">{decision.title}</td>
-                <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.owner}</td>
-                <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.date}</td>
+                <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.creator?.fullName || "—"}</td>
+                <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{new Date(decision.createdAt).toLocaleDateString()}</td>
                 <td className="py-3">
-                  <StatusBadge status={decision.status} />
+                  <StatusBadge status={decisionStatusLabel(decision.status)} />
                 </td>
               </tr>
             ))}

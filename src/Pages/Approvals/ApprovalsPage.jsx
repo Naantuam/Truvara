@@ -1,44 +1,44 @@
-import { useState, useEffect } from "react";
-import { CheckCircle2, XCircle, ChevronRight, User, DollarSign } from "lucide-react";
+import { useState, useMemo } from "react";
+import { CheckCircle2, XCircle, ChevronRight, User, DollarSign, Loader2 } from "lucide-react";
 import api from "../../api";
 import StatusBadge from "../../Reusable/StatusBadge";
 import DecisionDetailsModal from "../../Reusable/DecisionDetailsModal";
 import RejectReasonModal from "./RejectReasonModal";
+import { decisionStatusLabel, DECISIONS_CACHE_KEY, fetchDecisions } from "../../decisionHelpers";
+import useCachedResource from "../../useCachedResource";
 
 export default function ApprovalsPage() {
-  const [pending, setPending] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: decisions, setData: setDecisions, loading } = useCachedResource(DECISIONS_CACHE_KEY, fetchDecisions);
   const [detailsFor, setDetailsFor] = useState(null);
   const [rejecting, setRejecting] = useState(null);
+  const [approvingId, setApprovingId] = useState(null);
+  const [actionError, setActionError] = useState(null);
 
-  useEffect(() => {
-    Promise.all([
-      api.get("/decisions/pending/").catch(() => ({ data: [] })),
-      api.get("/decisions/history/").catch(() => ({ data: [] })),
-    ])
-      .then(([pendingRes, historyRes]) => {
-        setPending(Array.isArray(pendingRes.data) ? pendingRes.data : pendingRes.data?.results || []);
-        setHistory(Array.isArray(historyRes.data) ? historyRes.data : historyRes.data?.results || []);
-      })
-      .catch((err) => console.error("Failed to fetch approvals:", err))
-      .finally(() => setLoading(false));
-  }, []);
+  // There's one source of truth (GET /decisions/) -- Governance doesn't need
+  // separate "pending"/"history" endpoints, just a status split client-side.
+  const pending = useMemo(() => (decisions || []).filter((d) => d.status === "PENDING_APPROVAL"), [decisions]);
+  const history = useMemo(
+    () => (decisions || []).filter((d) => ["APPROVED", "REJECTED"].includes(d.status)),
+    [decisions]
+  );
 
   const approve = async (id) => {
+    setActionError(null);
+    setApprovingId(id);
     try {
       const res = await api.post(`/decisions/${id}/approve/`);
-      setPending((prev) => prev.filter((item) => item.id !== id));
-      setHistory((prev) => [res.data, ...prev]);
+      setDecisions((prev) => (prev || []).map((d) => (d.id === id ? res.data : d)));
     } catch (err) {
       console.error(`Failed to approve decision ${id}:`, err);
+      setActionError(err.response?.data?.detail || "Failed to approve decision.");
+    } finally {
+      setApprovingId(null);
     }
   };
 
-  const reject = async (id, rejection_reason) => {
-    const res = await api.post(`/decisions/${id}/reject/`, { rejection_reason });
-    setPending((prev) => prev.filter((item) => item.id !== id));
-    setHistory((prev) => [res.data, ...prev]);
+  const reject = async (id, reason) => {
+    const res = await api.post(`/decisions/${id}/reject/`, { reason });
+    setDecisions((prev) => (prev || []).map((d) => (d.id === id ? res.data : d)));
   };
 
   return (
@@ -47,6 +47,12 @@ export default function ApprovalsPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Approvals</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">Review and approve pending decision requests</p>
       </div>
+
+      {actionError && (
+        <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 border border-red-100 dark:border-red-900 rounded-lg px-3 py-2">
+          {actionError}
+        </p>
+      )}
 
       <div className="flex items-center gap-2">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Pending Review</h2>
@@ -58,7 +64,9 @@ export default function ApprovalsPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading approvals...</p>
+        <div className="flex items-center justify-center gap-2 py-6 text-gray-400 dark:text-gray-500">
+          <Loader2 className="w-4 h-4 animate-spin" /> Loading approvals...
+        </div>
       ) : pending.length === 0 ? (
         <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No pending approvals.</p>
       ) : (
@@ -74,10 +82,10 @@ export default function ApprovalsPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{item.description}</p>
 
               <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-3">
-                <User className="w-4 h-4 text-gray-400 dark:text-gray-500" /> By {item.owner}
+                <User className="w-4 h-4 text-gray-400 dark:text-gray-500" /> By {item.creator?.fullName || "Unknown"}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
-                <DollarSign className="w-4 h-4 text-gray-400 dark:text-gray-500" /> Est. <span className="font-semibold text-gray-900 dark:text-gray-100">${Number(item.estimated_cost || 0).toLocaleString()}</span>
+                <DollarSign className="w-4 h-4 text-gray-400 dark:text-gray-500" /> Est. <span className="font-semibold text-gray-900 dark:text-gray-100">${Number(item.expectedAmount || 0).toLocaleString()}</span>
               </div>
 
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mt-4">
@@ -88,13 +96,23 @@ export default function ApprovalsPage() {
               <div className="flex gap-2 mt-4">
                 <button
                   onClick={() => approve(item.id)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white text-sm font-medium rounded-lg py-2 hover:bg-green-700 transition-colors"
+                  disabled={approvingId === item.id}
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white text-sm font-medium rounded-lg py-2 hover:bg-green-700 transition-colors disabled:opacity-50"
                 >
-                  <CheckCircle2 className="w-4 h-4" /> Approve
+                  {approvingId === item.id ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Approving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" /> Approve
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={() => setRejecting(item)}
-                  className="flex-1 flex items-center justify-center gap-2 border border-gray-300 dark:border-gray-700 text-red-600 dark:text-red-400 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  disabled={approvingId === item.id}
+                  className="flex-1 flex items-center justify-center gap-2 border border-gray-300 dark:border-gray-700 text-red-600 dark:text-red-400 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
                 >
                   <XCircle className="w-4 h-4" /> Reject
                 </button>
@@ -114,7 +132,9 @@ export default function ApprovalsPage() {
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Decision History</h2>
 
         {loading ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading history...</p>
+          <div className="flex items-center justify-center gap-2 py-6 text-gray-400 dark:text-gray-500">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading history...
+          </div>
         ) : history.length === 0 ? (
           <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No resolved decisions yet.</p>
         ) : (
@@ -130,23 +150,27 @@ export default function ApprovalsPage() {
             </thead>
             <tbody>
               {history.map((decision) => (
-                <tr key={decision.id} className="border-b border-gray-50 dark:border-gray-800/60 last:border-0">
+                <tr
+                  key={decision.id}
+                  onClick={() => setDetailsFor(decision)}
+                  className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
+                >
                   <td className="py-3 pr-4">
                     <p className="text-gray-900 dark:text-gray-100">{decision.title}</p>
-                    {decision.status === "Approved" && decision.resolved_by && (
-                      <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">Approved by {decision.resolved_by}</p>
+                    {decision.status === "APPROVED" && decision.approver && (
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">Approved by {decision.approver.fullName}</p>
                     )}
-                    {decision.status === "Rejected" && decision.rejection_reason && (
+                    {decision.status === "REJECTED" && decision.rejectionReason && (
                       <p className="text-xs text-red-600 dark:text-red-400 mt-0.5 truncate max-w-[280px]">
-                        Reason: {decision.rejection_reason}
+                        Reason: {decision.rejectionReason}
                       </p>
                     )}
                   </td>
-                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.owner}</td>
-                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">${Number(decision.estimated_cost || 0).toLocaleString()}</td>
-                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.date}</td>
+                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.creator?.fullName || "—"}</td>
+                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">${Number(decision.expectedAmount || 0).toLocaleString()}</td>
+                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{new Date(decision.createdAt).toLocaleDateString()}</td>
                   <td className="py-3">
-                    <StatusBadge status={decision.status} />
+                    <StatusBadge status={decisionStatusLabel(decision.status)} />
                   </td>
                 </tr>
               ))}

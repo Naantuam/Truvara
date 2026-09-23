@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import api from "../../api";
+import { Loader2 } from "lucide-react";
+import useCachedResource from "../../useCachedResource";
+import { DASHBOARD_ACTIVITY_CACHE_KEY, fetchRecentActivity } from "../../dashboardHelpers";
 
 const getRelativeTime = (dateString) => {
   const diffInSeconds = Math.floor((new Date() - new Date(dateString)) / 1000);
@@ -13,27 +14,22 @@ const getRelativeTime = (dateString) => {
 };
 
 export default function TeamActivity() {
-  const [activity, setActivity] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api.get("/dashboard/activity/recent/")
-      .then((res) => setActivity(Array.isArray(res.data) ? res.data : res.data?.results || []))
-      .catch((err) => console.error("Failed to fetch team activity:", err))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: activity, loading } = useCachedResource(DASHBOARD_ACTIVITY_CACHE_KEY, fetchRecentActivity);
+  const list = activity || [];
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
       <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Team Activity</h2>
 
       {loading ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading activity...</p>
-      ) : activity.length === 0 ? (
+        <div className="flex items-center justify-center gap-2 py-6 text-gray-400 dark:text-gray-500">
+          <Loader2 className="w-4 h-4 animate-spin" /> Loading activity...
+        </div>
+      ) : list.length === 0 ? (
         <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No recent activity.</p>
       ) : (
         <ul className="flex flex-col gap-4">
-          {activity.map((item) => (
+          {list.map((item) => (
             <li key={item.id} className="flex gap-3">
               <span className="w-2 h-2 mt-1.5 rounded-full bg-brand-600 flex-shrink-0" />
               <div>
@@ -41,7 +37,7 @@ export default function TeamActivity() {
                   <span className="font-semibold">{item.actor}</span> {item.action}
                   {item.target ? ` "${item.target}"` : ""}
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{getRelativeTime(item.created_at)}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{getRelativeTime(item.createdAt)}</p>
               </div>
             </li>
           ))}

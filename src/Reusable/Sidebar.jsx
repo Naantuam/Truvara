@@ -5,6 +5,7 @@ import { FileText, CheckSquare, Users, ListChecks, DollarSign, BarChart3, Settin
 import BrandMark from './BrandMark';
 import SunMoonToggle from './SunMoonToggle';
 import useTheme from './useTheme';
+import { hasModuleAccess } from '../moduleAccess';
 
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
@@ -46,45 +47,21 @@ const NAV_GROUPS = [
     },
 ];
 
-export default function Sidebar({ sidebarOpen, setSidebarOpen, user, roles, appPermissions }) {
+export default function Sidebar({ sidebarOpen, setSidebarOpen, user }) {
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
 
-    const userRoleId = typeof user?.role === 'object' ? user?.role?.id : user?.role;
-    const userRole = roles?.find(r => r.id === userRoleId);
-    const userPermIds = userRole?.permissions || [];
-
-    const hasAccess = (itemApp) => {
-        if (!user) return false;
-        const isSuperuser = Boolean(user.superuser || user.is_superuser || user.is_staff);
-        const roleName = userRole?.name?.toLowerCase() || (typeof user?.role === 'string' ? user.role.toLowerCase() : '');
-        const isAdmin = isSuperuser || roleName.includes('admin');
-
-        // Superusers and Admins have global access to all sidebar links
-        if (isAdmin || isSuperuser) return true;
-
-        const allPerms = Object.values(appPermissions).flat();
-
-        // Dashboard specific check
-        if (itemApp === 'dashboard') {
-            const dashPerm = allPerms.find(p => p.codename === 'view_dashboardaccess');
-            if (dashPerm) {
-                return userPermIds.includes(dashPerm.id);
-            }
-            return false; // If there's no dashPerm defined, fallback to false for safety
-        }
-
-        // Settings is a self-service account page available to every authenticated user
-        if (itemApp === 'settings') return true;
-
-        // Feature modules dynamic check
-        const modulePerms = appPermissions?.[itemApp] || [];
-
-        return modulePerms.some(perm => userPermIds.includes(perm.id));
-    };
+    // Superuser fallback kept only for the AUTH_DISABLED test-user path
+    // (see Layout.jsx TEST_USER); real users are gated purely by
+    // hasModuleAccess, since the Owner role's seed already grants every
+    // permission -- no separate admin bypass is needed for it.
+    const isTestSuperuser = Boolean(user && !user.permissions && (user.superuser || user.is_superuser || user.is_staff));
 
     const allowedGroups = NAV_GROUPS
-        .map(group => ({ ...group, items: group.items.filter(item => hasAccess(item.app)) }))
+        .map(group => ({
+            ...group,
+            items: group.items.filter(item => isTestSuperuser || hasModuleAccess(user, item.app)),
+        }))
         .filter(group => group.items.length > 0);
 
     return (

@@ -17,8 +17,6 @@ export default function Layout() {
             return null;
         }
     });
-    const [roles, setRoles] = useState([]);
-    const [appPermissions, setAppPermissions] = useState({});
     const [loadingAuth, setLoadingAuth] = useState(true);
 
     useEffect(() => {
@@ -31,51 +29,19 @@ export default function Layout() {
         const fetchAuthData = async () => {
             setLoadingAuth(true);
             try {
-                // 1. Fetch current user independently
-                const userRes = await api.get("/users/me/").catch(err => {
-                    console.warn("Could not fetch /users/me/, relying on cached session:", err);
-                    return null;
-                });
-
-                if (userRes?.data) {
-                    setUser(userRes.data);
+                const meRes = await api.get("/auth/me/");
+                setUser((prev) => {
+                    const merged = { ...prev, ...meRes.data };
                     try {
-                        localStorage.setItem("user", JSON.stringify(userRes.data));
-                    } catch {}
-                }
-
-                // 2. Fetch roles and permissions
-                const apps = ['decisions', 'approvals', 'responsibilities', 'actions', 'expenses', 'reports'];
-                const [rolesRes, ...permsResList] = await Promise.all([
-                    api.get("/users/roles/").catch(() => ({ data: [] })),
-                    ...apps.map(app => api.get(`/users/permissions/${app}/`).catch(() => ({ data: [] })))
-                ]);
-
-                const rolesData = Array.isArray(rolesRes?.data) ? rolesRes.data : (rolesRes?.data?.results || []);
-                setRoles(rolesData.map(r => {
-                    const rawPerms1 = r.role_permissions || [];
-                    const rawPerms2 = r.rolemodulepermissions || [];
-                    const rawPerms3 = r.rolemodulepermission_set || [];
-                    const rawPerms4 = r.role_module_permissions || [];
-                    const rawPerms5 = r.module_permissions || [];
-                    const rawPerms6 = r.permissions || [];
-                    const combined = [...rawPerms1, ...rawPerms2, ...rawPerms3, ...rawPerms4, ...rawPerms5, ...rawPerms6];
-                    const parsedPermIds = Array.from(new Set(combined.map(p => {
-                        let val = typeof p === 'object' && p !== null ? (p.permission || p.permission_id || p.id) : p;
-                        return Number(val);
-                    }).filter(id => !isNaN(id) && id !== 0 && id !== null)));
-                    return { ...r, id: r.id ?? r.key, permissions: parsedPermIds };
-                }));
-
-                const newAppPermissions = {};
-                apps.forEach((app, index) => {
-                    const data = permsResList[index]?.data;
-                    newAppPermissions[app] = Array.isArray(data) ? data : (data?.results || []);
+                        localStorage.setItem("user", JSON.stringify(merged));
+                    } catch {
+                        // ignore storage failure (e.g. private browsing)
+                    }
+                    return merged;
                 });
-                setAppPermissions(newAppPermissions);
-
             } catch (err) {
-                console.error("Failed to fetch auth data:", err);
+                console.error("Failed to fetch current user:", err);
+                setUser(null);
             } finally {
                 setLoadingAuth(false);
             }
@@ -87,12 +53,11 @@ export default function Layout() {
     return (
         <div className="h-screen font-sans flex flex-col relative bg-gray-50 dark:bg-gray-950">
             {/* Fixed TopBar */}
-            <TopBar 
-                sidebarOpen={sidebarOpen} 
-                setSidebarOpen={setSidebarOpen} 
-                user={user} 
-                roles={roles} 
-                loadingAuth={loadingAuth} 
+            <TopBar
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+                user={user}
+                loadingAuth={loadingAuth}
             />
 
             {/* Main Layout Container */}
@@ -110,21 +75,19 @@ export default function Layout() {
                     ></div>
                 )}
 
-                {/* Sidebar 
-            - We wrap it in a div to ensure it sits above the backdrop (z-30) 
-            - On desktop, z-index resets (md:z-auto) 
+                {/* Sidebar
+            - We wrap it in a div to ensure it sits above the backdrop (z-30)
+            - On desktop, z-index resets (md:z-auto)
         */}
                 <div className="">
                     <Sidebar
                         sidebarOpen={sidebarOpen}
                         setSidebarOpen={setSidebarOpen}
                         user={user}
-                        roles={roles}
-                        appPermissions={appPermissions}
                     />
                 </div>
 
-                {/* Main Content 
+                {/* Main Content
             - Removed direct 'ml-55' on mobile.
             - Added 'md:ml-55': This ensures the "push" only happens on Desktop.
             - On Mobile, it stays 'ml-0' so the content remains full width behind the sidebar.
@@ -133,7 +96,7 @@ export default function Layout() {
                     className={`flex-1 transition-all duration-300 ease-in-out overflow-x-auto ${sidebarOpen ? "md:ml-55" : "ml-0"
                         }`}
                 >
-                    <Outlet context={{ user, roles, appPermissions, loadingAuth }} />
+                    <Outlet context={{ user, loadingAuth }} />
                 </main>
             </div>
         </div>

@@ -5,6 +5,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { UserCircle, LogOut, Send, Loader2 } from 'lucide-react';
 import api from "../api"
+import { clearCache } from "../dataCache";
 
 export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { }, user = null, roles = [], loadingAuth = true }) {
 
@@ -155,7 +156,7 @@ export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { },
               {loadingAuth ? (
                 <div className="h-4 w-24 bg-gray-100 dark:bg-gray-700 rounded animate-pulse mb-1"></div>
               ) : (
-                <span className="text-sm font-bold text-gray-800 dark:text-gray-100 leading-none">{user?.username || user?.email || "User"}</span>
+                <span className="text-sm font-bold text-gray-800 dark:text-gray-100 leading-none">{user?.full_name || user?.username || user?.email || "User"}</span>
               )}
 
               {loadingAuth ? (
@@ -180,6 +181,7 @@ export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { },
               <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                 <button
                   onClick={() => {
+                    clearCache();
                     localStorage.removeItem("access_token");
                     localStorage.removeItem("refresh_token");
                     window.location.href = "/";

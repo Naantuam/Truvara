@@ -2,6 +2,8 @@ const STATUS_STYLES = {
   Approved: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
   "Pending Approval": "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400",
   Pending: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400",
+  Submitted: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400",
+  Executing: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400",
   Draft: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
   Rejected: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400",
   Active: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",

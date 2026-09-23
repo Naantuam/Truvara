@@ -1,57 +1,44 @@
-import { useState, useEffect } from "react";
-import api from "../../api";
+import { Link } from "react-router-dom";
+import { Loader2, ArrowRight } from "lucide-react";
+import useCachedResource from "../../useCachedResource";
+import { DECISIONS_CACHE_KEY, fetchDecisions } from "../../decisionHelpers";
 
+// Read-only preview -- actually approving/rejecting (with its confirm-before-
+// reject step) lives on the Approvals page, not duplicated here.
 export default function PendingApprovals() {
-  const [decisions, setDecisions] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api.get("/decisions/pending/")
-      .then((res) => setDecisions(Array.isArray(res.data) ? res.data : res.data?.results || []))
-      .catch((err) => console.error("Failed to fetch pending approvals:", err))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const resolve = async (id, action) => {
-    try {
-      await api.post(`/decisions/${id}/${action}/`);
-      setDecisions((prev) => prev.filter((item) => item.id !== id));
-    } catch (err) {
-      console.error(`Failed to ${action} decision ${id}:`, err);
-    }
-  };
+  const { data: decisions, loading } = useCachedResource(DECISIONS_CACHE_KEY, fetchDecisions);
+  const pending = (decisions || []).filter((d) => d.status === "PENDING_APPROVAL");
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-      <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Pending Approvals</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Pending Approvals</h2>
+        {pending.length > 0 && (
+          <Link to="/approvals" className="text-sm font-medium text-brand-600 dark:text-gold-400 hover:underline flex items-center gap-1">
+            Review all <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        )}
+      </div>
 
       {loading ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading approvals...</p>
-      ) : decisions.length === 0 ? (
+        <div className="flex items-center justify-center gap-2 py-6 text-gray-400 dark:text-gray-500">
+          <Loader2 className="w-4 h-4 animate-spin" /> Loading approvals...
+        </div>
+      ) : pending.length === 0 ? (
         <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No pending approvals.</p>
       ) : (
         <div className="flex flex-col gap-3">
-          {decisions.map((item) => (
-            <div key={item.id} className="border border-gray-100 dark:border-gray-800 rounded-lg p-4">
+          {pending.slice(0, 5).map((item) => (
+            <Link
+              key={item.id}
+              to="/approvals"
+              className="block border border-gray-100 dark:border-gray-800 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors"
+            >
               <p className="font-medium text-gray-900 dark:text-gray-100">{item.title}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                By {item.owner} · {item.date}
+                By {item.creator?.fullName || "Unknown"} · {new Date(item.createdAt).toLocaleDateString()}
               </p>
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={() => resolve(item.id, "approve")}
-                  className="flex-1 bg-brand-600 text-white text-sm font-medium rounded-lg py-2 hover:bg-brand-700 transition-colors"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => resolve(item.id, "reject")}
-                  className="flex-1 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
-                  Reject
-                </button>
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

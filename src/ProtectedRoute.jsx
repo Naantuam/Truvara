@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate, useOutletContext } from "react-router-dom";
 import { AUTH_DISABLED } from "./config";
+import { hasModuleAccess } from "./moduleAccess";
 
 const ProtectedRoute = ({ children, app }) => {
   const context = useOutletContext();
@@ -14,10 +15,8 @@ const ProtectedRoute = ({ children, app }) => {
     return <Navigate to="/" replace />;
   }
 
-  // If no context yet (e.g. Layout is still fetching), we just render children 
-  // or return null/loading. To prevent flicker, Layout handles loading state globally.
-  if (context && app) {
-    const { user: contextUser, roles, appPermissions, loadingAuth } = context;
+  if (context) {
+    const { user: contextUser, loadingAuth } = context;
 
     // Grab user from context or fallback to localStorage
     let user = contextUser;
@@ -25,7 +24,9 @@ const ProtectedRoute = ({ children, app }) => {
       try {
         const saved = localStorage.getItem("user");
         if (saved) user = JSON.parse(saved);
-      } catch {}
+      } catch {
+        // ignore malformed cached user
+      }
     }
 
     // Wait for authentication checks to finish before deciding to kick the user out
@@ -40,32 +41,7 @@ const ProtectedRoute = ({ children, app }) => {
     if (!user && !loadingAuth) return <Navigate to="/" replace />;
     if (!user) return children;
 
-    const userRoleId = typeof user?.role === 'object' ? user?.role?.id : user?.role;
-    const userRole = roles?.find(r => r.id === userRoleId);
-    const roleName = userRole?.name?.toLowerCase() || (typeof user?.role === 'string' ? user.role.toLowerCase() : '');
-    const isSuperuser = Boolean(user.superuser || user.is_superuser || user.is_staff);
-    const isAdmin = isSuperuser || roleName.includes('admin');
-
-    // Superusers & Admins have full access to ALL pages (including users and dashboard)
-    if (isAdmin || isSuperuser) return children;
-
-    const userPermIds = userRole?.permissions || [];
-    const allPerms = Object.values(appPermissions || {}).flat();
-
-    let hasAccess = false;
-
-    if (app === 'dashboard') {
-      // Dashboard: check for specific view_dashboardaccess permission
-      const dashPerm = allPerms.find(p => p.codename === 'view_dashboardaccess');
-      if (dashPerm) {
-        hasAccess = userPermIds.includes(dashPerm.id);
-      }
-    } else {
-      const modulePerms = appPermissions?.[app] || [];
-      hasAccess = modulePerms.some(perm => userPermIds.includes(perm.id));
-    }
-
-    if (!hasAccess && !loadingAuth) {
+    if (app && !hasModuleAccess(user, app) && !loadingAuth) {
       return <Navigate to="/unauthorized" replace />;
     }
   }

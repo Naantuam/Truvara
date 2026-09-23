@@ -9,6 +9,7 @@ import InputField from "./AuthComponents/InputField";
 import { Mail, Lock } from "lucide-react";
 import api from "../api";
 import { AUTH_DISABLED } from "../config";
+import { clearCache } from "../dataCache";
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -40,6 +41,10 @@ const Login = () => {
       const access = res.data?.access;
       const refresh = res.data?.refresh;
       const user = res.data?.user || {};
+
+      // Fresh session -- any cached data from a previous session (or a
+      // different user, if this tab was left logged out) must not leak in.
+      clearCache();
 
       if (access) localStorage.setItem("access_token", access);
       if (refresh) localStorage.setItem("refresh_token", refresh);
@@ -89,7 +94,7 @@ const Login = () => {
           <Logo />
           {/* Mobile-only heading */}
           <h1 className="md:hidden text-white text-xl font-bold text-center mt-6">
-            Sign in to ABY Diamond Mines
+            Sign in to Truvara
           </h1>
         </div>
 
