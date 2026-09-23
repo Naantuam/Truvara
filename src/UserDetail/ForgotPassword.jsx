@@ -8,6 +8,7 @@ import AuthLink from "./AuthComponents/AuthLink";
 import { Mail } from "lucide-react";
 import api from "../api";
 
+
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
