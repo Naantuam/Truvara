@@ -10,8 +10,8 @@ export default function AuthBrandPanel() {
 
       <div className="relative z-10 flex flex-col items-center text-center max-w-sm">
         <BrandMark variant="dark" className="h-40 w-auto" />
-        <p className="mt-6 text-sm text-gray-300 leading-relaxed">
-          Welcome back. Structured decisions, clear accountability, and full visibility — everywhere your business grows.
+        <p className="mt-6 font-bold text-sm text-gray-300 leading-relaxed">
+          Welcome back. Structured decisions, clear accountability, and full visibility everywhere your business grows.
         </p>
       </div>
     </div>
