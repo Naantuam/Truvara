@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import "./App.css";
 
 import Login from "./UserDetail/Login";
+import SelectCompany from "./UserDetail/SelectCompany";
 import MFA from "./UserDetail/MFA";
 import ForgotPassword from "./UserDetail/ForgotPassword";
 import ResetPassword from "./UserDetail/ResetPassword";
@@ -26,10 +27,11 @@ function App() {
     <Routes>
       {/* Auth routes */}
       <Route path="/" element={<Login />} />
+      <Route path="/select-company" element={<SelectCompany />} />
       <Route path="/mfa" element={<MFA />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
-      <Route path="/activate/:uid/:token" element={<ActivateAccount />} />
+      <Route path="/activate" element={<ActivateAccount />} />
       {/* Main Pages with Unified Layout */}
       <Route element={<Layout />}>
         <Route path="/unauthorized" element={<Unauthorized />} />

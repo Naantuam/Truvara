@@ -1,0 +1,137 @@
+// Directory ("control plane") schema -- identity only, no business data.
+// One shared database. Holds just enough to authenticate a person and know
+// which companies they can reach: Company -> User -> Role -> Permission ->
+// CompanyMembership. Never holds a Decision, Task, Transaction, Document, or
+// AuditEvent -- those live in each company's own tenant database (see
+// prisma/tenant/schema.prisma), addressed via Company.tenantDatabaseUrl.
+//
+// Why split this way: several real people (e.g. Jimoh Precious Mohammed)
+// belong to more than one company, so identity can't be duplicated per
+// tenant database without creating multiple disconnected accounts for the
+// same person. Keeping identity here, once, lets login resolve "who is this"
+// before it resolves "which company's database do I need."
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/.prisma/directory-client"
+}
+
+// `schemas` scopes this file to the Postgres "directory" namespace only --
+// on the shared database (see TAVORA_DATABASE_URL), Ta-vora's tenant tables
+// live in "public" instead, so `db push` here never sees or touches them.
+datasource db {
+  provider = "postgresql"
+  url      = env("DIRECTORY_DATABASE_URL")
+  schemas  = ["directory"]
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  // Which physical database this company's business data lives in.
+  // Multiple companies MAY share the same value (the pooled tier) --
+  // tenant-side queries still filter by companyId in that case, exactly as
+  // they do today. A company promoted to its own dedicated database just
+  // gets a unique value here; no application code changes either way.
+  tenantDatabaseUrl String   @map("tenant_database_url")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  users       User[]
+  memberships CompanyMembership[]
+
+  @@map("companies")
+  @@schema("directory")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  // Null until the user activates their account by setting their own
+  // password -- a user in this state cannot log in yet (see authService.js
+  // login(), which checks for this explicitly and returns a distinct error
+  // rather than a generic "invalid credentials").
+  passwordHash String?  @map("password_hash")
+  fullName     String   @map("full_name")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Activation link state. Only the SHA-256 hash of the token is ever
+  // stored -- same principle as passwords: a database leak alone should
+  // never hand over a usable credential. Cleared once the user activates.
+  activationTokenHash      String?   @unique @map("activation_token_hash")
+  activationTokenExpiresAt DateTime? @map("activation_token_expires_at")
+
+  // Convenience pointer only (e.g. which company to preselect on login);
+  // authorization always goes through CompanyMembership, never this alone.
+  primaryCompanyId String?  @map("primary_company_id")
+  primaryCompany   Company? @relation(fields: [primaryCompanyId], references: [id])
+
+  memberships CompanyMembership[]
+
+  @@map("users")
+  @@schema("directory")
+}
+
+model Role {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  isSystem    Boolean @default(false) @map("is_system")
+
+  rolePermissions RolePermission[]
+  memberships     CompanyMembership[]
+
+  @@map("roles")
+  @@schema("directory")
+}
+
+model Permission {
+  id          String  @id @default(uuid())
+  code        String  @unique
+  description String?
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+  @@schema("directory")
+}
+
+model RolePermission {
+  roleId       String @map("role_id")
+  permissionId String @map("permission_id")
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+  @@schema("directory")
+}
+
+enum ScopeType {
+  COMPANY
+  DEPARTMENT
+  ASSIGNED_ONLY
+
+  @@schema("directory")
+}
+
+model CompanyMembership {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  companyId    String    @map("company_id")
+  roleId       String    @map("role_id")
+  scopeType    ScopeType @default(COMPANY) @map("scope_type")
+  departmentId String?   @map("department_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
+  role    Role    @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, companyId])
+  @@map("company_memberships")
+  @@schema("directory")
+}

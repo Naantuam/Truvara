@@ -31,10 +31,20 @@ const Login = () => {
 
     try {
       const res = await api.post("/auth/login/", form);
-      
+
       if (res.data.mfa_required) {
         // Redirect to MFA verification screen
         navigate("/mfa", { state: { userId: res.data.user_id, email: res.data.email } });
+        return;
+      }
+
+      if (res.data.companies_available) {
+        // This person belongs to more than one company (e.g. an Owner
+        // involved in two businesses) -- password is already verified, they
+        // just need to pick which workspace to enter.
+        navigate("/select-company", {
+          state: { companies: res.data.companies_available, preAuthToken: res.data.pre_auth_token },
+        });
         return;
       }
 

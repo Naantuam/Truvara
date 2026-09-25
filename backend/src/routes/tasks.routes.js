@@ -40,7 +40,7 @@ const taskUpdateSchema = taskCreateSchema.partial().omit({ decisionId: true, ass
 
 router.get("/", requirePermission("operations:task:view"), async (req, res, next) => {
   try {
-    const tasks = await listTasks(req.user.companyId, { decisionId: req.query.decisionId });
+    const tasks = await listTasks(req.user.tenantDb, req.user.companyId, { decisionId: req.query.decisionId });
     res.json(tasks);
   } catch (err) {
     next(err);
@@ -49,7 +49,7 @@ router.get("/", requirePermission("operations:task:view"), async (req, res, next
 
 router.get("/:id", requirePermission("operations:task:view"), async (req, res, next) => {
   try {
-    const task = await getTask(req.user.companyId, req.params.id);
+    const task = await getTask(req.user.tenantDb, req.user.companyId, req.params.id);
     res.json(task);
   } catch (err) {
     handleTaskError(err, res, next);
@@ -61,7 +61,7 @@ router.post("/", requirePermission("operations:task:create"), async (req, res, n
   if (!parsed.success) return res.status(400).json({ detail: "Invalid task payload." });
 
   try {
-    const task = await createTask(req.user, parsed.data);
+    const task = await createTask(req.user.tenantDb, req.user, parsed.data);
     res.status(201).json(task);
   } catch (err) {
     handleTaskError(err, res, next);
@@ -73,7 +73,7 @@ router.patch("/:id", requirePermission("operations:task:edit"), async (req, res,
   if (!parsed.success) return res.status(400).json({ detail: "Invalid task payload." });
 
   try {
-    const task = await updateTask(req.user, req.params.id, parsed.data);
+    const task = await updateTask(req.user.tenantDb, req.user, req.params.id, parsed.data);
     res.json(task);
   } catch (err) {
     handleTaskError(err, res, next);
@@ -87,7 +87,7 @@ router.post("/:id/assign", requirePermission("operations:task:assign"), async (r
   if (!parsed.success) return res.status(400).json({ detail: "A valid assigneeId is required." });
 
   try {
-    const task = await assignTask(req.user, req.params.id, parsed.data.assigneeId);
+    const task = await assignTask(req.user.tenantDb, req.user, req.params.id, parsed.data.assigneeId);
     res.json(task);
   } catch (err) {
     handleTaskError(err, res, next);
@@ -104,7 +104,7 @@ router.post("/:id/status", requirePermission("operations:task:edit"), async (req
   if (!parsed.success) return res.status(400).json({ detail: "A valid status is required." });
 
   try {
-    const task = await updateTaskStatus(req.user, req.params.id, parsed.data.status, parsed.data.outcome);
+    const task = await updateTaskStatus(req.user.tenantDb, req.user, req.params.id, parsed.data.status, parsed.data.outcome);
     res.json(task);
   } catch (err) {
     handleTaskError(err, res, next);

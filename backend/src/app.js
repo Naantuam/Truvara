@@ -6,6 +6,8 @@ import tasksRoutes from "./routes/tasks.routes.js";
 import transactionsRoutes from "./routes/transactions.routes.js";
 import companyRoutes from "./routes/company.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
+import reportsRoutes from "./routes/reports.routes.js";
+import settingsRoutes from "./routes/settings.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 // CORS_ORIGIN accepts a comma-separated list, e.g. both the local dev
@@ -39,6 +41,8 @@ export function createApp() {
   app.use("/api/tasks", tasksRoutes);
   app.use("/api/transactions", transactionsRoutes);
   app.use("/api/dashboard", dashboardRoutes);
+  app.use("/api/reports", reportsRoutes);
+  app.use("/api/settings", settingsRoutes);
   app.use("/api/company", companyRoutes);
 
   app.use(errorHandler);

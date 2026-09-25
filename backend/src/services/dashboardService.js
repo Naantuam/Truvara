@@ -1,4 +1,4 @@
-import { prisma } from "../db/prisma.js";
+import { directoryPrisma } from "../db/directoryPrisma.js";
 
 // Pure and exported for testing -- work-scope §5.5 says the dashboard must
 // not be a separately-populated data source, so this just narrates the
@@ -23,7 +23,7 @@ export function describeAction(action) {
 
 // Batch-resolve a human-readable "target" (title/narration) per audit event
 // by entity type, instead of one query per event.
-async function resolveTargets(events) {
+async function resolveTargets(db, events) {
   const idsByType = { Decision: [], Task: [], Transaction: [] };
   for (const e of events) {
     if (idsByType[e.entityType]) idsByType[e.entityType].push(e.entityId);
@@ -31,13 +31,13 @@ async function resolveTargets(events) {
 
   const [decisions, tasks, transactions] = await Promise.all([
     idsByType.Decision.length
-      ? prisma.decision.findMany({ where: { id: { in: idsByType.Decision } }, select: { id: true, title: true } })
+      ? db.decision.findMany({ where: { id: { in: idsByType.Decision } }, select: { id: true, title: true } })
       : [],
     idsByType.Task.length
-      ? prisma.task.findMany({ where: { id: { in: idsByType.Task } }, select: { id: true, title: true } })
+      ? db.task.findMany({ where: { id: { in: idsByType.Task } }, select: { id: true, title: true } })
       : [],
     idsByType.Transaction.length
-      ? prisma.transaction.findMany({ where: { id: { in: idsByType.Transaction } }, select: { id: true, narration: true } })
+      ? db.transaction.findMany({ where: { id: { in: idsByType.Transaction } }, select: { id: true, narration: true } })
       : [],
   ]);
 
@@ -48,19 +48,29 @@ async function resolveTargets(events) {
   return titleMap;
 }
 
-export async function getRecentActivity(companyId, limit = 15) {
-  const events = await prisma.auditEvent.findMany({
+export async function getRecentActivity(db, companyId, limit = 15) {
+  const events = await db.auditEvent.findMany({
     where: { companyId },
     orderBy: { createdAt: "desc" },
     take: limit,
-    include: { actor: { select: { fullName: true } } },
   });
 
-  const titleMap = await resolveTargets(events);
+  const [titleMap, actorMap] = await Promise.all([
+    resolveTargets(db, events),
+    (async () => {
+      const actorIds = [...new Set(events.map((e) => e.actorId).filter(Boolean))];
+      if (actorIds.length === 0) return new Map();
+      const actors = await directoryPrisma.user.findMany({
+        where: { id: { in: actorIds } },
+        select: { id: true, fullName: true },
+      });
+      return new Map(actors.map((a) => [a.id, a.fullName]));
+    })(),
+  ]);
 
   return events.map((e) => ({
     id: e.id,
-    actor: e.actor?.fullName || "Someone",
+    actor: (e.actorId && actorMap.get(e.actorId)) || "Someone",
     action: describeAction(e.action),
     target: titleMap.get(`${e.entityType}:${e.entityId}`) || null,
     createdAt: e.createdAt,

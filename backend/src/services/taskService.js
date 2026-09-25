@@ -1,5 +1,6 @@
-import { prisma } from "../db/prisma.js";
 import { recordAuditEvent } from "../utils/audit.js";
+import { loadUserMap, attachUser } from "../utils/hydrateUsers.js";
+import { directoryPrisma } from "../db/directoryPrisma.js";
 
 export class TaskError extends Error {
   constructor(message, status = 400) {
@@ -9,16 +10,7 @@ export class TaskError extends Error {
   }
 }
 
-const PERSON_SELECT = { id: true, fullName: true, email: true };
-const taskInclude = {
-  assignee: { select: PERSON_SELECT },
-  decision: { select: { id: true, title: true, status: true } },
-};
-
-// Prisma's default interactive-transaction timeout (5s) is too tight for real
-// observed latency to Neon -- see decisionService.js for the same fix.
 const TRANSACTION_OPTIONS = { timeout: 15000 };
-
 const ACTIVE_STATUSES = ["PENDING", "IN_PROGRESS"];
 
 // Only Manager/Owner (operations:task:assign) can touch any task; a Team
@@ -38,23 +30,33 @@ function withComputedFields(task) {
   return { ...task, isOverdue };
 }
 
-async function findCompanyTask(companyId, id) {
-  return prisma.task.findFirst({ where: { id, companyId }, include: taskInclude });
+// assigneeId references a User in the separate directory database; decision
+// stays a normal Prisma include since Task and Decision share the same
+// tenant DB.
+async function hydrate(db, tasks) {
+  const list = Array.isArray(tasks) ? tasks : [tasks];
+  const userMap = await loadUserMap(list.map((t) => t.assigneeId));
+  const withUsers = list.map((t) => ({ ...withComputedFields(t), assignee: attachUser(userMap, t.assigneeId) }));
+  return Array.isArray(tasks) ? withUsers : withUsers[0];
 }
 
-export async function listTasks(companyId, { decisionId } = {}) {
-  const tasks = await prisma.task.findMany({
+async function findCompanyTask(db, companyId, id) {
+  return db.task.findFirst({ where: { id, companyId }, include: { decision: { select: { id: true, title: true, status: true } } } });
+}
+
+export async function listTasks(db, companyId, { decisionId } = {}) {
+  const tasks = await db.task.findMany({
     where: { companyId, ...(decisionId ? { decisionId } : {}) },
     orderBy: { createdAt: "desc" },
-    include: taskInclude,
+    include: { decision: { select: { id: true, title: true, status: true } } },
   });
-  return tasks.map(withComputedFields);
+  return hydrate(db, tasks);
 }
 
-export async function getTask(companyId, id) {
-  const task = await findCompanyTask(companyId, id);
+export async function getTask(db, companyId, id) {
+  const task = await findCompanyTask(db, companyId, id);
   if (!task) throw new TaskError("Task not found.", 404);
-  return withComputedFields(task);
+  return hydrate(db, task);
 }
 
 // If a decisionId is given, it must be a real decision in the SAME company --
@@ -65,22 +67,22 @@ async function assertDecisionInCompany(tx, companyId, decisionId) {
   if (!decision) throw new TaskError("Decision not found.", 404);
 }
 
-// Same tenant check for assigning a task to a user -- the assignee must be a
-// member of the acting user's company.
-async function assertAssigneeInCompany(tx, companyId, assigneeId) {
+// The assignee must be a real member of this company -- checked against the
+// directory, since Task only stores a bare user id, not a relation.
+async function assertAssigneeInCompany(companyId, assigneeId) {
   if (!assigneeId) return;
-  const membership = await tx.companyMembership.findUnique({
+  const membership = await directoryPrisma.companyMembership.findUnique({
     where: { userId_companyId: { userId: assigneeId, companyId } },
   });
   if (!membership) throw new TaskError("Assignee is not a member of this company.", 400);
 }
 
-export async function createTask(actor, input) {
-  return prisma.$transaction(async (tx) => {
+export async function createTask(db, actor, input) {
+  const task = await db.$transaction(async (tx) => {
     await assertDecisionInCompany(tx, actor.companyId, input.decisionId);
-    await assertAssigneeInCompany(tx, actor.companyId, input.assigneeId);
+    await assertAssigneeInCompany(actor.companyId, input.assigneeId);
 
-    const task = await tx.task.create({
+    const created = await tx.task.create({
       data: {
         companyId: actor.companyId,
         decisionId: input.decisionId ?? null,
@@ -90,7 +92,7 @@ export async function createTask(actor, input) {
         priority: input.priority ?? null,
         dueDate: input.dueDate ?? null,
       },
-      include: taskInclude,
+      include: { decision: { select: { id: true, title: true, status: true } } },
     });
 
     await recordAuditEvent(tx, {
@@ -98,23 +100,25 @@ export async function createTask(actor, input) {
       actorId: actor.userId,
       action: "task.created",
       entityType: "Task",
-      entityId: task.id,
-      changes: { title: task.title, decisionId: task.decisionId },
+      entityId: created.id,
+      changes: { title: created.title, decisionId: created.decisionId },
     });
 
-    return withComputedFields(task);
+    return created;
   }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, task);
 }
 
-export async function updateTask(actor, id, input) {
-  return prisma.$transaction(async (tx) => {
+export async function updateTask(db, actor, id, input) {
+  const updated = await db.$transaction(async (tx) => {
     const task = await tx.task.findFirst({ where: { id, companyId: actor.companyId } });
     if (!task) throw new TaskError("Task not found.", 404);
     if (!canEditTask(actor, task)) {
       throw new TaskError("You do not have permission to edit this task.", 403);
     }
 
-    const updated = await tx.task.update({
+    const result = await tx.task.update({
       where: { id },
       data: {
         title: input.title ?? task.title,
@@ -122,7 +126,7 @@ export async function updateTask(actor, id, input) {
         priority: input.priority ?? task.priority,
         dueDate: input.dueDate !== undefined ? input.dueDate : task.dueDate,
       },
-      include: taskInclude,
+      include: { decision: { select: { id: true, title: true, status: true } } },
     });
 
     await recordAuditEvent(tx, {
@@ -134,21 +138,23 @@ export async function updateTask(actor, id, input) {
       changes: input,
     });
 
-    return withComputedFields(updated);
+    return result;
   }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, updated);
 }
 
-export async function assignTask(actor, id, assigneeId) {
-  return prisma.$transaction(async (tx) => {
+export async function assignTask(db, actor, id, assigneeId) {
+  const updated = await db.$transaction(async (tx) => {
     const task = await tx.task.findFirst({ where: { id, companyId: actor.companyId } });
     if (!task) throw new TaskError("Task not found.", 404);
 
-    await assertAssigneeInCompany(tx, actor.companyId, assigneeId);
+    await assertAssigneeInCompany(actor.companyId, assigneeId);
 
-    const updated = await tx.task.update({
+    const result = await tx.task.update({
       where: { id },
       data: { assigneeId },
-      include: taskInclude,
+      include: { decision: { select: { id: true, title: true, status: true } } },
     });
 
     await recordAuditEvent(tx, {
@@ -160,18 +166,20 @@ export async function assignTask(actor, id, assigneeId) {
       changes: { assigneeId },
     });
 
-    return withComputedFields(updated);
+    return result;
   }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, updated);
 }
 
 const VALID_STATUSES = ["PENDING", "IN_PROGRESS", "COMPLETED"];
 
-export async function updateTaskStatus(actor, id, status, outcome) {
+export async function updateTaskStatus(db, actor, id, status, outcome) {
   if (!VALID_STATUSES.includes(status)) {
     throw new TaskError("Invalid status.", 400);
   }
 
-  return prisma.$transaction(async (tx) => {
+  const updated = await db.$transaction(async (tx) => {
     const task = await tx.task.findFirst({ where: { id, companyId: actor.companyId } });
     if (!task) throw new TaskError("Task not found.", 404);
     if (!canEditTask(actor, task)) {
@@ -181,14 +189,14 @@ export async function updateTaskStatus(actor, id, status, outcome) {
       throw new TaskError("This task is already completed and cannot be reopened here.", 409);
     }
 
-    const updated = await tx.task.update({
+    const result = await tx.task.update({
       where: { id },
       data: {
         status,
         completedAt: status === "COMPLETED" ? new Date() : task.completedAt,
         outcome: status === "COMPLETED" ? (outcome ?? task.outcome) : task.outcome,
       },
-      include: taskInclude,
+      include: { decision: { select: { id: true, title: true, status: true } } },
     });
 
     await recordAuditEvent(tx, {
@@ -200,6 +208,8 @@ export async function updateTaskStatus(actor, id, status, outcome) {
       changes: { from: task.status, to: status, outcome: outcome ?? null },
     });
 
-    return withComputedFields(updated);
+    return result;
   }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, updated);
 }

@@ -1,55 +1,62 @@
 import { useState, useEffect } from "react";
-import { User, Building2, Bell, Shield, CreditCard, Users } from "lucide-react";
+import { useOutletContext } from "react-router-dom";
+import { User, Building2, Users, Loader2 } from "lucide-react";
 import api from "../../api";
 import SettingsRow from "./SettingsRow";
-import SettingsToggle from "./SettingsToggle";
-import InviteMemberModal from "./InviteMemberModal";
+import MemberRow from "./MemberRow";
+import AddMemberModal from "./AddMemberModal";
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [inviteOpen, setInviteOpen] = useState(false);
+  const { user } = useOutletContext() || {};
+  const [members, setMembers] = useState([]);
+  const [loadingMembers, setLoadingMembers] = useState(true);
+  const [addOpen, setAddOpen] = useState(false);
 
-  useEffect(() => {
-    api.get("/settings/")
-      .then((res) => setSettings(res.data))
-      .catch((err) => console.error("Failed to fetch settings:", err))
-      .finally(() => setLoading(false));
-  }, []);
+  const canManageCompany = user?.permissions?.includes("admin:settings:manage");
+  const canManageUsers = user?.permissions?.includes("admin:users:manage");
 
-  const patchSection = async (section, payload) => {
-    const res = await api.patch(`/settings/${section}/`, payload);
-    setSettings((prev) => ({ ...prev, [section]: { ...prev[section], ...res.data } }));
+  const fetchMembers = () => {
+    setLoadingMembers(true);
+    api.get("/company/members/")
+      .then((res) => setMembers(Array.isArray(res.data) ? res.data : []))
+      .catch((err) => console.error("Failed to fetch team members:", err))
+      .finally(() => setLoadingMembers(false));
   };
 
-  const handleInvite = async (payload) => {
-    await api.post("/settings/team/invite/", payload);
-    setSettings((prev) => ({
-      ...prev,
-      team: { ...prev.team, active_count: (prev.team?.active_count || 0) + 1 },
-    }));
+  useEffect(fetchMembers, []);
+
+  const handleProfileSave = async (fullName) => {
+    const res = await api.patch("/settings/profile/", { fullName });
+    const updated = { ...user, full_name: res.data.fullName };
+    try {
+      localStorage.setItem("user", JSON.stringify(updated));
+    } catch {
+      // ignore storage failure (e.g. private browsing)
+    }
+    window.location.reload();
   };
 
-  if (loading) {
-    return (
-      <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6">
-        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading settings...</p>
-      </div>
-    );
-  }
+  const handleCompanySave = async (name) => {
+    await api.patch("/settings/company/", { name });
+    window.location.reload();
+  };
 
-  const profile = settings?.profile || {};
-  const company = settings?.company || {};
-  const notifications = settings?.notifications || {};
-  const security = settings?.security || {};
-  const billing = settings?.billing || {};
-  const team = settings?.team || {};
+  const handleAddMember = async (payload) => {
+    const res = await api.post("/company/members/", payload);
+    fetchMembers();
+    return res.data;
+  };
+
+  const handleUpdateMember = async (userId, payload) => {
+    await api.patch(`/company/members/${userId}/`, payload);
+    fetchMembers();
+  };
 
   return (
     <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Manage your account and application preferences</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Manage your account and company</p>
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
@@ -57,9 +64,14 @@ export default function SettingsPage() {
           <User className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Profile</h2>
         </div>
-        <SettingsRow label="Full Name" value={profile.full_name} onSave={(v) => patchSection("profile", { full_name: v })} />
-        <SettingsRow label="Email" value={profile.email} type="email" onSave={(v) => patchSection("profile", { email: v })} />
-        <SettingsRow label="Role" value={profile.role} onSave={(v) => patchSection("profile", { role: v })} />
+        <SettingsRow label="Full Name" value={user?.full_name} onSave={handleProfileSave} />
+        <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
+          <div>
+            <p className="text-sm text-gray-900 dark:text-gray-100">Email</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
+          </div>
+        </div>
+        <SettingsRow label="Password" value="••••••••" linkTo="/security" />
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
@@ -67,88 +79,62 @@ export default function SettingsPage() {
           <Building2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Company</h2>
         </div>
-        <SettingsRow label="Company Name" value={company.name} onSave={(v) => patchSection("company", { name: v })} />
-        <SettingsRow label="Industry" value={company.industry} onSave={(v) => patchSection("company", { industry: v })} />
-        <SettingsRow label="Company Size" value={company.size} onSave={(v) => patchSection("company", { size: v })} />
-      </div>
-
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-2">
-          <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Notifications</h2>
-        </div>
-        <SettingsToggle
-          label="Email Notifications"
-          checked={Boolean(notifications.email_notifications)}
-          onChange={(v) => patchSection("notifications", { email_notifications: v })}
-        />
-        <SettingsToggle
-          label="Decision Alerts"
-          checked={Boolean(notifications.decision_alerts)}
-          onChange={(v) => patchSection("notifications", { decision_alerts: v })}
-        />
-        <SettingsToggle
-          label="Approval Reminders"
-          checked={Boolean(notifications.approval_reminders)}
-          onChange={(v) => patchSection("notifications", { approval_reminders: v })}
-        />
-      </div>
-
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-2">
-          <Shield className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Security</h2>
-        </div>
-        <SettingsToggle
-          label="Two-Factor Authentication"
-          checked={Boolean(security.two_factor_enabled)}
-          onChange={(v) => patchSection("security", { two_factor_enabled: v })}
-        />
-        <SettingsRow
-          label="Session Timeout"
-          value={security.session_timeout_minutes ? `${security.session_timeout_minutes} minutes` : ""}
-          onSave={(v) => patchSection("security", { session_timeout_minutes: parseInt(v, 10) || 0 })}
-        />
-        <SettingsRow label="Password Last Changed" value={security.password_last_changed} linkTo="/security" />
-      </div>
-
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-2">
-          <CreditCard className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Billing</h2>
-        </div>
-        <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
-          <div>
-            <p className="text-sm text-gray-900 dark:text-gray-100">Current Plan</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{billing.plan_name} - ${billing.price}/month</p>
+        {canManageCompany ? (
+          <SettingsRow label="Company Name" value={user?.company_name} onSave={handleCompanySave} />
+        ) : (
+          <div className="flex items-center justify-between py-3">
+            <p className="text-sm text-gray-900 dark:text-gray-100">Company Name</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{user?.company_name}</p>
           </div>
-          <button
-            onClick={() => alert("Plan upgrades aren't available yet.")}
-            className="bg-brand-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-brand-700 transition-colors"
-          >
-            Upgrade Plan
-          </button>
-        </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400 pt-3">Next billing date: {billing.next_billing_date}</p>
+        )}
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-2">
-          <Users className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Team Members</h2>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Team Members</h2>
+          </div>
+          {canManageUsers && (
+            <button
+              onClick={() => setAddOpen(true)}
+              className="bg-brand-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-brand-700 transition-colors"
+            >
+              Add Member
+            </button>
+          )}
         </div>
-        <div className="flex items-center justify-between py-3">
-          <p className="text-sm text-gray-500 dark:text-gray-400">{team.active_count ?? 0} active team members</p>
-          <button
-            onClick={() => setInviteOpen(true)}
-            className="bg-brand-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-brand-700 transition-colors"
-          >
-            Invite Members
-          </button>
-        </div>
+
+        {loadingMembers ? (
+          <div className="flex items-center justify-center gap-2 py-6 text-gray-400 dark:text-gray-500">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading team...
+          </div>
+        ) : members.length === 0 ? (
+          <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No team members found.</p>
+        ) : canManageUsers ? (
+          <div>
+            {members.map((m) => (
+              <MemberRow key={m.id} member={m} onUpdate={handleUpdateMember} isSelf={m.id === user?.id} />
+            ))}
+          </div>
+        ) : (
+          <div>
+            {members.map((m) => (
+              <div key={m.id} className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                <div>
+                  <p className="text-sm text-gray-900 dark:text-gray-100">{m.fullName}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{m.email}</p>
+                </div>
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{m.role}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <InviteMemberModal open={inviteOpen} onClose={() => setInviteOpen(false)} onInvited={handleInvite} />
+      {canManageUsers && (
+        <AddMemberModal open={addOpen} onClose={() => setAddOpen(false)} onAdded={handleAddMember} />
+      )}
     </div>
   );
 }

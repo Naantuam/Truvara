@@ -1,8 +1,6 @@
 import "dotenv/config";
 import argon2 from "argon2";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { directoryPrisma as prisma } from "../src/db/directoryPrisma.js";
 
 // Namespaced so Governance/Operations/Finance/Dashboard share one permission
 // vocabulary (work-scope: "User -> Role -> Permissions -> Module Access ->
@@ -56,7 +54,7 @@ const ROLE_PERMISSIONS = {
   ],
 };
 
-async function main() {
+async function seedRolesAndPermissions() {
   const permissionRows = {};
   for (const [code, description] of PERMISSIONS) {
     permissionRows[code] = await prisma.permission.upsert({
@@ -85,10 +83,16 @@ async function main() {
     }
   }
 
-  // Dev-only seed data. There is no signup flow yet (open concern) -- this is
-  // how a company + one user per role exists at all for local testing.
-  // One user per role (not just Owner) so RBAC differences are actually
-  // observable -- Owner alone can't demonstrate that access is restricted.
+  return roleRows;
+}
+
+async function seedDevCompany(roleRows) {
+  const tenantDatabaseUrl = process.env.TENANT_DATABASE_URL;
+  if (!tenantDatabaseUrl || tenantDatabaseUrl.includes("placeholder")) {
+    console.log("Skipping dev company/users -- TENANT_DATABASE_URL is still a placeholder. Set it to a real, empty tenant database to seed dev logins.");
+    return;
+  }
+
   const DEV_PASSWORD = "ChangeMe123!";
   const DEV_USERS = [
     { email: "owner@truvara.dev", fullName: "Dev Owner", role: "Owner" },
@@ -98,7 +102,7 @@ async function main() {
 
   let company = await prisma.company.findFirst({ where: { name: "Truvara Dev Co" } });
   if (!company) {
-    company = await prisma.company.create({ data: { name: "Truvara Dev Co" } });
+    company = await prisma.company.create({ data: { name: "Truvara Dev Co", tenantDatabaseUrl } });
   }
 
   for (const { email, fullName, role } of DEV_USERS) {
@@ -114,7 +118,11 @@ async function main() {
     });
     console.log(`Seeded ${role} login: ${email} / ${DEV_PASSWORD}`);
   }
+}
 
+async function main() {
+  const roleRows = await seedRolesAndPermissions();
+  await seedDevCompany(roleRows);
   console.log("Seed complete.");
 }
 

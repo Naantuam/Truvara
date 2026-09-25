@@ -35,7 +35,7 @@ const decisionUpdateSchema = decisionInputSchema.partial();
 
 router.get("/", requirePermission("governance:decision:view"), async (req, res, next) => {
   try {
-    const decisions = await listDecisions(req.user.companyId);
+    const decisions = await listDecisions(req.user.tenantDb, req.user.companyId);
     res.json(decisions);
   } catch (err) {
     next(err);
@@ -44,7 +44,7 @@ router.get("/", requirePermission("governance:decision:view"), async (req, res, 
 
 router.get("/:id", requirePermission("governance:decision:view"), async (req, res, next) => {
   try {
-    const decision = await getDecision(req.user.companyId, req.params.id);
+    const decision = await getDecision(req.user.tenantDb, req.user.companyId, req.params.id);
     res.json(decision);
   } catch (err) {
     handleDecisionError(err, res, next);
@@ -56,7 +56,7 @@ router.post("/", requirePermission("governance:decision:create"), async (req, re
   if (!parsed.success) return res.status(400).json({ detail: "Invalid decision payload." });
 
   try {
-    const decision = await createDecision(req.user, parsed.data);
+    const decision = await createDecision(req.user.tenantDb, req.user, parsed.data);
     res.status(201).json(decision);
   } catch (err) {
     handleDecisionError(err, res, next);
@@ -68,7 +68,7 @@ router.patch("/:id", requirePermission("governance:decision:edit"), async (req, 
   if (!parsed.success) return res.status(400).json({ detail: "Invalid decision payload." });
 
   try {
-    const decision = await updateDecision(req.user, req.params.id, parsed.data);
+    const decision = await updateDecision(req.user.tenantDb, req.user, req.params.id, parsed.data);
     res.json(decision);
   } catch (err) {
     handleDecisionError(err, res, next);
@@ -77,7 +77,7 @@ router.patch("/:id", requirePermission("governance:decision:edit"), async (req, 
 
 router.post("/:id/submit", requirePermission("governance:decision:submit"), async (req, res, next) => {
   try {
-    const decision = await submitDecision(req.user, req.params.id);
+    const decision = await submitDecision(req.user.tenantDb, req.user, req.params.id);
     res.json(decision);
   } catch (err) {
     handleDecisionError(err, res, next);
@@ -86,7 +86,7 @@ router.post("/:id/submit", requirePermission("governance:decision:submit"), asyn
 
 router.post("/:id/approve", requirePermission("governance:decision:approve"), async (req, res, next) => {
   try {
-    const decision = await approveDecision(req.user, req.params.id);
+    const decision = await approveDecision(req.user.tenantDb, req.user, req.params.id);
     res.json(decision);
   } catch (err) {
     handleDecisionError(err, res, next);
@@ -100,7 +100,7 @@ router.post("/:id/reject", requirePermission("governance:decision:approve"), asy
   if (!parsed.success) return res.status(400).json({ detail: "A rejection reason is required." });
 
   try {
-    const decision = await rejectDecision(req.user, req.params.id, parsed.data.reason);
+    const decision = await rejectDecision(req.user.tenantDb, req.user, req.params.id, parsed.data.reason);
     res.json(decision);
   } catch (err) {
     handleDecisionError(err, res, next);

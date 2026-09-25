@@ -22,7 +22,7 @@ const SecuritySettings = () => {
 
     try {
       await api.post("/auth/change-password/", {
-        old_password: form.old_password,
+        current_password: form.old_password,
         new_password: form.new_password,
       });
       setMessage({ type: "success", text: "✅ Password updated successfully!" });

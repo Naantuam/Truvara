@@ -41,7 +41,7 @@ const transactionUpdateSchema = z.object({
 // Must come before "/:id" or "summary" would be parsed as an id.
 router.get("/summary", requirePermission("finance:transaction:view"), async (req, res, next) => {
   try {
-    const summary = await getSummary(req.user.companyId);
+    const summary = await getSummary(req.user.tenantDb, req.user.companyId);
     res.json(summary);
   } catch (err) {
     next(err);
@@ -50,7 +50,7 @@ router.get("/summary", requirePermission("finance:transaction:view"), async (req
 
 router.get("/", requirePermission("finance:transaction:view"), async (req, res, next) => {
   try {
-    const transactions = await listTransactions(req.user.companyId, {
+    const transactions = await listTransactions(req.user.tenantDb, req.user.companyId, {
       decisionId: req.query.decisionId,
       taskId: req.query.taskId,
       type: req.query.type,
@@ -63,7 +63,7 @@ router.get("/", requirePermission("finance:transaction:view"), async (req, res, 
 
 router.get("/:id", requirePermission("finance:transaction:view"), async (req, res, next) => {
   try {
-    const transaction = await getTransaction(req.user.companyId, req.params.id);
+    const transaction = await getTransaction(req.user.tenantDb, req.user.companyId, req.params.id);
     res.json(transaction);
   } catch (err) {
     handleTransactionError(err, res, next);
@@ -75,7 +75,7 @@ router.post("/", requirePermission("finance:transaction:create"), async (req, re
   if (!parsed.success) return res.status(400).json({ detail: "Invalid transaction payload." });
 
   try {
-    const transaction = await createTransaction(req.user, parsed.data);
+    const transaction = await createTransaction(req.user.tenantDb, req.user, parsed.data);
     res.status(201).json(transaction);
   } catch (err) {
     handleTransactionError(err, res, next);
@@ -87,7 +87,7 @@ router.patch("/:id", requirePermission("finance:transaction:edit"), async (req, 
   if (!parsed.success) return res.status(400).json({ detail: "Invalid transaction payload." });
 
   try {
-    const transaction = await updateTransaction(req.user, req.params.id, parsed.data);
+    const transaction = await updateTransaction(req.user.tenantDb, req.user, req.params.id, parsed.data);
     res.json(transaction);
   } catch (err) {
     handleTransactionError(err, res, next);

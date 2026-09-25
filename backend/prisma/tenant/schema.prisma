@@ -1,0 +1,183 @@
+// Tenant ("business data") schema -- one definition, many physical
+// databases. Each company's Decisions/Tasks/Transactions/Documents/Audit
+// log live in a database matching this exact schema, but which database a
+// given request talks to is resolved at runtime (via Company.tenantDatabaseUrl
+// in the directory) and passed to PrismaClient's `datasourceUrl` option --
+// this file is never used to generate more than one client.
+//
+// companyId is kept on every model even though a dedicated-tier database
+// only ever holds one company's rows -- companies on the shared pooled tier
+// (future companies, by default) share ONE tenant database, and need it for
+// real isolation. Every service function filters by it exactly the same way
+// regardless of which tier a company is on; only the connection differs.
+//
+// creatorId/approverId/assigneeId/recordedById/actorId/uploadedById are
+// plain UUID columns, not Prisma relations -- the User they reference lives
+// in the separate directory database, and Prisma (like Postgres itself)
+// can't enforce or join a foreign key across two different databases.
+// Services resolve display names by querying the directory client
+// separately and merging the result in application code.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/.prisma/tenant-client"
+}
+
+// `schemas` scopes this file to the Postgres "public" namespace only -- on
+// the shared database (see TAVORA_DATABASE_URL), the directory tables live
+// in their own "directory" namespace instead, so `db push` here never sees
+// or touches them. Foundry's and Knit Energy's databases only ever hold
+// tenant tables in "public" to begin with, so nothing changes for them.
+datasource db {
+  provider = "postgresql"
+  url      = env("TENANT_DATABASE_URL")
+  schemas  = ["public"]
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  companyId String   @map("company_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  decisions Decision[]
+
+  @@unique([companyId, name])
+  @@map("departments")
+  @@schema("public")
+}
+
+enum DecisionStatus {
+  DRAFT
+  SUBMITTED
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  EXECUTING
+  COMPLETED
+
+  @@schema("public")
+}
+
+model Decision {
+  id              String         @id @default(uuid())
+  companyId       String         @map("company_id")
+  departmentId    String?        @map("department_id")
+  title           String
+  description     String?
+  proposedAction  String?        @map("proposed_action")
+  stakeholders    String?
+  priority        String?
+  status          DecisionStatus @default(DRAFT)
+  creatorId       String         @map("creator_id")
+  approverId      String?        @map("approver_id")
+  expectedAmount  Decimal?       @map("expected_amount") @db.Decimal(14, 2)
+  rejectionReason String?        @map("rejection_reason")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  approvedAt      DateTime?      @map("approved_at")
+
+  department   Department?   @relation(fields: [departmentId], references: [id])
+  tasks        Task[]
+  transactions Transaction[]
+  documents    Document[]
+
+  @@index([companyId, status])
+  @@map("decisions")
+  @@schema("public")
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  OVERDUE
+  COMPLETED
+
+  @@schema("public")
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  companyId   String     @map("company_id")
+  decisionId  String?    @map("decision_id")
+  title       String
+  description String?
+  assigneeId  String?    @map("assignee_id")
+  status      TaskStatus @default(PENDING)
+  priority    String?
+  dueDate     DateTime?  @map("due_date")
+  completedAt DateTime?  @map("completed_at")
+  outcome     String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  decision     Decision?     @relation(fields: [decisionId], references: [id])
+  transactions Transaction[]
+
+  @@index([companyId, status])
+  @@map("tasks")
+  @@schema("public")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+
+  @@schema("public")
+}
+
+model Transaction {
+  id           String          @id @default(uuid())
+  companyId    String          @map("company_id")
+  decisionId   String?         @map("decision_id")
+  taskId       String?         @map("task_id")
+  type         TransactionType
+  amount       Decimal         @db.Decimal(14, 2)
+  currency     String          @default("NGN")
+  narration    String?
+  counterparty String?
+  category     String?
+  recordedById String          @map("recorded_by_id")
+  occurredAt   DateTime        @map("occurred_at")
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  decision  Decision?  @relation(fields: [decisionId], references: [id])
+  task      Task?      @relation(fields: [taskId], references: [id])
+  documents Document[]
+
+  @@index([companyId, type])
+  @@map("transactions")
+  @@schema("public")
+}
+
+model Document {
+  id            String   @id @default(uuid())
+  companyId     String   @map("company_id")
+  decisionId    String?  @map("decision_id")
+  transactionId String?  @map("transaction_id")
+  fileName      String   @map("file_name")
+  fileUrl       String   @map("file_url")
+  uploadedById  String   @map("uploaded_by_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  decision    Decision?    @relation(fields: [decisionId], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@map("documents")
+  @@schema("public")
+}
+
+model AuditEvent {
+  id         String   @id @default(uuid())
+  companyId  String   @map("company_id")
+  actorId    String?  @map("actor_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  changes    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([companyId, entityType, entityId])
+  @@map("audit_events")
+  @@schema("public")
+}

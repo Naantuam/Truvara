@@ -4,12 +4,24 @@ services:
     runtime: node
     rootDir: backend
     plan: free
-    buildCommand: npm install && npx prisma generate && npm run prisma:deploy
+    # Schema is managed locally via `prisma db push` (see bms_system_backend_todo
+    # memory) against each database directly, not through migration history --
+    # there are no migration files to `deploy`. Render's build only needs to
+    # generate the two Prisma clients the app imports at runtime.
+    buildCommand: npm install && npm run prisma:generate
     startCommand: npm start
     envVars:
       - key: PORT
         value: 10000
-      - key: DATABASE_URL
+      - key: DIRECTORY_DATABASE_URL
+        sync: false
+      - key: TENANT_DATABASE_URL
+        sync: false
+      - key: TAVORA_DATABASE_URL
+        sync: false
+      - key: KNITENERGY_DATABASE_URL
+        sync: false
+      - key: FOUNDRY_DATABASE_URL
         sync: false
       - key: JWT_ACCESS_SECRET
         sync: false
@@ -20,4 +32,16 @@ services:
       - key: JWT_REFRESH_TTL
         value: 7d
       - key: CORS_ORIGIN
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM
         sync: false

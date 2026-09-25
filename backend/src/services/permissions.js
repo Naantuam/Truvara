@@ -1,13 +1,14 @@
-import { prisma } from "../db/prisma.js";
+import { directoryPrisma } from "../db/directoryPrisma.js";
 
 // Loaded fresh per request rather than cached in the JWT: a permission change
 // (or a role change) must take effect on the user's very next request, not
 // only after their token expires.
 export async function loadPermissionContext(userId, companyId) {
-  const membership = await prisma.companyMembership.findUnique({
+  const membership = await directoryPrisma.companyMembership.findUnique({
     where: { userId_companyId: { userId, companyId } },
     include: {
       role: { include: { rolePermissions: { include: { permission: true } } } },
+      company: { select: { tenantDatabaseUrl: true } },
     },
   });
 
@@ -21,6 +22,7 @@ export async function loadPermissionContext(userId, companyId) {
     scopeType: membership.scopeType,
     departmentId: membership.departmentId,
     permissions,
+    tenantDatabaseUrl: membership.company.tenantDatabaseUrl,
   };
 }
 

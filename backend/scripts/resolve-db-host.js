@@ -13,6 +13,11 @@
 // resolver ever runs -- while still sending the real hostname over TLS (SNI),
 // which Neon's proxy needs to route to the right compute. Re-resolved fresh
 // on every run (not hardcoded) since Neon's IPs aren't guaranteed stable.
+//
+// Now scans every env var whose name contains DATABASE_URL (DIRECTORY_
+// DATABASE_URL, TENANT_DATABASE_URL, and any per-tenant *_DATABASE_URL added
+// later), not just one -- the running server talks to several hosts at once
+// once more than one company's database is live.
 import dns from "node:dns/promises";
 import fs from "node:fs";
 import path from "node:path";
@@ -31,21 +36,27 @@ function extractHostname(databaseUrl) {
 }
 
 async function main() {
-  const hostname = extractHostname(process.env.DATABASE_URL);
-
-  if (!hostname || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
-    fs.writeFileSync(hostAliasesPath, "");
-    return;
+  const hostnames = new Set();
+  for (const [key, value] of Object.entries(process.env)) {
+    if (!key.includes("DATABASE_URL") || !value) continue;
+    const hostname = extractHostname(value);
+    if (hostname && !/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+      hostnames.add(hostname);
+    }
   }
 
-  try {
-    const addresses = await dns.resolve4(hostname);
-    fs.writeFileSync(hostAliasesPath, `${hostname} ${addresses[0]}\n`);
-    console.log(`[resolve-db-host] ${hostname} -> ${addresses[0]} (IPv4 pin for Prisma's DNS resolver)`);
-  } catch (err) {
-    console.warn(`[resolve-db-host] Could not resolve ${hostname} over IPv4, leaving HOSTALIASES empty:`, err.message);
-    fs.writeFileSync(hostAliasesPath, "");
+  const lines = [];
+  for (const hostname of hostnames) {
+    try {
+      const addresses = await dns.resolve4(hostname);
+      lines.push(`${hostname} ${addresses[0]}`);
+      console.log(`[resolve-db-host] ${hostname} -> ${addresses[0]} (IPv4 pin for Prisma's DNS resolver)`);
+    } catch (err) {
+      console.warn(`[resolve-db-host] Could not resolve ${hostname} over IPv4, skipping:`, err.message);
+    }
   }
+
+  fs.writeFileSync(hostAliasesPath, lines.length ? lines.join("\n") + "\n" : "");
 }
 
 main();

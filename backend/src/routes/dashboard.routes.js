@@ -8,7 +8,7 @@ router.use(authenticate);
 
 router.get("/activity", requirePermission("dashboard:view"), async (req, res, next) => {
   try {
-    const activity = await getRecentActivity(req.user.companyId);
+    const activity = await getRecentActivity(req.user.tenantDb, req.user.companyId);
     res.json(activity);
   } catch (err) {
     next(err);

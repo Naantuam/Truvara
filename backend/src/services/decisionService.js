@@ -1,5 +1,5 @@
-import { prisma } from "../db/prisma.js";
 import { recordAuditEvent } from "../utils/audit.js";
+import { loadUserMap, attachUser } from "../utils/hydrateUsers.js";
 
 export class DecisionError extends Error {
   constructor(message, status = 400) {
@@ -17,46 +17,47 @@ export function canApproveDecision(actor, decision) {
   return decision.creatorId !== actor.userId;
 }
 
-// The frontend needs a name to display, not just creatorId/approverId UUIDs --
-// work-scope §5.2 lists "Decision maker / responsible authority" as required
-// decision content, so this is minimum viable UI data, not scope creep.
-const PERSON_SELECT = { id: true, fullName: true, email: true };
-const decisionInclude = {
-  creator: { select: PERSON_SELECT },
-  approver: { select: PERSON_SELECT },
-};
-
-// Prisma's default interactive-transaction timeout (5s) is too tight for this
-// network path to Neon, which has genuine latency variance (not just a first
-// cold-start query) -- a plain create+audit-log transaction has been observed
-// to exceed it. This is a real fix, not an environment-specific workaround.
+// Prisma's default interactive-transaction timeout (5s) is too tight for real
+// observed latency to Neon -- kept generous here too.
 const TRANSACTION_OPTIONS = { timeout: 15000 };
 
-// Every read/write of a decision goes through this -- filtering by
-// req.user.companyId, never a client-supplied value. A decision that exists
-// but belongs to another company is indistinguishable from one that doesn't
-// exist: both return null here, and callers turn that into a 404, never 403.
-async function findCompanyDecision(companyId, id) {
-  return prisma.decision.findFirst({ where: { id, companyId }, include: decisionInclude });
+// creatorId/approverId reference Users in the separate directory database --
+// resolved here per call rather than via Prisma `include` (not possible
+// across two physical databases). department, tasks, transactions, and
+// documents all live in the same tenant DB as Decision, so those stay as
+// normal Prisma includes.
+async function hydrate(db, decisions) {
+  const list = Array.isArray(decisions) ? decisions : [decisions];
+  const userMap = await loadUserMap(list.flatMap((d) => [d.creatorId, d.approverId]));
+  const withUsers = list.map((d) => ({
+    ...d,
+    creator: attachUser(userMap, d.creatorId),
+    approver: attachUser(userMap, d.approverId),
+  }));
+  return Array.isArray(decisions) ? withUsers : withUsers[0];
 }
 
-export async function listDecisions(companyId) {
-  return prisma.decision.findMany({
+async function findCompanyDecision(db, companyId, id) {
+  return db.decision.findFirst({ where: { id, companyId } });
+}
+
+export async function listDecisions(db, companyId) {
+  const decisions = await db.decision.findMany({
     where: { companyId },
     orderBy: { createdAt: "desc" },
-    include: decisionInclude,
   });
+  return hydrate(db, decisions);
 }
 
-export async function getDecision(companyId, id) {
-  const decision = await findCompanyDecision(companyId, id);
+export async function getDecision(db, companyId, id) {
+  const decision = await findCompanyDecision(db, companyId, id);
   if (!decision) throw new DecisionError("Decision not found.", 404);
-  return decision;
+  return hydrate(db, decision);
 }
 
-export async function createDecision(actor, input) {
-  return prisma.$transaction(async (tx) => {
-    const decision = await tx.decision.create({
+export async function createDecision(db, actor, input) {
+  const decision = await db.$transaction(async (tx) => {
+    const created = await tx.decision.create({
       data: {
         companyId: actor.companyId,
         creatorId: actor.userId,
@@ -68,7 +69,6 @@ export async function createDecision(actor, input) {
         priority: input.priority ?? null,
         expectedAmount: input.expectedAmount ?? null,
       },
-      include: decisionInclude,
     });
 
     await recordAuditEvent(tx, {
@@ -76,16 +76,18 @@ export async function createDecision(actor, input) {
       actorId: actor.userId,
       action: "decision.created",
       entityType: "Decision",
-      entityId: decision.id,
-      changes: { title: decision.title, status: decision.status },
+      entityId: created.id,
+      changes: { title: created.title, status: created.status },
     });
 
-    return decision;
+    return created;
   }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, decision);
 }
 
-export async function updateDecision(actor, id, input) {
-  return prisma.$transaction(async (tx) => {
+export async function updateDecision(db, actor, id, input) {
+  const updated = await db.$transaction(async (tx) => {
     const decision = await tx.decision.findFirst({ where: { id, companyId: actor.companyId } });
     if (!decision) throw new DecisionError("Decision not found.", 404);
 
@@ -96,7 +98,7 @@ export async function updateDecision(actor, id, input) {
       throw new DecisionError("Only the creator (or Owner) can edit this decision.", 403);
     }
 
-    const updated = await tx.decision.update({
+    const result = await tx.decision.update({
       where: { id },
       data: {
         title: input.title ?? decision.title,
@@ -107,7 +109,6 @@ export async function updateDecision(actor, id, input) {
         priority: input.priority ?? decision.priority,
         expectedAmount: input.expectedAmount ?? decision.expectedAmount,
       },
-      include: decisionInclude,
     });
 
     await recordAuditEvent(tx, {
@@ -119,12 +120,14 @@ export async function updateDecision(actor, id, input) {
       changes: input,
     });
 
-    return updated;
+    return result;
   }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, updated);
 }
 
-export async function submitDecision(actor, id) {
-  return prisma.$transaction(async (tx) => {
+export async function submitDecision(db, actor, id) {
+  const updated = await db.$transaction(async (tx) => {
     const decision = await tx.decision.findFirst({ where: { id, companyId: actor.companyId } });
     if (!decision) throw new DecisionError("Decision not found.", 404);
 
@@ -135,10 +138,9 @@ export async function submitDecision(actor, id) {
       throw new DecisionError("Only the creator (or Owner) can submit this decision.", 403);
     }
 
-    const updated = await tx.decision.update({
+    const result = await tx.decision.update({
       where: { id },
       data: { status: "PENDING_APPROVAL" },
-      include: decisionInclude,
     });
 
     await recordAuditEvent(tx, {
@@ -150,12 +152,14 @@ export async function submitDecision(actor, id) {
       changes: { from: "DRAFT", to: "PENDING_APPROVAL" },
     });
 
-    return updated;
+    return result;
   }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, updated);
 }
 
-export async function approveDecision(actor, id) {
-  return prisma.$transaction(async (tx) => {
+export async function approveDecision(db, actor, id) {
+  const updated = await db.$transaction(async (tx) => {
     const decision = await tx.decision.findFirst({ where: { id, companyId: actor.companyId } });
     if (!decision) throw new DecisionError("Decision not found.", 404);
 
@@ -166,10 +170,9 @@ export async function approveDecision(actor, id) {
       throw new DecisionError("You cannot approve a decision you created.", 403);
     }
 
-    const updated = await tx.decision.update({
+    const result = await tx.decision.update({
       where: { id },
       data: { status: "APPROVED", approverId: actor.userId, approvedAt: new Date() },
-      include: decisionInclude,
     });
 
     await recordAuditEvent(tx, {
@@ -181,12 +184,14 @@ export async function approveDecision(actor, id) {
       changes: { from: "PENDING_APPROVAL", to: "APPROVED" },
     });
 
-    return updated;
+    return result;
   }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, updated);
 }
 
-export async function rejectDecision(actor, id, reason) {
-  return prisma.$transaction(async (tx) => {
+export async function rejectDecision(db, actor, id, reason) {
+  const updated = await db.$transaction(async (tx) => {
     const decision = await tx.decision.findFirst({ where: { id, companyId: actor.companyId } });
     if (!decision) throw new DecisionError("Decision not found.", 404);
 
@@ -197,10 +202,9 @@ export async function rejectDecision(actor, id, reason) {
       throw new DecisionError("You cannot reject a decision you created.", 403);
     }
 
-    const updated = await tx.decision.update({
+    const result = await tx.decision.update({
       where: { id },
       data: { status: "REJECTED", approverId: actor.userId, rejectionReason: reason },
-      include: decisionInclude,
     });
 
     await recordAuditEvent(tx, {
@@ -212,6 +216,8 @@ export async function rejectDecision(actor, id, reason) {
       changes: { from: "PENDING_APPROVAL", to: "REJECTED", reason },
     });
 
-    return updated;
+    return result;
   }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, updated);
 }

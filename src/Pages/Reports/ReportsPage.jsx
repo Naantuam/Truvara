@@ -1,182 +1,94 @@
-import { useState, useEffect } from "react";
-import { Download } from "lucide-react";
-import {
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-} from "recharts";
+import { useState } from "react";
+import { Download, FileText, FileSpreadsheet } from "lucide-react";
 import api from "../../api";
-import useTheme from "../../Reusable/useTheme";
 
-const STATUS_COLORS = {
-  Approved: "#10b981",
-  "Pending Approval": "#f97316",
-  Draft: "#9ca3af",
-  Rejected: "#ef4444",
-};
-
-const STATS = [
-  { key: "total_decisions", label: "Total Decisions", goodDirection: "up", suffix: "" },
-  { key: "approval_rate", label: "Approval Rate", goodDirection: "up", suffix: "%" },
-  { key: "avg_response_time", label: "Avg. Response Time", goodDirection: "down", suffix: " days" },
-];
-
+// Precious's spec for Reports (work-scope §9) is an export tool, not an
+// analytics dashboard -- PDF/CSV of the real underlying data for a selected
+// period. The old chart-based version here was speculative scaffolding from
+// before that spec existed; see bms_system_open_concerns memory.
 export default function ReportsPage() {
-  const { theme } = useTheme();
-  const gridStroke = theme === "dark" ? "#374151" : "#f0f0f0";
-  const tickFill = theme === "dark" ? "#9ca3af" : "#9ca3af";
-  const [range, setRange] = useState("6m");
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [downloading, setDownloading] = useState(false);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [downloading, setDownloading] = useState(null);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    setLoading(true);
-    api.get("/reports/summary/", { params: { range } })
-      .then((res) => setData(res.data))
-      .catch((err) => console.error("Failed to fetch report summary:", err))
-      .finally(() => setLoading(false));
-  }, [range]);
-
-  const handleExport = async () => {
-    setDownloading(true);
+  const handleExport = async (format) => {
+    setDownloading(format);
+    setError(null);
     try {
-      const res = await api.get("/reports/export/", { params: { range }, responseType: "blob" });
+      const params = { format };
+      if (from) params.from = new Date(from).toISOString();
+      if (to) params.to = new Date(to).toISOString();
+
+      const res = await api.get("/reports/export/", { params, responseType: "blob" });
       const url = URL.createObjectURL(res.data);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "business-report.csv";
+      link.download = `truvara-report.${format === "pdf" ? "pdf" : "csv"}`;
       link.click();
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Failed to export report:", err);
+      setError("Failed to export report. Please try again.");
     } finally {
-      setDownloading(false);
+      setDownloading(null);
     }
   };
 
   return (
     <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Analytics and insights for your business</p>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Export your business data — decisions, actions, finances, and recent activity</p>
+      </div>
+
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 max-w-xl">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">Export Report</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+          Includes company info, Governance, Operations, Finance, and recent activity. Leave dates blank to include all-time data.
+        </p>
+
+        <div className="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">From</label>
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">To</label>
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="mt-1 w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <select
-            value={range}
-            onChange={(e) => setRange(e.target.value)}
-            className="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-          >
-            <option value="3m">Last 3 Months</option>
-            <option value="6m">Last 6 Months</option>
-            <option value="12m">Last 12 Months</option>
-          </select>
+
+        {error && <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>}
+
+        <div className="flex gap-3">
           <button
-            onClick={handleExport}
-            disabled={downloading}
-            className="flex items-center gap-2 bg-brand-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-brand-700 transition-colors disabled:opacity-50"
+            onClick={() => handleExport("csv")}
+            disabled={downloading !== null}
+            className="flex-1 flex items-center justify-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
           >
-            <Download className="w-4 h-4" /> {downloading ? "Exporting..." : "Export Report"}
+            <FileSpreadsheet className="w-4 h-4" /> {downloading === "csv" ? "Exporting..." : "Export CSV"}
+          </button>
+          <button
+            onClick={() => handleExport("pdf")}
+            disabled={downloading !== null}
+            className="flex-1 flex items-center justify-center gap-2 bg-brand-600 text-white text-sm font-medium rounded-lg py-2.5 hover:bg-brand-700 transition-colors disabled:opacity-50"
+          >
+            {downloading === "pdf" ? <Download className="w-4 h-4 animate-pulse" /> : <FileText className="w-4 h-4" />}
+            {downloading === "pdf" ? "Exporting..." : "Export PDF"}
           </button>
         </div>
       </div>
-
-      {loading ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading report data...</p>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Expenses by Month</h2>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data?.expenses_by_month || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
-                    <Tooltip />
-                    <Bar dataKey="amount" fill="#c39c55" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Decisions by Status</h2>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={data?.decisions_by_status || []}
-                      dataKey="value"
-                      nameKey="status"
-                      innerRadius={0}
-                      outerRadius={90}
-                      label={({ status, value }) => `${status}: ${value}%`}
-                    >
-                      {(data?.decisions_by_status || []).map((entry) => (
-                        <Cell key={entry.status} fill={STATUS_COLORS[entry.status] || "#9ca3af"} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Actions Completed</h2>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={data?.actions_completed || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Approval Trends</h2>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data?.approval_trends || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: tickFill }} />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="approved" fill="#10b981" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="rejected" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {STATS.map((stat) => {
-              const entry = data?.stats?.[stat.key];
-              const delta = entry?.delta ?? 0;
-              const isGood = stat.goodDirection === "up" ? delta >= 0 : delta <= 0;
-              return (
-                <div key={stat.key} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
-                    {entry?.value ?? "—"}{stat.suffix}
-                  </p>
-                  <p className={`text-xs font-medium mt-1 ${isGood ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                    {delta >= 0 ? "+" : ""}{delta}{stat.suffix} from last period
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
     </div>
   );
 }
