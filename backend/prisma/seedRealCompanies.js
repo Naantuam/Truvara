@@ -26,6 +26,7 @@ const COMPANIES = [
       // Energy entry below, on purpose: exercises the real multi-company
       // login/select-company flow.
       { email: "nathaniellongmen@gmail.com", fullName: "Nathaniel Longmen", role: "Owner" },
+      { email: "info.tavorainternationalltd@gmail.com", fullName: "a-vora International Limited", role: "Owner" },
       { email: "emily@thefoundrybiz.com", fullName: "Emily Sharlene", role: "Owner" }
       // Real emails not yet available -- uncomment once known:
       // { email: "martins@tavora.example", fullName: "Martins Brengshak", role: "Team Member" },
@@ -38,6 +39,7 @@ const COMPANIES = [
     tenantDatabaseUrlEnv: "KNITENERGY_DATABASE_URL",
     members: [
       { email: "nathaniellongmen@gmail.com", fullName: "Nathaniel Longmen", role: "Owner" },
+      { email: "knitenergylimited@gmail.com", fullName: "Knit Energy Ltd", role: "Owner" },
       { email: "emily@thefoundrybiz.com", fullName: "Emily Sharlene", role: "Owner" }
 
     ],
@@ -47,6 +49,7 @@ const COMPANIES = [
     tenantDatabaseUrlEnv: "FOUNDRY_DATABASE_URL",
     members: [
       { email: "emily@thefoundrybiz.com", fullName: "Emily Sharlene", role: "Owner" },
+      { email: "info@thefoundrybiz.com", fullName: "The Foundry Business Services LLC", role: "Owner" }
       // Joe's email not yet confirmed -- uncomment once known:
       // { email: "joe@thefoundrybiz.com", fullName: "Joe Benny Kunze", role: "Team Member" },
     ],
