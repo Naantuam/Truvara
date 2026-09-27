@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { MailCheck } from "lucide-react";
 
-const ROLES = ["Owner", "Manager", "Team Member"];
+// Manager role limited/commented out from frontend per requirements (can be re-enabled later)
+const ROLES = ["Owner", /* "Manager", */ "Team Member"];
 
 // New members get an activation email with a link to set their own
 // password -- nothing sensitive passes through this admin, or this screen.

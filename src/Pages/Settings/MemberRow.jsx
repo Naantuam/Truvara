@@ -1,9 +1,15 @@
 import { useState } from "react";
 
-const ROLES = ["Owner", "Manager", "Team Member"];
+// Manager role limited/commented out from frontend per requirements (can be re-enabled later)
+const ROLES = ["Owner", /* "Manager", */ "Team Member"];
 
 export default function MemberRow({ member, onUpdate, isSelf }) {
   const [saving, setSaving] = useState(false);
+
+  // Preserve Manager option for rendering if an existing user in DB currently has that role
+  const roleOptions = member?.role === "Manager" && !ROLES.includes("Manager")
+    ? [...ROLES, "Manager"]
+    : ROLES;
 
   const handleRoleChange = async (e) => {
     setSaving(true);
@@ -39,7 +45,7 @@ export default function MemberRow({ member, onUpdate, isSelf }) {
           title={isSelf ? "You can't change your own role" : undefined}
           className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50"
         >
-          {ROLES.map((r) => (
+          {roleOptions.map((r) => (
             <option key={r}>{r}</option>
           ))}
         </select>
