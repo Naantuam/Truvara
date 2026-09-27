@@ -26,7 +26,7 @@ const COMPANIES = [
       // Energy entry below, on purpose: exercises the real multi-company
       // login/select-company flow.
       { email: "nathaniellongmen@gmail.com", fullName: "Nathaniel Longmen", role: "Owner" },
-      { email: "info.tavorainternationalltd@gmail.com", fullName: "a-vora International Limited", role: "Owner" },
+      { email: "info.tavorainternationalltd@gmail.com", fullName: "Ta-vora International Limited", role: "Owner" },
       { email: "emily@thefoundrybiz.com", fullName: "Emily Sharlene", role: "Owner" }
       // Real emails not yet available -- uncomment once known:
       // { email: "martins@tavora.example", fullName: "Martins Brengshak", role: "Team Member" },
