@@ -92,29 +92,31 @@ export default function ResponsibilitiesPage() {
 
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Workload Summary</h2>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
-                  <th className="pb-2 pr-4">Person</th>
-                  <th className="pb-2 pr-4">Active Tasks</th>
-                  <th className="pb-2">Completed</th>
-                </tr>
-              </thead>
-              <tbody>
-                {people.map((p, index) => (
-                  <tr key={p.id} className="border-b border-gray-50 dark:border-gray-800/60 last:border-0">
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-2">
-                        <DepartmentAvatar name={p.name} index={index} size="sm" />
-                        <span className="text-gray-900 dark:text-gray-100">{p.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{p.activeCount}</td>
-                    <td className="py-3 text-gray-600 dark:text-gray-400">{p.completedCount}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
+                    <th className="pb-2 pr-4">Person</th>
+                    <th className="pb-2 pr-4">Active Tasks</th>
+                    <th className="pb-2">Completed</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {people.map((p, index) => (
+                    <tr key={p.id} className="border-b border-gray-50 dark:border-gray-800/60 last:border-0">
+                      <td className="py-3 pr-4">
+                        <div className="flex items-center gap-2">
+                          <DepartmentAvatar name={p.name} index={index} size="sm" />
+                          <span className="text-gray-900 dark:text-gray-100">{p.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{p.activeCount}</td>
+                      <td className="py-3 text-gray-600 dark:text-gray-400">{p.completedCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       )}

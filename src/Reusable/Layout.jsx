@@ -93,7 +93,7 @@ export default function Layout() {
             - On Mobile, it stays 'ml-0' so the content remains full width behind the sidebar.
         */}
                 <main
-                    className={`flex-1 transition-all duration-300 ease-in-out overflow-x-auto ${sidebarOpen ? "md:ml-55" : "ml-0"
+                    className={`flex-1 min-w-0 transition-all duration-300 ease-in-out overflow-x-auto ${sidebarOpen ? "md:ml-55" : "ml-0"
                         }`}
                 >
                     <Outlet context={{ user, loadingAuth }} />

@@ -72,65 +72,69 @@ export default function ActionsPage() {
           {active.length > 0 && (
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
               <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Active ({active.length})</h2>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
-                    <th className="pb-2 pr-4">Action</th>
-                    <th className="pb-2 pr-4">Assigned To</th>
-                    <th className="pb-2 pr-4">Priority</th>
-                    <th className="pb-2 pr-4">Due</th>
-                    <th className="pb-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {active.map((t) => (
-                    <tr
-                      key={t.id}
-                      onClick={() => setActiveTask(t)}
-                      className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
-                    >
-                      <td className="py-3 pr-4">
-                        <p className="text-gray-900 dark:text-gray-100">{t.title}</p>
-                        {t.decision && <p className="text-xs text-gray-400 dark:text-gray-500">From: {t.decision.title}</p>}
-                      </td>
-                      <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{t.assignee?.fullName || "Unassigned"}</td>
-                      <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{t.priority || "—"}</td>
-                      <td className={`py-3 pr-4 ${t.isOverdue ? "text-red-600 dark:text-red-400 font-medium" : "text-gray-600 dark:text-gray-400"}`}>
-                        {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "—"}{t.isOverdue && " (Overdue)"}
-                      </td>
-                      <td className="py-3"><StatusBadge status={taskStatusLabel(t.status)} /></td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
+                      <th className="pb-2 pr-4">Action</th>
+                      <th className="pb-2 pr-4">Assigned To</th>
+                      <th className="pb-2 pr-4">Priority</th>
+                      <th className="pb-2 pr-4">Due</th>
+                      <th className="pb-2">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {active.map((t) => (
+                      <tr
+                        key={t.id}
+                        onClick={() => setActiveTask(t)}
+                        className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
+                      >
+                        <td className="py-3 pr-4">
+                          <p className="text-gray-900 dark:text-gray-100">{t.title}</p>
+                          {t.decision && <p className="text-xs text-gray-400 dark:text-gray-500">From: {t.decision.title}</p>}
+                        </td>
+                        <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{t.assignee?.fullName || "Unassigned"}</td>
+                        <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{t.priority || "—"}</td>
+                        <td className={`py-3 pr-4 ${t.isOverdue ? "text-red-600 dark:text-red-400 font-medium" : "text-gray-600 dark:text-gray-400"}`}>
+                          {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "—"}{t.isOverdue && " (Overdue)"}
+                        </td>
+                        <td className="py-3"><StatusBadge status={taskStatusLabel(t.status)} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
           {completed.length > 0 && (
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
               <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Completed ({completed.length})</h2>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
-                    <th className="pb-2 pr-4">Action</th>
-                    <th className="pb-2 pr-4">Assigned To</th>
-                    <th className="pb-2">Outcome</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {completed.map((t) => (
-                    <tr
-                      key={t.id}
-                      onClick={() => setActiveTask(t)}
-                      className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
-                    >
-                      <td className="py-3 pr-4 text-gray-900 dark:text-gray-100">{t.title}</td>
-                      <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{t.assignee?.fullName || "Unassigned"}</td>
-                      <td className="py-3 text-gray-600 dark:text-gray-400 truncate max-w-[280px]">{t.outcome || "—"}</td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
+                      <th className="pb-2 pr-4">Action</th>
+                      <th className="pb-2 pr-4">Assigned To</th>
+                      <th className="pb-2">Outcome</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {completed.map((t) => (
+                      <tr
+                        key={t.id}
+                        onClick={() => setActiveTask(t)}
+                        className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
+                      >
+                        <td className="py-3 pr-4 text-gray-900 dark:text-gray-100">{t.title}</td>
+                        <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{t.assignee?.fullName || "Unassigned"}</td>
+                        <td className="py-3 text-gray-600 dark:text-gray-400 truncate max-w-[280px]">{t.outcome || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>

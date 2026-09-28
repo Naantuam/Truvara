@@ -92,8 +92,8 @@ export default function ExpensesPage() {
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">All Transactions</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">{filtered.length} entries · net ${total.toLocaleString()}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
+          <div className="flex items-center flex-wrap gap-2">
+            <div className="flex border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden flex-shrink-0">
               {TABS.map((t) => (
                 <button
                   key={t}
@@ -111,7 +111,7 @@ export default function ExpensesPage() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500"
+              className="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500 max-w-full"
             >
               {categories.map((c) => (
                 <option key={c}>{c}</option>
@@ -127,54 +127,56 @@ export default function ExpensesPage() {
         ) : filtered.length === 0 ? (
           <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No transactions found.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
-                <th className="pb-2 pr-4">Date</th>
-                <th className="pb-2 pr-4">Description</th>
-                <th className="pb-2 pr-4">Category</th>
-                <th className="pb-2 pr-4">Type</th>
-                <th className="pb-2 pr-4">Amount</th>
-                <th className="pb-2">Recorded By</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((t) => (
-                <tr key={t.id} className="border-b border-gray-50 dark:border-gray-800/60 last:border-0">
-                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{new Date(t.occurredAt).toLocaleDateString()}</td>
-                  <td className="py-3 pr-4">
-                    <p className="text-gray-900 dark:text-gray-100">{t.narration || "—"}</p>
-                    {t.task && (
-                      <p className="text-xs text-gold-600 dark:text-gold-400">Action: {t.task.title}</p>
-                    )}
-                    {t.decision && !t.task && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500">Decision: {t.decision.title}</p>
-                    )}
-                  </td>
-                  <td className="py-3 pr-4">
-                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                      {t.category || "Uncategorized"}
-                    </span>
-                  </td>
-                  <td className="py-3 pr-4">
-                    <span className={`text-xs font-medium ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"}`}>
-                      {t.type === "INCOME" ? "Income" : "Expense"}
-                    </span>
-                  </td>
-                  <td className={`py-3 pr-4 font-medium ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-gray-900 dark:text-gray-100"}`}>
-                    {t.type === "INCOME" ? "+" : "-"}${Number(t.amount || 0).toLocaleString()}
-                  </td>
-                  <td className="py-3 text-gray-600 dark:text-gray-400">{t.recordedBy?.fullName || "—"}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
+                  <th className="pb-2 pr-4">Date</th>
+                  <th className="pb-2 pr-4">Description</th>
+                  <th className="pb-2 pr-4">Category</th>
+                  <th className="pb-2 pr-4">Type</th>
+                  <th className="pb-2 pr-4">Amount</th>
+                  <th className="pb-2">Recorded By</th>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="border-t border-gray-200 dark:border-gray-800 font-bold text-gray-900 dark:text-gray-100">
-                <td className="pt-3" colSpan={4}>Net</td>
-                <td className="pt-3" colSpan={2}>${total.toLocaleString()}</td>
-              </tr>
-            </tfoot>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((t) => (
+                  <tr key={t.id} className="border-b border-gray-50 dark:border-gray-800/60 last:border-0">
+                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{new Date(t.occurredAt).toLocaleDateString()}</td>
+                    <td className="py-3 pr-4">
+                      <p className="text-gray-900 dark:text-gray-100">{t.narration || "—"}</p>
+                      {t.task && (
+                        <p className="text-xs text-gold-600 dark:text-gold-400">Action: {t.task.title}</p>
+                      )}
+                      {t.decision && !t.task && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Decision: {t.decision.title}</p>
+                      )}
+                    </td>
+                    <td className="py-3 pr-4">
+                      <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                        {t.category || "Uncategorized"}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <span className={`text-xs font-medium ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"}`}>
+                        {t.type === "INCOME" ? "Income" : "Expense"}
+                      </span>
+                    </td>
+                    <td className={`py-3 pr-4 font-medium ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-gray-900 dark:text-gray-100"}`}>
+                      {t.type === "INCOME" ? "+" : "-"}${Number(t.amount || 0).toLocaleString()}
+                    </td>
+                    <td className="py-3 text-gray-600 dark:text-gray-400">{t.recordedBy?.fullName || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-gray-200 dark:border-gray-800 font-bold text-gray-900 dark:text-gray-100">
+                  <td className="pt-3" colSpan={4}>Net</td>
+                  <td className="pt-3" colSpan={2}>${total.toLocaleString()}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         )}
       </div>
 

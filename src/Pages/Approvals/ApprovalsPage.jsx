@@ -138,44 +138,46 @@ export default function ApprovalsPage() {
         ) : history.length === 0 ? (
           <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No resolved decisions yet.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
-                <th className="pb-2 pr-4">Decision</th>
-                <th className="pb-2 pr-4">Submitted By</th>
-                <th className="pb-2 pr-4">Est. Cost</th>
-                <th className="pb-2 pr-4">Date</th>
-                <th className="pb-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((decision) => (
-                <tr
-                  key={decision.id}
-                  onClick={() => setDetailsFor(decision)}
-                  className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
-                >
-                  <td className="py-3 pr-4">
-                    <p className="text-gray-900 dark:text-gray-100">{decision.title}</p>
-                    {decision.status === "APPROVED" && decision.approver && (
-                      <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">Approved by {decision.approver.fullName}</p>
-                    )}
-                    {decision.status === "REJECTED" && decision.rejectionReason && (
-                      <p className="text-xs text-red-600 dark:text-red-400 mt-0.5 truncate max-w-[280px]">
-                        Reason: {decision.rejectionReason}
-                      </p>
-                    )}
-                  </td>
-                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.creator?.fullName || "—"}</td>
-                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">${Number(decision.expectedAmount || 0).toLocaleString()}</td>
-                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{new Date(decision.createdAt).toLocaleDateString()}</td>
-                  <td className="py-3">
-                    <StatusBadge status={decisionStatusLabel(decision.status)} />
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
+                  <th className="pb-2 pr-4">Decision</th>
+                  <th className="pb-2 pr-4">Submitted By</th>
+                  <th className="pb-2 pr-4">Est. Cost</th>
+                  <th className="pb-2 pr-4">Date</th>
+                  <th className="pb-2">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {history.map((decision) => (
+                  <tr
+                    key={decision.id}
+                    onClick={() => setDetailsFor(decision)}
+                    className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
+                  >
+                    <td className="py-3 pr-4">
+                      <p className="text-gray-900 dark:text-gray-100">{decision.title}</p>
+                      {decision.status === "APPROVED" && decision.approver && (
+                        <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">Approved by {decision.approver.fullName}</p>
+                      )}
+                      {decision.status === "REJECTED" && decision.rejectionReason && (
+                        <p className="text-xs text-red-600 dark:text-red-400 mt-0.5 truncate max-w-[280px]">
+                          Reason: {decision.rejectionReason}
+                        </p>
+                      )}
+                    </td>
+                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.creator?.fullName || "—"}</td>
+                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">${Number(decision.expectedAmount || 0).toLocaleString()}</td>
+                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{new Date(decision.createdAt).toLocaleDateString()}</td>
+                    <td className="py-3">
+                      <StatusBadge status={decisionStatusLabel(decision.status)} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

@@ -77,63 +77,65 @@ export default function DecisionsPage() {
         ) : filtered.length === 0 ? (
           <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No decisions found.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
-                <th className="pb-2 pr-4">Decision</th>
-                <th className="pb-2 pr-4">Submitted By</th>
-                <th className="pb-2 pr-4">Est. Cost</th>
-                <th className="pb-2 pr-4">Date</th>
-                <th className="pb-2">Status</th>
-                <th className="pb-2 w-24"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((decision) => (
-                <tr
-                  key={decision.id}
-                  className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/60"
-                >
-                  <td className="py-3 pr-4 cursor-pointer" onClick={() => setDetailsFor(decision)}>
-                    <p className="text-gray-900 dark:text-gray-100">{decision.title}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[280px]">{decision.description}</p>
-                  </td>
-                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.creator?.fullName || "—"}</td>
-                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">${Number(decision.expectedAmount || 0).toLocaleString()}</td>
-                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{new Date(decision.createdAt).toLocaleDateString()}</td>
-                  <td className="py-3">
-                    <StatusBadge status={decisionStatusLabel(decision.status)} />
-                  </td>
-                  <td className="py-3 text-gray-300 dark:text-gray-600">
-                    <div className="flex items-center gap-2 justify-end">
-                      {canSubmitDecision(decision, user) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSubmit(decision.id);
-                          }}
-                          disabled={submittingId === decision.id}
-                          title="Submit for approval"
-                          className="flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-gold-400 hover:underline disabled:opacity-50"
-                        >
-                          {submittingId === decision.id ? (
-                            <>
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Submitting...
-                            </>
-                          ) : (
-                            <>
-                              <Send className="w-3.5 h-3.5" /> Submit
-                            </>
-                          )}
-                        </button>
-                      )}
-                      <ChevronRight className="w-4 h-4 cursor-pointer" onClick={() => setDetailsFor(decision)} />
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
+                  <th className="pb-2 pr-4">Decision</th>
+                  <th className="pb-2 pr-4">Submitted By</th>
+                  <th className="pb-2 pr-4">Est. Cost</th>
+                  <th className="pb-2 pr-4">Date</th>
+                  <th className="pb-2">Status</th>
+                  <th className="pb-2 w-24"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((decision) => (
+                  <tr
+                    key={decision.id}
+                    className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/60"
+                  >
+                    <td className="py-3 pr-4 cursor-pointer" onClick={() => setDetailsFor(decision)}>
+                      <p className="text-gray-900 dark:text-gray-100">{decision.title}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[280px]">{decision.description}</p>
+                    </td>
+                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.creator?.fullName || "—"}</td>
+                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">${Number(decision.expectedAmount || 0).toLocaleString()}</td>
+                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{new Date(decision.createdAt).toLocaleDateString()}</td>
+                    <td className="py-3">
+                      <StatusBadge status={decisionStatusLabel(decision.status)} />
+                    </td>
+                    <td className="py-3 text-gray-300 dark:text-gray-600">
+                      <div className="flex items-center gap-2 justify-end">
+                        {canSubmitDecision(decision, user) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSubmit(decision.id);
+                            }}
+                            disabled={submittingId === decision.id}
+                            title="Submit for approval"
+                            className="flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-gold-400 hover:underline disabled:opacity-50"
+                          >
+                            {submittingId === decision.id ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Submitting...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="w-3.5 h-3.5" /> Submit
+                              </>
+                            )}
+                          </button>
+                        )}
+                        <ChevronRight className="w-4 h-4 cursor-pointer" onClick={() => setDetailsFor(decision)} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
