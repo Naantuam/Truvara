@@ -5,6 +5,7 @@ import api from "../../api";
 import SettingsRow from "./SettingsRow";
 import MemberRow from "./MemberRow";
 import AddMemberModal from "./AddMemberModal";
+import { CURRENCY_OPTIONS } from "../../currencyHelpers";
 
 export default function SettingsPage() {
   const { user } = useOutletContext() || {};
@@ -37,7 +38,24 @@ export default function SettingsPage() {
   };
 
   const handleCompanySave = async (name) => {
-    await api.patch("/settings/company/", { name });
+    const res = await api.patch("/settings/company/", { name });
+    const updated = { ...user, company_name: res.data.name };
+    try {
+      localStorage.setItem("user", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+    window.location.reload();
+  };
+
+  const handleCurrencySave = async (currency) => {
+    const res = await api.patch("/settings/company/", { currency });
+    const updated = { ...user, company_currency: res.data.currency };
+    try {
+      localStorage.setItem("user", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
     window.location.reload();
   };
 
@@ -80,12 +98,26 @@ export default function SettingsPage() {
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Company</h2>
         </div>
         {canManageCompany ? (
-          <SettingsRow label="Company Name" value={user?.company_name} onSave={handleCompanySave} />
+          <>
+            <SettingsRow label="Company Name" value={user?.company_name} onSave={handleCompanySave} />
+            <SettingsRow
+              label="Reporting Currency"
+              value={user?.company_currency || "NGN"}
+              options={CURRENCY_OPTIONS}
+              onSave={handleCurrencySave}
+            />
+          </>
         ) : (
-          <div className="flex items-center justify-between py-3">
-            <p className="text-sm text-gray-900 dark:text-gray-100">Company Name</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{user?.company_name}</p>
-          </div>
+          <>
+            <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
+              <p className="text-sm text-gray-900 dark:text-gray-100">Company Name</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{user?.company_name}</p>
+            </div>
+            <div className="flex items-center justify-between py-3">
+              <p className="text-sm text-gray-900 dark:text-gray-100">Reporting Currency</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{user?.company_currency || "NGN"}</p>
+            </div>
+          </>
         )}
       </div>
 

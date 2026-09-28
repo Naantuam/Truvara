@@ -3,8 +3,9 @@ import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import useCachedResource from "../../useCachedResource";
 import { DECISIONS_CACHE_KEY, fetchDecisions } from "../../decisionHelpers";
 import { TASKS_CACHE_KEY, fetchTasks } from "../../taskHelpers";
+import { getCurrencySymbol } from "../../currencyHelpers";
 
-export default function AddExpenseModal({ open, onClose, onCreated, initial = {} }) {
+export default function AddExpenseModal({ open, onClose, onCreated, initial = {}, currency = "NGN" }) {
   const [type, setType] = useState(initial.type || "EXPENSE");
   const [narration, setNarration] = useState(initial.narration || "");
   const [amount, setAmount] = useState(initial.amount || "");
@@ -45,6 +46,7 @@ export default function AddExpenseModal({ open, onClose, onCreated, initial = {}
         type,
         narration: narration || undefined,
         amount: Number(amount),
+        currency,
         occurredAt: occurredAt ? new Date(occurredAt).toISOString() : undefined,
         category: category || undefined,
         counterparty: counterparty || undefined,
@@ -98,7 +100,7 @@ export default function AddExpenseModal({ open, onClose, onCreated, initial = {}
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount ({getCurrencySymbol(currency)})</label>
                 <input
                   type="number"
                   required

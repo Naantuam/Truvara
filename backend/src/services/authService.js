@@ -41,6 +41,7 @@ async function buildSessionResponse(user, membership) {
       full_name: user.fullName,
       company_id: membership.companyId,
       company_name: membership.company.name,
+      company_currency: membership.company.currency || "NGN",
       role: membership.role.name,
     },
   };
@@ -52,7 +53,7 @@ async function buildSessionResponse(user, membership) {
 async function resolveSessionForUser(user) {
   const memberships = await directoryPrisma.companyMembership.findMany({
     where: { userId: user.id },
-    include: { role: true, company: { select: { id: true, name: true } } },
+    include: { role: true, company: { select: { id: true, name: true, currency: true } } },
   });
 
   if (memberships.length === 0) {
@@ -122,7 +123,7 @@ export async function selectCompany(preAuthToken, companyId) {
 
   const membership = await directoryPrisma.companyMembership.findUnique({
     where: { userId_companyId: { userId: user.id, companyId } },
-    include: { role: true, company: { select: { id: true, name: true } } },
+    include: { role: true, company: { select: { id: true, name: true, currency: true } } },
   });
   if (!membership) throw new AuthError("You do not have access to that company.");
 

@@ -1,8 +1,9 @@
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import StatusBadge from "./StatusBadge";
 import { decisionStatusLabel } from "../decisionHelpers";
+import { formatMoney } from "../currencyHelpers";
 
-export default function DecisionDetailsModal({ decision, onClose }) {
+export default function DecisionDetailsModal({ decision, onClose, currency = "NGN" }) {
   return (
     <Dialog open={Boolean(decision)} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
@@ -37,7 +38,7 @@ export default function DecisionDetailsModal({ decision, onClose }) {
 
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">Estimated Cost</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                ${Number(decision.expectedAmount || 0).toLocaleString()}
+                {formatMoney(decision.expectedAmount, currency)}
               </p>
 
               <button

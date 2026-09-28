@@ -28,11 +28,18 @@ router.patch("/profile", async (req, res, next) => {
   }
 });
 
-const companySchema = z.object({ name: z.string().min(1) });
+const companySchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    currency: z.enum(["NGN", "USD", "EUR", "GBP"]).optional(),
+  })
+  .refine((data) => data.name !== undefined || data.currency !== undefined, {
+    message: "At least one of name or currency is required.",
+  });
 
 router.patch("/company", requirePermission("admin:settings:manage"), async (req, res, next) => {
   const parsed = companySchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ detail: "name is required." });
+  if (!parsed.success) return res.status(400).json({ detail: parsed.error.issues[0]?.message || "Invalid payload." });
 
   try {
     const company = await updateCompany(req.user.companyId, parsed.data);

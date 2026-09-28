@@ -19,6 +19,7 @@ import { generateActivationToken, sendActivationEmail } from "../src/services/ac
 const COMPANIES = [
   {
     name: "Ta-vora International Limited",
+    currency: "NGN",
     tenantDatabaseUrlEnv: "TAVORA_DATABASE_URL",
     members: [
       // Standing in for Precious (Owner) until he shares his own real email --
@@ -36,6 +37,7 @@ const COMPANIES = [
   },
   {
     name: "Knit Energy Ltd",
+    currency: "NGN",
     tenantDatabaseUrlEnv: "KNITENERGY_DATABASE_URL",
     members: [
       { email: "nathaniellongmen@gmail.com", fullName: "Nathaniel Longmen", role: "Owner" },
@@ -46,6 +48,7 @@ const COMPANIES = [
   },
   {
     name: "The Foundry Business Services LLC",
+    currency: "USD",
     tenantDatabaseUrlEnv: "FOUNDRY_DATABASE_URL",
     members: [
       { email: "emily@thefoundrybiz.com", fullName: "Emily Sharlene", role: "Owner" },
@@ -74,7 +77,13 @@ async function main() {
 
     let company = await prisma.company.findFirst({ where: { name: companyDef.name } });
     if (!company) {
-      company = await prisma.company.create({ data: { name: companyDef.name, tenantDatabaseUrl } });
+      company = await prisma.company.create({
+        data: {
+          name: companyDef.name,
+          currency: companyDef.currency || "NGN",
+          tenantDatabaseUrl,
+        },
+      });
       console.log(`Created company: ${companyDef.name}`);
     }
 

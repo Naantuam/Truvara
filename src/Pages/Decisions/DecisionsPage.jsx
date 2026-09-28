@@ -7,9 +7,11 @@ import DecisionDetailsModal from "../../Reusable/DecisionDetailsModal";
 import AddDecisionModal from "./AddDecisionModal";
 import { decisionStatusLabel, canSubmitDecision, DECISIONS_CACHE_KEY, fetchDecisions } from "../../decisionHelpers";
 import useCachedResource from "../../useCachedResource";
+import { formatMoney } from "../../currencyHelpers";
 
 export default function DecisionsPage() {
   const { user } = useOutletContext() || {};
+  const currency = user?.company_currency || "NGN";
   const { data: decisions, setData: setDecisions, loading } = useCachedResource(DECISIONS_CACHE_KEY, fetchDecisions);
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -100,7 +102,7 @@ export default function DecisionsPage() {
                       <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[280px]">{decision.description}</p>
                     </td>
                     <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{decision.creator?.fullName || "—"}</td>
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">${Number(decision.expectedAmount || 0).toLocaleString()}</td>
+                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{formatMoney(decision.expectedAmount, currency)}</td>
                     <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{new Date(decision.createdAt).toLocaleDateString()}</td>
                     <td className="py-3">
                       <StatusBadge status={decisionStatusLabel(decision.status)} />
@@ -143,8 +145,9 @@ export default function DecisionsPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={handleCreated}
+        currency={currency}
       />
-      <DecisionDetailsModal decision={detailsFor} onClose={() => setDetailsFor(null)} />
+      <DecisionDetailsModal decision={detailsFor} onClose={() => setDetailsFor(null)} currency={currency} />
     </div>
   );
 }

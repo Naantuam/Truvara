@@ -21,11 +21,14 @@ export async function updateProfile(userId, { fullName }) {
 // HIGH priority: Company edit/save/persist. Only the company's own name is
 // user-editable here -- tenantDatabaseUrl is an infrastructure concern, not
 // something exposed through Settings.
-export async function updateCompany(companyId, { name }) {
+export async function updateCompany(companyId, { name, currency }) {
   return directoryPrisma.company.update({
     where: { id: companyId },
-    data: { name },
-    select: { id: true, name: true },
+    data: {
+      ...(name !== undefined ? { name } : {}),
+      ...(currency !== undefined ? { currency } : {}),
+    },
+    select: { id: true, name: true, currency: true },
   });
 }
 

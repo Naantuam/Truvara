@@ -1,3 +1,4 @@
+import { useOutletContext } from "react-router-dom";
 import { AlertCircle, CheckSquare, Users, TrendingUp, DollarSign } from "lucide-react";
 import StatCard from "./StatCard";
 import useCachedResource from "../../useCachedResource";
@@ -5,6 +6,7 @@ import { DECISIONS_CACHE_KEY, fetchDecisions } from "../../decisionHelpers";
 import { TASKS_CACHE_KEY, fetchTasks } from "../../taskHelpers";
 import { TRANSACTIONS_CACHE_KEY, fetchTransactions } from "../../transactionHelpers";
 import { computeDashboardStats } from "../../dashboardHelpers";
+import { formatMoney } from "../../currencyHelpers";
 
 const CARDS = [
   { key: "open_decisions", label: "Open Decisions", icon: AlertCircle, iconColor: "text-brand-600 dark:text-brand-400", iconBg: "bg-brand-50 dark:bg-brand-950", href: "/decisions" },
@@ -15,6 +17,8 @@ const CARDS = [
 ];
 
 export default function DashboardStats() {
+  const { user } = useOutletContext() || {};
+  const currency = user?.company_currency || "NGN";
   const { data: decisions, loading: loadingDecisions } = useCachedResource(DECISIONS_CACHE_KEY, fetchDecisions);
   const { data: tasks, loading: loadingTasks } = useCachedResource(TASKS_CACHE_KEY, fetchTasks);
   const { data: transactions, loading: loadingTransactions } = useCachedResource(TRANSACTIONS_CACHE_KEY, fetchTransactions);
@@ -26,7 +30,7 @@ export default function DashboardStats() {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       {CARDS.map((card) => {
         const raw = summary[card.key] ?? 0;
-        const value = loading ? "—" : card.isCurrency ? `$${Number(raw).toLocaleString()}` : raw;
+        const value = loading ? "—" : card.isCurrency ? formatMoney(raw, currency) : raw;
         return (
           <StatCard
             key={card.key}

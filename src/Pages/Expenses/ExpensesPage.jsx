@@ -1,13 +1,17 @@
 import { useState, useMemo } from "react";
+import { useOutletContext } from "react-router-dom";
 import { DollarSign, TrendingUp, TrendingDown, Scale, Upload, Plus, Loader2 } from "lucide-react";
 import api from "../../api";
 import AddExpenseModal from "./AddExpenseModal";
 import { TRANSACTIONS_CACHE_KEY, fetchTransactions, TRANSACTIONS_SUMMARY_CACHE_KEY, fetchTransactionsSummary } from "../../transactionHelpers";
 import useCachedResource from "../../useCachedResource";
+import { formatMoney } from "../../currencyHelpers";
 
 const TABS = ["All", "Manual", "From Actions"];
 
 export default function ExpensesPage() {
+  const { user } = useOutletContext() || {};
+  const currency = user?.company_currency || "NGN";
   const { data: transactions, setData: setTransactions, loading } = useCachedResource(TRANSACTIONS_CACHE_KEY, fetchTransactions);
   const { data: summary, refresh: refreshSummary } = useCachedResource(TRANSACTIONS_SUMMARY_CACHE_KEY, fetchTransactionsSummary);
   const [tab, setTab] = useState("All");
@@ -79,7 +83,7 @@ export default function ExpensesPage() {
               <card.icon className={`w-5 h-5 ${card.color}`} />
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {!summary ? "—" : card.isCount ? card.value ?? 0 : `$${Number(card.value || 0).toLocaleString()}`}
+              {!summary ? "—" : card.isCount ? card.value ?? 0 : formatMoney(card.value, currency)}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{card.label}</p>
           </div>
@@ -90,7 +94,7 @@ export default function ExpensesPage() {
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">All Transactions</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{filtered.length} entries · net ${total.toLocaleString()}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{filtered.length} entries · net {formatMoney(total, currency)}</p>
           </div>
           <div className="flex items-center flex-wrap gap-2">
             <div className="flex border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden flex-shrink-0">
@@ -163,7 +167,7 @@ export default function ExpensesPage() {
                       </span>
                     </td>
                     <td className={`py-3 pr-4 font-medium ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-gray-900 dark:text-gray-100"}`}>
-                      {t.type === "INCOME" ? "+" : "-"}${Number(t.amount || 0).toLocaleString()}
+                      {t.type === "INCOME" ? "+" : "-"}{formatMoney(t.amount, t.currency || currency)}
                     </td>
                     <td className="py-3 text-gray-600 dark:text-gray-400">{t.recordedBy?.fullName || "—"}</td>
                   </tr>
@@ -172,7 +176,7 @@ export default function ExpensesPage() {
               <tfoot>
                 <tr className="border-t border-gray-200 dark:border-gray-800 font-bold text-gray-900 dark:text-gray-100">
                   <td className="pt-3" colSpan={4}>Net</td>
-                  <td className="pt-3" colSpan={2}>${total.toLocaleString()}</td>
+                  <td className="pt-3" colSpan={2}>{formatMoney(total, currency)}</td>
                 </tr>
               </tfoot>
             </table>
@@ -180,7 +184,7 @@ export default function ExpensesPage() {
         )}
       </div>
 
-      <AddExpenseModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={handleCreated} />
+      <AddExpenseModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={handleCreated} currency={currency} />
     </div>
   );
 }

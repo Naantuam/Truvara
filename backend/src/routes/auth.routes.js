@@ -101,12 +101,13 @@ router.get("/me", authenticate, async (req, res, next) => {
   try {
     const company = await directoryPrisma.company.findUnique({
       where: { id: req.user.companyId },
-      select: { name: true },
+      select: { name: true, currency: true },
     });
     res.json({
       id: req.user.id,
       company_id: req.user.companyId,
       company_name: company?.name || null,
+      company_currency: company?.currency || "NGN",
       role: req.user.role,
       permissions: Array.from(req.user.permissions),
     });

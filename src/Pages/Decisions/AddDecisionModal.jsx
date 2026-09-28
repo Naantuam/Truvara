@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import { getCurrencySymbol } from "../../currencyHelpers";
 
-export default function AddDecisionModal({ open, onClose, onCreated }) {
+export default function AddDecisionModal({ open, onClose, onCreated, currency = "NGN" }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [proposedAction, setProposedAction] = useState("");
@@ -87,7 +88,7 @@ export default function AddDecisionModal({ open, onClose, onCreated }) {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Estimated Cost</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Estimated Cost ({getCurrencySymbol(currency)})</label>
               <input
                 type="number"
                 min="0"
