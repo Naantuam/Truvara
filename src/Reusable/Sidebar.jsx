@@ -6,6 +6,7 @@ import BrandMark from './BrandMark';
 import SunMoonToggle from './SunMoonToggle';
 import useTheme from './useTheme';
 import { hasModuleAccess } from '../moduleAccess';
+import { getCurrencyIcon } from '../currencyHelpers';
 
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
@@ -99,6 +100,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user }) {
                                 )}
                                 {group.items.map((item) => {
                                     const isActive = location.pathname.startsWith(item.href);
+                                    const Icon = item.app === 'expenses' ? getCurrencyIcon(user?.company_currency) : item.icon;
                                     return (
                                         <Link
                                             key={item.name}
@@ -110,7 +112,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user }) {
                                                 "group flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200"
                                             )}
                                         >
-                                            <item.icon
+                                            <Icon
                                                 className={classNames(
                                                     isActive ? "text-white" : "text-gray-400 group-hover:text-brand-700 dark:text-gray-500 dark:group-hover:text-gold-400",
                                                     "h-5 w-5 flex-shrink-0"

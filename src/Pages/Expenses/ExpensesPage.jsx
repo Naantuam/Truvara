@@ -5,7 +5,7 @@ import api from "../../api";
 import AddExpenseModal from "./AddExpenseModal";
 import { TRANSACTIONS_CACHE_KEY, fetchTransactions, TRANSACTIONS_SUMMARY_CACHE_KEY, fetchTransactionsSummary } from "../../transactionHelpers";
 import useCachedResource from "../../useCachedResource";
-import { formatMoney } from "../../currencyHelpers";
+import { formatMoney, getCurrencyIcon } from "../../currencyHelpers";
 
 const TABS = ["All", "Manual", "From Actions"];
 
@@ -46,11 +46,12 @@ export default function ExpensesPage() {
     setModalOpen(true);
   };
 
+  const CurrencyIcon = getCurrencyIcon(currency);
   const cards = [
     { label: "Total Income", value: summary?.totalIncome, icon: TrendingUp, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950" },
     { label: "Total Expenses", value: summary?.totalExpense, icon: TrendingDown, color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950" },
     { label: "Net", value: summary?.net, icon: Scale, color: "text-gold-600 dark:text-gold-400", bg: "bg-gold-50 dark:bg-gold-950" },
-    { label: "Transactions Recorded", value: summary?.count, isCount: true, icon: DollarSign, color: "text-brand-600 dark:text-brand-400", bg: "bg-brand-50 dark:bg-brand-950" },
+    { label: "Transactions Recorded", value: summary?.count, isCount: true, icon: CurrencyIcon, color: "text-brand-600 dark:text-brand-400", bg: "bg-brand-50 dark:bg-brand-950" },
   ];
 
   return (

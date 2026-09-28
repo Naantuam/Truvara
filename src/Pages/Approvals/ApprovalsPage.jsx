@@ -7,11 +7,12 @@ import DecisionDetailsModal from "../../Reusable/DecisionDetailsModal";
 import RejectReasonModal from "./RejectReasonModal";
 import { decisionStatusLabel, DECISIONS_CACHE_KEY, fetchDecisions } from "../../decisionHelpers";
 import useCachedResource from "../../useCachedResource";
-import { formatMoney } from "../../currencyHelpers";
+import { formatMoney, getCurrencyIcon } from "../../currencyHelpers";
 
 export default function ApprovalsPage() {
   const { user } = useOutletContext() || {};
   const currency = user?.company_currency || "NGN";
+  const CurrencyIcon = getCurrencyIcon(currency);
   const { data: decisions, setData: setDecisions, loading } = useCachedResource(DECISIONS_CACHE_KEY, fetchDecisions);
   const [detailsFor, setDetailsFor] = useState(null);
   const [rejecting, setRejecting] = useState(null);
@@ -89,7 +90,7 @@ export default function ApprovalsPage() {
                 <User className="w-4 h-4 text-gray-400 dark:text-gray-500" /> By {item.creator?.fullName || "Unknown"}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
-                <DollarSign className="w-4 h-4 text-gray-400 dark:text-gray-500" /> Est. <span className="font-semibold text-gray-900 dark:text-gray-100">{formatMoney(item.expectedAmount, currency)}</span>
+                <CurrencyIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" /> Est. <span className="font-semibold text-gray-900 dark:text-gray-100">{formatMoney(item.expectedAmount, currency)}</span>
               </div>
 
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mt-4">

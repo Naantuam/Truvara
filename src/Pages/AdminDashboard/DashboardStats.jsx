@@ -6,7 +6,7 @@ import { DECISIONS_CACHE_KEY, fetchDecisions } from "../../decisionHelpers";
 import { TASKS_CACHE_KEY, fetchTasks } from "../../taskHelpers";
 import { TRANSACTIONS_CACHE_KEY, fetchTransactions } from "../../transactionHelpers";
 import { computeDashboardStats } from "../../dashboardHelpers";
-import { formatMoney } from "../../currencyHelpers";
+import { formatMoney, getCurrencyIcon } from "../../currencyHelpers";
 
 const CARDS = [
   { key: "open_decisions", label: "Open Decisions", icon: AlertCircle, iconColor: "text-brand-600 dark:text-brand-400", iconBg: "bg-brand-50 dark:bg-brand-950", href: "/decisions" },
@@ -19,6 +19,8 @@ const CARDS = [
 export default function DashboardStats() {
   const { user } = useOutletContext() || {};
   const currency = user?.company_currency || "NGN";
+  const CurrencyIcon = getCurrencyIcon(currency);
+
   const { data: decisions, loading: loadingDecisions } = useCachedResource(DECISIONS_CACHE_KEY, fetchDecisions);
   const { data: tasks, loading: loadingTasks } = useCachedResource(TASKS_CACHE_KEY, fetchTasks);
   const { data: transactions, loading: loadingTransactions } = useCachedResource(TRANSACTIONS_CACHE_KEY, fetchTransactions);
@@ -31,10 +33,11 @@ export default function DashboardStats() {
       {CARDS.map((card) => {
         const raw = summary[card.key] ?? 0;
         const value = loading ? "—" : card.isCurrency ? formatMoney(raw, currency) : raw;
+        const Icon = card.isCurrency ? CurrencyIcon : card.icon;
         return (
           <StatCard
             key={card.key}
-            icon={card.icon}
+            icon={Icon}
             iconColor={card.iconColor}
             iconBg={card.iconBg}
             value={value}
