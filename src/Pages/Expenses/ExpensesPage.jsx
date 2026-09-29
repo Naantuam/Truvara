@@ -3,9 +3,11 @@ import { useOutletContext } from "react-router-dom";
 import { DollarSign, TrendingUp, TrendingDown, Scale, Upload, Plus, Loader2 } from "lucide-react";
 import api from "../../api";
 import AddExpenseModal from "./AddExpenseModal";
+import TransactionDetailsModal from "./TransactionDetailsModal";
 import { TRANSACTIONS_CACHE_KEY, fetchTransactions, TRANSACTIONS_SUMMARY_CACHE_KEY, fetchTransactionsSummary } from "../../transactionHelpers";
 import useCachedResource from "../../useCachedResource";
 import { formatMoney, getCurrencyIcon } from "../../currencyHelpers";
+import { formatDateOnly } from "../../dateHelpers";
 
 const TABS = ["All", "Manual", "From Actions"];
 
@@ -17,6 +19,7 @@ export default function ExpensesPage() {
   const [tab, setTab] = useState("All");
   const [category, setCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
 
   const categories = useMemo(
     () => ["All", ...new Set((transactions || []).map((t) => t.category).filter(Boolean))],
@@ -38,6 +41,14 @@ export default function ExpensesPage() {
     setTransactions((prev) => [res.data, ...(prev || [])]);
     // Summary is a server-computed aggregate, not something we can merge
     // client-side -- reload it now that a new transaction exists.
+    refreshSummary();
+  };
+
+  const handleUpdated = async (id, payload) => {
+    const res = await api.patch(`/transactions/${id}/`, payload);
+    setTransactions((prev) => (prev || []).map((t) => (t.id === id ? res.data : t)));
+    setSelectedTransaction(res.data);
+    // Amount/category can change what the summary aggregates -- reload it.
     refreshSummary();
   };
 
@@ -146,8 +157,12 @@ export default function ExpensesPage() {
               </thead>
               <tbody>
                 {filtered.map((t) => (
-                  <tr key={t.id} className="border-b border-gray-50 dark:border-gray-800/60 last:border-0">
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{new Date(t.occurredAt).toLocaleDateString()}</td>
+                  <tr
+                    key={t.id}
+                    onClick={() => setSelectedTransaction(t)}
+                    className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
+                  >
+                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{formatDateOnly(t.occurredAt)}</td>
                     <td className="py-3 pr-4">
                       <p className="text-gray-900 dark:text-gray-100">{t.narration || "—"}</p>
                       {t.task && (
@@ -186,6 +201,13 @@ export default function ExpensesPage() {
       </div>
 
       <AddExpenseModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={handleCreated} currency={currency} />
+      <TransactionDetailsModal
+        transaction={selectedTransaction}
+        user={user}
+        currency={currency}
+        onClose={() => setSelectedTransaction(null)}
+        onUpdated={handleUpdated}
+      />
     </div>
   );
 }

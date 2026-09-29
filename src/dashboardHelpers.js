@@ -3,33 +3,57 @@ import api from "./api";
 export const DASHBOARD_ACTIVITY_CACHE_KEY = "dashboard-activity";
 export const fetchRecentActivity = () => api.get("/dashboard/activity/").then((res) => (Array.isArray(res.data) ? res.data : []));
 
-// Work-scope §5.5: "the dashboard should not be manually populated with
-// information that already exists elsewhere in the system." So these stats
-// are computed here, client-side, from the exact same cached decisions/tasks/
-// transactions data the Decisions/Actions/Expenses pages already fetch --
-// no separate backend summary endpoint exists or is needed for this.
-export function computeDashboardStats(decisions, tasks, transactions) {
-  const openDecisions = (decisions || []).filter((d) => !["REJECTED", "COMPLETED"].includes(d.status)).length;
-  const pendingApprovals = (decisions || []).filter((d) => d.status === "PENDING_APPROVAL").length;
+function utcDateKey(date) {
+  return date.toISOString().slice(0, 10);
+}
 
-  const activeTasks = (tasks || []).filter((t) => t.status !== "COMPLETED");
-  const openActions = activeTasks.length;
-  const activeResponsibilities = new Set(activeTasks.map((t) => t.assignee?.id).filter(Boolean)).size;
+// Transaction dates are stored as UTC-midnight (see dateHelpers.js) -- bucket
+// keys are built the same way so a transaction always lands in the bucket
+// matching the calendar date it was actually entered as, regardless of the
+// viewer's own timezone.
+export function computeExpenseProgression(transactions, period = "month", now = new Date()) {
+  const list = transactions || [];
+  const todayUtc = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
-  const now = new Date();
-  const monthlyExpenses = (transactions || [])
-    .filter((t) => {
-      if (t.type !== "EXPENSE") return false;
-      const d = new Date(t.occurredAt);
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    })
-    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+  const buckets = [];
+  if (period === "week") {
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(todayUtc.getTime() - i * 86400000);
+      buckets.push({ key: utcDateKey(d), label: d.toLocaleDateString(undefined, { weekday: "short", timeZone: "UTC" }) });
+    }
+  } else if (period === "year") {
+    const year = todayUtc.getUTCFullYear();
+    for (let m = 0; m < 12; m++) {
+      const d = new Date(Date.UTC(year, m, 1));
+      buckets.push({ key: `${year}-${String(m + 1).padStart(2, "0")}`, label: d.toLocaleDateString(undefined, { month: "short", timeZone: "UTC" }) });
+    }
+  } else {
+    const year = todayUtc.getUTCFullYear();
+    const month = todayUtc.getUTCMonth();
+    const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+      buckets.push({ key: utcDateKey(new Date(Date.UTC(year, month, day))), label: String(day) });
+    }
+  }
 
-  return {
-    open_decisions: openDecisions,
-    pending_approvals: pendingApprovals,
-    active_responsibilities: activeResponsibilities,
-    open_actions: openActions,
-    monthly_expenses: monthlyExpenses,
+  const bucketMap = new Map(buckets.map((b) => [b.key, { ...b, income: 0, expense: 0 }]));
+  const keyFor = (iso) => {
+    const d = new Date(iso);
+    return period === "year" ? `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}` : utcDateKey(d);
   };
+
+  for (const t of list) {
+    const bucket = bucketMap.get(keyFor(t.occurredAt));
+    if (!bucket) continue; // outside the selected period
+    if (t.type === "INCOME") bucket.income += Number(t.amount || 0);
+    else bucket.expense += Number(t.amount || 0);
+  }
+
+  const series = buckets.map((b) => bucketMap.get(b.key));
+  const totals = series.reduce(
+    (acc, b) => ({ totalIncome: acc.totalIncome + b.income, totalExpense: acc.totalExpense + b.expense }),
+    { totalIncome: 0, totalExpense: 0 }
+  );
+
+  return { series, ...totals };
 }
