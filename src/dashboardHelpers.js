@@ -57,3 +57,22 @@ export function computeExpenseProgression(transactions, period = "month", now = 
 
   return { series, ...totals };
 }
+
+// Shifts an anchor date by one period unit -- always normalized to the 1st
+// for month/year (never mutates a day-of-month directly) so e.g. Jan 31 ->
+// next month can't overflow into March.
+export function shiftPeriodAnchor(anchor, period, direction) {
+  if (period === "week") return new Date(anchor.getTime() + direction * 7 * 86400000);
+  if (period === "year") return new Date(anchor.getFullYear() + direction, 0, 1);
+  return new Date(anchor.getFullYear(), anchor.getMonth() + direction, 1);
+}
+
+export function formatPeriodLabel(period, anchor) {
+  if (period === "year") return String(anchor.getFullYear());
+  if (period === "month") return anchor.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+
+  const todayUtc = new Date(Date.UTC(anchor.getFullYear(), anchor.getMonth(), anchor.getDate()));
+  const start = new Date(todayUtc.getTime() - 6 * 86400000);
+  const fmt = (d) => d.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+  return `${fmt(start)} – ${fmt(todayUtc)}`;
+}
