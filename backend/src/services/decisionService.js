@@ -28,11 +28,12 @@ const TRANSACTION_OPTIONS = { timeout: 15000 };
 // normal Prisma includes.
 async function hydrate(db, decisions) {
   const list = Array.isArray(decisions) ? decisions : [decisions];
-  const userMap = await loadUserMap(list.flatMap((d) => [d.creatorId, d.approverId]));
+  const userMap = await loadUserMap(list.flatMap((d) => [d.creatorId, d.approverId, d.modifiedById]));
   const withUsers = list.map((d) => ({
     ...d,
     creator: attachUser(userMap, d.creatorId),
     approver: attachUser(userMap, d.approverId),
+    modifiedBy: attachUser(userMap, d.modifiedById),
   }));
   return Array.isArray(decisions) ? withUsers : withUsers[0];
 }
@@ -108,6 +109,7 @@ export async function updateDecision(db, actor, id, input) {
         departmentId: input.departmentId ?? decision.departmentId,
         priority: input.priority ?? decision.priority,
         expectedAmount: input.expectedAmount ?? decision.expectedAmount,
+        modifiedById: actor.userId,
       },
     });
 
@@ -140,7 +142,7 @@ export async function submitDecision(db, actor, id) {
 
     const result = await tx.decision.update({
       where: { id },
-      data: { status: "PENDING_APPROVAL" },
+      data: { status: "PENDING_APPROVAL", modifiedById: actor.userId },
     });
 
     await recordAuditEvent(tx, {
@@ -172,7 +174,7 @@ export async function approveDecision(db, actor, id) {
 
     const result = await tx.decision.update({
       where: { id },
-      data: { status: "APPROVED", approverId: actor.userId, approvedAt: new Date() },
+      data: { status: "APPROVED", approverId: actor.userId, approvedAt: new Date(), modifiedById: actor.userId },
     });
 
     await recordAuditEvent(tx, {
@@ -204,7 +206,7 @@ export async function rejectDecision(db, actor, id, reason) {
 
     const result = await tx.decision.update({
       where: { id },
-      data: { status: "REJECTED", approverId: actor.userId, rejectionReason: reason },
+      data: { status: "REJECTED", approverId: actor.userId, rejectionReason: reason, modifiedById: actor.userId },
     });
 
     await recordAuditEvent(tx, {

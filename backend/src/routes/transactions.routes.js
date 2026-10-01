@@ -8,6 +8,9 @@ import {
   getTransaction,
   createTransaction,
   updateTransaction,
+  approveTransaction,
+  rejectTransaction,
+  voidTransaction,
   getSummary,
 } from "../services/transactionService.js";
 
@@ -88,6 +91,41 @@ router.patch("/:id", requirePermission("finance:transaction:edit"), async (req, 
 
   try {
     const transaction = await updateTransaction(req.user.tenantDb, req.user, req.params.id, parsed.data);
+    res.json(transaction);
+  } catch (err) {
+    handleTransactionError(err, res, next);
+  }
+});
+
+router.post("/:id/approve", requirePermission("finance:transaction:approve"), async (req, res, next) => {
+  try {
+    const transaction = await approveTransaction(req.user.tenantDb, req.user, req.params.id);
+    res.json(transaction);
+  } catch (err) {
+    handleTransactionError(err, res, next);
+  }
+});
+
+const reasonSchema = z.object({ reason: z.string().min(1, "A reason is required.") });
+
+router.post("/:id/reject", requirePermission("finance:transaction:approve"), async (req, res, next) => {
+  const parsed = reasonSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ detail: parsed.error.issues[0]?.message || "Invalid payload." });
+
+  try {
+    const transaction = await rejectTransaction(req.user.tenantDb, req.user, req.params.id, parsed.data.reason);
+    res.json(transaction);
+  } catch (err) {
+    handleTransactionError(err, res, next);
+  }
+});
+
+router.post("/:id/void", requirePermission("finance:transaction:approve"), async (req, res, next) => {
+  const parsed = reasonSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ detail: parsed.error.issues[0]?.message || "Invalid payload." });
+
+  try {
+    const transaction = await voidTransaction(req.user.tenantDb, req.user, req.params.id, parsed.data.reason);
     res.json(transaction);
   } catch (err) {
     handleTransactionError(err, res, next);

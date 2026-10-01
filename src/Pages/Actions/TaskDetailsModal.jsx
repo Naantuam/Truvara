@@ -43,6 +43,16 @@ export default function TaskDetailsModal({ task, user, onClose, onStatusChanged 
             Assigned to {task.assignee?.fullName || "Unassigned"}
             {task.dueDate && ` · Due ${new Date(task.dueDate).toLocaleDateString()}`}
           </p>
+          {task.creator && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              Created by {task.creator.fullName} · {new Date(task.createdAt).toLocaleDateString()}
+            </p>
+          )}
+          {task.modifiedBy && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              Last edited by {task.modifiedBy.fullName} · {new Date(task.updatedAt).toLocaleString()}
+            </p>
+          )}
           {task.isOverdue && (
             <p className="text-xs font-medium text-red-600 dark:text-red-400 mt-1">Overdue</p>
           )}

@@ -12,11 +12,25 @@ export class TransactionError extends Error {
 const TRANSACTION_OPTIONS = { timeout: 15000 };
 const includeRelated = { decision: { select: { id: true, title: true } }, task: { select: { id: true, title: true } } };
 
+// Maker-checker, same rule as canApproveDecision: Owner may always approve
+// (the agreed single-founder exception); anyone else can't approve/reject/
+// void a transaction they recorded themselves.
+export function canApproveTransaction(actor, transaction) {
+  if (actor.role === "Owner") return true;
+  return transaction.recordedById !== actor.userId;
+}
+
 // recordedById references a User in the separate directory database.
 async function hydrate(db, transactions) {
   const list = Array.isArray(transactions) ? transactions : [transactions];
-  const userMap = await loadUserMap(list.map((t) => t.recordedById));
-  const withUsers = list.map((t) => ({ ...t, recordedBy: attachUser(userMap, t.recordedById) }));
+  const userMap = await loadUserMap(list.flatMap((t) => [t.recordedById, t.modifiedById, t.approverId, t.voidedById]));
+  const withUsers = list.map((t) => ({
+    ...t,
+    recordedBy: attachUser(userMap, t.recordedById),
+    modifiedBy: attachUser(userMap, t.modifiedById),
+    approver: attachUser(userMap, t.approverId),
+    voidedBy: attachUser(userMap, t.voidedById),
+  }));
   return Array.isArray(transactions) ? withUsers : withUsers[0];
 }
 
@@ -92,6 +106,9 @@ export async function updateTransaction(db, actor, id, input) {
   const updated = await db.$transaction(async (tx) => {
     const transaction = await tx.transaction.findFirst({ where: { id, companyId: actor.companyId } });
     if (!transaction) throw new TransactionError("Transaction not found.", 404);
+    if (transaction.status !== "PENDING_APPROVAL") {
+      throw new TransactionError("Only a transaction still awaiting approval can be edited.", 409);
+    }
 
     const result = await tx.transaction.update({
       where: { id },
@@ -101,6 +118,7 @@ export async function updateTransaction(db, actor, id, input) {
         category: input.category ?? transaction.category,
         amount: input.amount ?? transaction.amount,
         occurredAt: input.occurredAt ?? transaction.occurredAt,
+        modifiedById: actor.userId,
       },
       include: includeRelated,
     });
@@ -112,6 +130,109 @@ export async function updateTransaction(db, actor, id, input) {
       entityType: "Transaction",
       entityId: id,
       changes: input,
+    });
+
+    return result;
+  }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, updated);
+}
+
+export async function approveTransaction(db, actor, id) {
+  const updated = await db.$transaction(async (tx) => {
+    const transaction = await tx.transaction.findFirst({ where: { id, companyId: actor.companyId } });
+    if (!transaction) throw new TransactionError("Transaction not found.", 404);
+    if (transaction.status !== "PENDING_APPROVAL") {
+      throw new TransactionError("Only a transaction awaiting approval can be approved.", 409);
+    }
+    if (!canApproveTransaction(actor, transaction)) {
+      throw new TransactionError("You cannot approve a transaction you recorded yourself.", 403);
+    }
+
+    const result = await tx.transaction.update({
+      where: { id },
+      data: { status: "APPROVED", approverId: actor.userId, approvedAt: new Date(), modifiedById: actor.userId },
+      include: includeRelated,
+    });
+
+    await recordAuditEvent(tx, {
+      companyId: actor.companyId,
+      actorId: actor.userId,
+      action: "transaction.approved",
+      entityType: "Transaction",
+      entityId: id,
+      changes: { from: "PENDING_APPROVAL", to: "APPROVED" },
+    });
+
+    return result;
+  }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, updated);
+}
+
+export async function rejectTransaction(db, actor, id, reason) {
+  const updated = await db.$transaction(async (tx) => {
+    const transaction = await tx.transaction.findFirst({ where: { id, companyId: actor.companyId } });
+    if (!transaction) throw new TransactionError("Transaction not found.", 404);
+    if (transaction.status !== "PENDING_APPROVAL") {
+      throw new TransactionError("Only a transaction awaiting approval can be rejected.", 409);
+    }
+    if (!canApproveTransaction(actor, transaction)) {
+      throw new TransactionError("You cannot reject a transaction you recorded yourself.", 403);
+    }
+
+    const result = await tx.transaction.update({
+      where: { id },
+      data: { status: "REJECTED", approverId: actor.userId, rejectionReason: reason, modifiedById: actor.userId },
+      include: includeRelated,
+    });
+
+    await recordAuditEvent(tx, {
+      companyId: actor.companyId,
+      actorId: actor.userId,
+      action: "transaction.rejected",
+      entityType: "Transaction",
+      entityId: id,
+      changes: { from: "PENDING_APPROVAL", to: "REJECTED", reason },
+    });
+
+    return result;
+  }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, updated);
+}
+
+// Void is the only way to retract a posted (APPROVED) transaction -- never
+// edited, never deleted. The row stays forever; it just stops counting.
+export async function voidTransaction(db, actor, id, reason) {
+  if (!reason) throw new TransactionError("A reason is required to void a transaction.", 400);
+
+  const updated = await db.$transaction(async (tx) => {
+    const transaction = await tx.transaction.findFirst({ where: { id, companyId: actor.companyId } });
+    if (!transaction) throw new TransactionError("Transaction not found.", 404);
+    if (transaction.status !== "APPROVED") {
+      throw new TransactionError("Only an approved transaction can be voided.", 409);
+    }
+    if (transaction.isVoided) {
+      throw new TransactionError("This transaction is already voided.", 409);
+    }
+    if (!canApproveTransaction(actor, transaction)) {
+      throw new TransactionError("You cannot void a transaction you recorded yourself.", 403);
+    }
+
+    const result = await tx.transaction.update({
+      where: { id },
+      data: { isVoided: true, voidedById: actor.userId, voidedAt: new Date(), voidReason: reason, modifiedById: actor.userId },
+      include: includeRelated,
+    });
+
+    await recordAuditEvent(tx, {
+      companyId: actor.companyId,
+      actorId: actor.userId,
+      action: "transaction.voided",
+      entityType: "Transaction",
+      entityId: id,
+      changes: { reason },
     });
 
     return result;
@@ -142,6 +263,6 @@ export function computeSummary(transactions) {
 }
 
 export async function getSummary(db, companyId) {
-  const transactions = await db.transaction.findMany({ where: { companyId } });
+  const transactions = await db.transaction.findMany({ where: { companyId, status: "APPROVED", isVoided: false } });
   return computeSummary(transactions);
 }

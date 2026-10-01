@@ -35,8 +35,13 @@ function withComputedFields(task) {
 // tenant DB.
 async function hydrate(db, tasks) {
   const list = Array.isArray(tasks) ? tasks : [tasks];
-  const userMap = await loadUserMap(list.map((t) => t.assigneeId));
-  const withUsers = list.map((t) => ({ ...withComputedFields(t), assignee: attachUser(userMap, t.assigneeId) }));
+  const userMap = await loadUserMap(list.flatMap((t) => [t.assigneeId, t.creatorId, t.modifiedById]));
+  const withUsers = list.map((t) => ({
+    ...withComputedFields(t),
+    assignee: attachUser(userMap, t.assigneeId),
+    creator: attachUser(userMap, t.creatorId),
+    modifiedBy: attachUser(userMap, t.modifiedById),
+  }));
   return Array.isArray(tasks) ? withUsers : withUsers[0];
 }
 
@@ -91,6 +96,7 @@ export async function createTask(db, actor, input) {
         assigneeId: input.assigneeId ?? null,
         priority: input.priority ?? null,
         dueDate: input.dueDate ?? null,
+        creatorId: actor.userId,
       },
       include: { decision: { select: { id: true, title: true, status: true } } },
     });
@@ -125,6 +131,7 @@ export async function updateTask(db, actor, id, input) {
         description: input.description ?? task.description,
         priority: input.priority ?? task.priority,
         dueDate: input.dueDate !== undefined ? input.dueDate : task.dueDate,
+        modifiedById: actor.userId,
       },
       include: { decision: { select: { id: true, title: true, status: true } } },
     });
@@ -153,7 +160,7 @@ export async function assignTask(db, actor, id, assigneeId) {
 
     const result = await tx.task.update({
       where: { id },
-      data: { assigneeId },
+      data: { assigneeId, modifiedById: actor.userId },
       include: { decision: { select: { id: true, title: true, status: true } } },
     });
 
@@ -195,6 +202,7 @@ export async function updateTaskStatus(db, actor, id, status, outcome) {
         status,
         completedAt: status === "COMPLETED" ? new Date() : task.completedAt,
         outcome: status === "COMPLETED" ? (outcome ?? task.outcome) : task.outcome,
+        modifiedById: actor.userId,
       },
       include: { decision: { select: { id: true, title: true, status: true } } },
     });

@@ -35,7 +35,9 @@ export async function compileReport(db, companyId, { from, to } = {}) {
       orderBy: { createdAt: "asc" },
     }),
     db.transaction.findMany({
-      where: { companyId, ...(occurredAtFilter ? { occurredAt: occurredAtFilter } : {}) },
+      // Only posted, non-voided transactions belong in a financial report --
+      // pending/rejected/voided entries aren't real, counted activity.
+      where: { companyId, status: "APPROVED", isVoided: false, ...(occurredAtFilter ? { occurredAt: occurredAtFilter } : {}) },
       orderBy: { occurredAt: "asc" },
     }),
     db.auditEvent.findMany({

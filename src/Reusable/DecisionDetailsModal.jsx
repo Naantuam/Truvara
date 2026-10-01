@@ -18,6 +18,11 @@ export default function DecisionDetailsModal({ decision, onClose, currency = "NG
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Submitted by {decision.creator?.fullName || "Unknown"} · {new Date(decision.createdAt).toLocaleDateString()}
               </p>
+              {decision.modifiedBy && (
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                  Last edited by {decision.modifiedBy.fullName} · {new Date(decision.updatedAt).toLocaleString()}
+                </p>
+              )}
 
               {decision.status === "APPROVED" && decision.approver && (
                 <p className="text-sm text-green-600 dark:text-green-400 mt-2">Approved by {decision.approver.fullName}</p>

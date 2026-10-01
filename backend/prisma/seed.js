@@ -21,6 +21,7 @@ const PERMISSIONS = [
   ["finance:transaction:view", "View financial activity"],
   ["finance:transaction:create", "Record income/expenses"],
   ["finance:transaction:edit", "Edit financial records"],
+  ["finance:transaction:approve", "Approve, reject, or void financial transactions"],
   ["dashboard:view", "View management dashboard"],
   ["admin:users:manage", "Manage users and company membership"],
   ["admin:settings:manage", "Manage business/company settings"],

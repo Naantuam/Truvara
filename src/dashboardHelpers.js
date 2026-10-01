@@ -12,7 +12,9 @@ function utcDateKey(date) {
 // matching the calendar date it was actually entered as, regardless of the
 // viewer's own timezone.
 export function computeExpenseProgression(transactions, period = "month", now = new Date()) {
-  const list = transactions || [];
+  // Only posted, non-voided transactions are real -- pending/rejected/voided
+  // entries shouldn't move the totals or the chart.
+  const list = (transactions || []).filter((t) => t.status === "APPROVED" && !t.isVoided);
   const todayUtc = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
   const buckets = [];

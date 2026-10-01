@@ -34,7 +34,11 @@ export default function ExpensesPage() {
     return l;
   }, [transactions, tab, category]);
 
-  const total = filtered.reduce((sum, t) => sum + Number(t.amount || 0) * (t.type === "EXPENSE" ? -1 : 1), 0);
+  // Only posted, non-voided entries are real money moved -- matches what the
+  // server-computed summary cards above already count.
+  const total = filtered
+    .filter((t) => t.status === "APPROVED" && !t.isVoided)
+    .reduce((sum, t) => sum + Number(t.amount || 0) * (t.type === "EXPENSE" ? -1 : 1), 0);
 
   const handleCreated = async (payload) => {
     const res = await api.post("/transactions/", payload);
@@ -44,12 +48,31 @@ export default function ExpensesPage() {
     refreshSummary();
   };
 
+  const applyUpdate = (updated) => {
+    setTransactions((prev) => (prev || []).map((t) => (t.id === updated.id ? updated : t)));
+    setSelectedTransaction(updated);
+    // Status/amount changes affect the server-computed summary -- reload it.
+    refreshSummary();
+  };
+
   const handleUpdated = async (id, payload) => {
     const res = await api.patch(`/transactions/${id}/`, payload);
-    setTransactions((prev) => (prev || []).map((t) => (t.id === id ? res.data : t)));
-    setSelectedTransaction(res.data);
-    // Amount/category can change what the summary aggregates -- reload it.
-    refreshSummary();
+    applyUpdate(res.data);
+  };
+
+  const handleApprove = async (id) => {
+    const res = await api.post(`/transactions/${id}/approve/`);
+    applyUpdate(res.data);
+  };
+
+  const handleReject = async (id, reason) => {
+    const res = await api.post(`/transactions/${id}/reject/`, { reason });
+    applyUpdate(res.data);
+  };
+
+  const handleVoid = async (id, reason) => {
+    const res = await api.post(`/transactions/${id}/void/`, { reason });
+    applyUpdate(res.data);
   };
 
   const handleUploadReceipt = () => {
@@ -151,6 +174,7 @@ export default function ExpensesPage() {
                   <th className="pb-2 pr-4">Description</th>
                   <th className="pb-2 pr-4">Category</th>
                   <th className="pb-2 pr-4">Type</th>
+                  <th className="pb-2 pr-4">Status</th>
                   <th className="pb-2 pr-4">Amount</th>
                   <th className="pb-2">Recorded By</th>
                 </tr>
@@ -182,7 +206,18 @@ export default function ExpensesPage() {
                         {t.type === "INCOME" ? "Income" : "Expense"}
                       </span>
                     </td>
-                    <td className={`py-3 pr-4 font-medium ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-gray-900 dark:text-gray-100"}`}>
+                    <td className="py-3 pr-4">
+                      {t.isVoided ? (
+                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">Voided</span>
+                      ) : t.status === "PENDING_APPROVAL" ? (
+                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-gold-50 dark:bg-gold-950 text-gold-700 dark:text-gold-400">Pending</span>
+                      ) : t.status === "REJECTED" ? (
+                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400">Rejected</span>
+                      ) : (
+                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400">Approved</span>
+                      )}
+                    </td>
+                    <td className={`py-3 pr-4 font-medium ${t.isVoided ? "line-through text-gray-400 dark:text-gray-500" : t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-gray-900 dark:text-gray-100"}`}>
                       {t.type === "INCOME" ? "+" : "-"}{formatMoney(t.amount, t.currency || currency)}
                     </td>
                     <td className="py-3 text-gray-600 dark:text-gray-400">{t.recordedBy?.fullName || "—"}</td>
@@ -191,7 +226,7 @@ export default function ExpensesPage() {
               </tbody>
               <tfoot>
                 <tr className="border-t border-gray-200 dark:border-gray-800 font-bold text-gray-900 dark:text-gray-100">
-                  <td className="pt-3" colSpan={4}>Net</td>
+                  <td className="pt-3" colSpan={5}>Net (approved only)</td>
                   <td className="pt-3" colSpan={2}>{formatMoney(total, currency)}</td>
                 </tr>
               </tfoot>
@@ -207,6 +242,9 @@ export default function ExpensesPage() {
         currency={currency}
         onClose={() => setSelectedTransaction(null)}
         onUpdated={handleUpdated}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        onVoid={handleVoid}
       />
     </div>
   );
