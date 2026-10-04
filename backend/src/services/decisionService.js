@@ -1,5 +1,6 @@
 import { recordAuditEvent } from "../utils/audit.js";
 import { loadUserMap, attachUser } from "../utils/hydrateUsers.js";
+import { directoryPrisma } from "../db/directoryPrisma.js";
 
 export class DecisionError extends Error {
   constructor(message, status = 400) {
@@ -28,12 +29,13 @@ const TRANSACTION_OPTIONS = { timeout: 15000 };
 // normal Prisma includes.
 async function hydrate(db, decisions) {
   const list = Array.isArray(decisions) ? decisions : [decisions];
-  const userMap = await loadUserMap(list.flatMap((d) => [d.creatorId, d.approverId, d.modifiedById]));
+  const userMap = await loadUserMap(list.flatMap((d) => [d.creatorId, d.approverId, d.modifiedById, d.coAuthorId]));
   const withUsers = list.map((d) => ({
     ...d,
     creator: attachUser(userMap, d.creatorId),
     approver: attachUser(userMap, d.approverId),
     modifiedBy: attachUser(userMap, d.modifiedById),
+    coAuthor: attachUser(userMap, d.coAuthorId),
   }));
   return Array.isArray(decisions) ? withUsers : withUsers[0];
 }
@@ -120,6 +122,44 @@ export async function updateDecision(db, actor, id, input) {
       entityType: "Decision",
       entityId: id,
       changes: input,
+    });
+
+    return result;
+  }, TRANSACTION_OPTIONS);
+
+  return hydrate(db, updated);
+}
+
+// Status-independent on purpose (unlike updateDecision, which only allows
+// edits while DRAFT) -- crediting a co-author doesn't change what was
+// decided, so it shouldn't be locked out once a decision moves past draft.
+export async function setDecisionCoAuthor(db, actor, id, coAuthorId) {
+  const updated = await db.$transaction(async (tx) => {
+    const decision = await tx.decision.findFirst({ where: { id, companyId: actor.companyId } });
+    if (!decision) throw new DecisionError("Decision not found.", 404);
+    if (decision.creatorId !== actor.userId && actor.role !== "Owner") {
+      throw new DecisionError("Only the creator (or Owner) can set a co-author on this decision.", 403);
+    }
+
+    if (coAuthorId) {
+      const membership = await directoryPrisma.companyMembership.findUnique({
+        where: { userId_companyId: { userId: coAuthorId, companyId: actor.companyId } },
+      });
+      if (!membership) throw new DecisionError("Co-author must be a member of this company.", 400);
+    }
+
+    const result = await tx.decision.update({
+      where: { id },
+      data: { coAuthorId: coAuthorId || null, modifiedById: actor.userId },
+    });
+
+    await recordAuditEvent(tx, {
+      companyId: actor.companyId,
+      actorId: actor.userId,
+      action: "decision.co_author_set",
+      entityType: "Decision",
+      entityId: id,
+      changes: { coAuthorId: coAuthorId || null },
     });
 
     return result;

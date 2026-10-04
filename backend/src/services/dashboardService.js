@@ -9,6 +9,7 @@ const ACTION_DESCRIPTIONS = {
   "decision.submitted": "submitted a decision for approval",
   "decision.approved": "approved a decision",
   "decision.rejected": "rejected a decision",
+  "decision.co_author_set": "set a co-author on a decision",
   "task.created": "created a task",
   "task.edited": "edited a task",
   "task.assigned": "reassigned a task",

@@ -8,6 +8,7 @@ import {
   getDecision,
   createDecision,
   updateDecision,
+  setDecisionCoAuthor,
   submitDecision,
   approveDecision,
   rejectDecision,
@@ -69,6 +70,20 @@ router.patch("/:id", requirePermission("governance:decision:edit"), async (req, 
 
   try {
     const decision = await updateDecision(req.user.tenantDb, req.user, req.params.id, parsed.data);
+    res.json(decision);
+  } catch (err) {
+    handleDecisionError(err, res, next);
+  }
+});
+
+const coAuthorSchema = z.object({ coAuthorId: z.string().uuid().nullable() });
+
+router.patch("/:id/co-author", requirePermission("governance:decision:edit"), async (req, res, next) => {
+  const parsed = coAuthorSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ detail: "coAuthorId (or null) is required." });
+
+  try {
+    const decision = await setDecisionCoAuthor(req.user.tenantDb, req.user, req.params.id, parsed.data.coAuthorId);
     res.json(decision);
   } catch (err) {
     handleDecisionError(err, res, next);

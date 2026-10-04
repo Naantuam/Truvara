@@ -45,6 +45,21 @@ export default function DecisionsPage() {
     }
   };
 
+  const applyUpdate = (updated) => {
+    setDecisions((prev) => (prev || []).map((d) => (d.id === updated.id ? updated : d)));
+    setDetailsFor(updated);
+  };
+
+  const handleUpdated = async (id, payload) => {
+    const res = await api.patch(`/decisions/${id}/`, payload);
+    applyUpdate(res.data);
+  };
+
+  const handleSetCoAuthor = async (id, coAuthorId) => {
+    const res = await api.patch(`/decisions/${id}/co-author/`, { coAuthorId });
+    applyUpdate(res.data);
+  };
+
   return (
     <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
       <div className="flex justify-end">
@@ -143,7 +158,14 @@ export default function DecisionsPage() {
         onCreated={handleCreated}
         currency={currency}
       />
-      <DecisionDetailsModal decision={detailsFor} onClose={() => setDetailsFor(null)} currency={currency} />
+      <DecisionDetailsModal
+        decision={detailsFor}
+        user={user}
+        onClose={() => setDetailsFor(null)}
+        onUpdated={handleUpdated}
+        onSetCoAuthor={handleSetCoAuthor}
+        currency={currency}
+      />
     </div>
   );
 }

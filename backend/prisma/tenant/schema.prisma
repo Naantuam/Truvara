@@ -72,6 +72,14 @@ model Decision {
   creatorId       String         @map("creator_id")
   approverId      String?        @map("approver_id")
   modifiedById    String?        @map("modified_by_id")
+  // Who actually used the system to create this record (creatorId) is never
+  // rewritten -- that's the real audit signal. coAuthorId is a separate,
+  // additive attribution for "who this is really credited to in real life"
+  // (e.g. Precious data-entering a decision that's really Martins's), shown
+  // alongside the creator, not instead of them. Settable regardless of
+  // status, unlike the content fields below -- it doesn't change what was
+  // decided, only who else is credited.
+  coAuthorId      String?        @map("co_author_id")
   expectedAmount  Decimal?       @map("expected_amount") @db.Decimal(14, 2)
   rejectionReason String?        @map("rejection_reason")
   createdAt       DateTime       @default(now()) @map("created_at")
