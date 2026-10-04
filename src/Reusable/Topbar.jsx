@@ -27,25 +27,32 @@ export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { },
   const roleLabel = user?.role || "Unknown Role";
 
   return (
-    <header className="w-full bg-white dark:bg-gray-900 shadow-sm border-b border-gray-100 dark:border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 z-40 gap-4">
-      {/* Left section (Bars button + page title, desktop only -- mobile keeps
-          its own centered header block above the page content, see Layout.jsx) */}
-      <div className="flex items-center gap-4 min-w-0">
+    <header className="relative w-full bg-white dark:bg-gray-900 shadow-sm border-b border-gray-100 dark:border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 z-40 gap-4">
+      {/* Left section: just the sidebar toggle. The title is centered on the
+          full header width below, not placed here -- the sidebar is `fixed`
+          with a higher z-index than this header, so it visually covers
+          anything in this left column; centering keeps the title clear of it. */}
+      <div className="flex items-center flex-shrink-0">
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="flex-shrink-0 rounded-md bg-transparent text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors"
+            className="rounded-md bg-transparent text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors"
           >
             <Bars3Icon className="h-6 w-6" />
           </button>
         )}
-        {header && (
-          <div className="hidden md:block min-w-0">
-            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight truncate">{header.title}</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{header.subtitle}</p>
-          </div>
-        )}
       </div>
+
+      {/* Page title/subtitle, desktop only -- mobile keeps its own centered
+          header block above the page content, see Layout.jsx. True center of
+          the header, not just "between the two side sections", so the fixed
+          sidebar never overlaps it. */}
+      {header && (
+        <div className="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-xs text-center px-4 pointer-events-none">
+          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight truncate">{header.title}</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{header.subtitle}</p>
+        </div>
+      )}
 
       {/* Right section (Notifications & User Info) */}
       <div className="flex items-center space-x-4 flex-shrink-0">
