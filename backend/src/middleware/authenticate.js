@@ -37,6 +37,7 @@ export async function authenticate(req, res, next) {
     scopeType: ctx.scopeType,
     departmentId: ctx.departmentId,
     permissions: ctx.permissions,
+    companyCurrency: ctx.companyCurrency,
     tenantDb: getTenantClient(ctx.tenantDatabaseUrl),
   };
 

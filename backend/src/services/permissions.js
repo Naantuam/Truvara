@@ -8,7 +8,7 @@ export async function loadPermissionContext(userId, companyId) {
     where: { userId_companyId: { userId, companyId } },
     include: {
       role: { include: { rolePermissions: { include: { permission: true } } } },
-      company: { select: { tenantDatabaseUrl: true } },
+      company: { select: { tenantDatabaseUrl: true, currency: true } },
     },
   });
 
@@ -23,6 +23,7 @@ export async function loadPermissionContext(userId, companyId) {
     departmentId: membership.departmentId,
     permissions,
     tenantDatabaseUrl: membership.company.tenantDatabaseUrl,
+    companyCurrency: membership.company.currency,
   };
 }
 

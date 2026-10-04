@@ -46,7 +46,6 @@ export default function AddExpenseModal({ open, onClose, onCreated, initial = {}
         type,
         narration: narration || undefined,
         amount: Number(amount),
-        currency,
         occurredAt: occurredAt ? new Date(occurredAt).toISOString() : undefined,
         category: category || undefined,
         counterparty: counterparty || undefined,

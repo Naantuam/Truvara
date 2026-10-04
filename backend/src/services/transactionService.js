@@ -79,6 +79,11 @@ export async function createTransaction(db, actor, input) {
         taskId: input.taskId ?? null,
         type: input.type,
         amount: input.amount,
+        // Always the company's own configured currency, never client-supplied
+        // -- there's no multi-currency-per-company feature, so this is the
+        // single source of truth rather than something the request could
+        // get wrong or spoof.
+        currency: actor.companyCurrency || "NGN",
         narration: input.narration ?? null,
         counterparty: input.counterparty ?? null,
         category: input.category ?? null,
