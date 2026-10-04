@@ -30,7 +30,11 @@ const PERMISSIONS = [
 // Owner/Manager/Team Member per Precious's WhatsApp spec. Owner keeps both
 // create and approve on decisions -- the maker-checker exception agreed for
 // a single-founder company -- everyone else is blocked from approving their
-// own decision at the route/service layer, not here.
+// own decision at the route/service layer, not here. Team Member gained
+// create/edit/submit on decisions 2026-10-04, per Precious: "What we have is
+// generally for the owner and it shouldn't be so -- Team member should be
+// able to open a decision and wait for the owner to Approve." Approve stays
+// Owner-only for everyone but Owner, same maker-checker rule as before.
 const ROLE_PERMISSIONS = {
   Owner: PERMISSIONS.map(([code]) => code),
   Manager: [
@@ -48,6 +52,9 @@ const ROLE_PERMISSIONS = {
   ],
   "Team Member": [
     "governance:decision:view",
+    "governance:decision:create",
+    "governance:decision:edit",
+    "governance:decision:submit",
     "operations:task:view",
     "operations:task:edit",
     "finance:transaction:view",

@@ -1,5 +1,6 @@
 import { directoryPrisma } from "../db/directoryPrisma.js";
 import { generateActivationToken, sendActivationEmail } from "./activation.js";
+import { recordAuditEvent } from "../utils/audit.js";
 
 export class SettingsError extends Error {
   constructor(message, status = 400) {
@@ -21,14 +22,15 @@ export async function updateProfile(userId, { fullName }) {
 // HIGH priority: Company edit/save/persist. Only the company's own name is
 // user-editable here -- tenantDatabaseUrl is an infrastructure concern, not
 // something exposed through Settings.
-export async function updateCompany(companyId, { name, currency }) {
+export async function updateCompany(companyId, { name, currency, employeeCount }) {
   return directoryPrisma.company.update({
     where: { id: companyId },
     data: {
       ...(name !== undefined ? { name } : {}),
       ...(currency !== undefined ? { currency } : {}),
+      ...(employeeCount !== undefined ? { employeeCount } : {}),
     },
-    select: { id: true, name: true, currency: true },
+    select: { id: true, name: true, currency: true, employeeCount: true },
   });
 }
 
@@ -107,6 +109,42 @@ export async function updateMember(companyId, userId, { fullName, roleName, isAc
   });
 
   return { ...user, role: updatedMembership.role.name, isActive: updatedMembership.isActive };
+}
+
+// Owner-only (admin:users:manage): removes someone's access to this one
+// company. The User account itself is never touched -- their fullName stays
+// resolvable on every Decision/Task/Transaction/AuditEvent they ever
+// touched here, so deleting a person's access never erases the company's
+// own history of what they did. A reason is required and recorded in that
+// same audit trail, same as void/reject elsewhere in the app.
+export async function removeMember(tenantDb, companyId, actor, targetUserId, reason) {
+  if (!reason) throw new SettingsError("A reason is required to remove a member.", 400);
+  if (targetUserId === actor.userId) throw new SettingsError("You cannot remove yourself.", 400);
+
+  const membership = await directoryPrisma.companyMembership.findUnique({
+    where: { userId_companyId: { userId: targetUserId, companyId } },
+  });
+  if (!membership) throw new SettingsError("This person is not a member of this company.", 404);
+
+  const user = await directoryPrisma.user.findUnique({
+    where: { id: targetUserId },
+    select: { fullName: true, email: true },
+  });
+
+  await directoryPrisma.companyMembership.delete({
+    where: { userId_companyId: { userId: targetUserId, companyId } },
+  });
+
+  await recordAuditEvent(tenantDb, {
+    companyId,
+    actorId: actor.userId,
+    action: "member.removed",
+    entityType: "User",
+    entityId: targetUserId,
+    changes: { fullName: user?.fullName, email: user?.email, reason },
+  });
+
+  return { id: targetUserId, removed: true };
 }
 
 async function resolveRoleId(roleName) {

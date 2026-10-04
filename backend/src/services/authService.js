@@ -33,6 +33,8 @@ function signSessionTokens(userId, companyId, roleName) {
 
 async function buildSessionResponse(user, membership) {
   const tokens = signSessionTokens(user.id, membership.companyId, membership.role.name);
+  const permissionCodes = new Set((membership.role.rolePermissions || []).map((rp) => rp.permission.code));
+
   return {
     ...tokens,
     user: {
@@ -42,6 +44,12 @@ async function buildSessionResponse(user, membership) {
       company_id: membership.companyId,
       company_name: membership.company.name,
       company_currency: membership.company.currency || "NGN",
+      // Not sent at all to anyone without this permission -- not just
+      // hidden in the UI, since that alone would still leak it over the
+      // network to a Team Member who looked.
+      ...(permissionCodes.has("admin:settings:manage")
+        ? { company_employee_count: membership.company.employeeCount ?? null }
+        : {}),
       role: membership.role.name,
       notifications_read_at: membership.notificationsReadAt,
     },
@@ -57,7 +65,10 @@ async function resolveSessionForUser(user) {
   // any other they belong to.
   const memberships = await directoryPrisma.companyMembership.findMany({
     where: { userId: user.id, isActive: true },
-    include: { role: true, company: { select: { id: true, name: true, currency: true } } },
+    include: {
+      role: { include: { rolePermissions: { include: { permission: true } } } },
+      company: { select: { id: true, name: true, currency: true, employeeCount: true } },
+    },
   });
 
   if (memberships.length === 0) {
@@ -127,7 +138,10 @@ export async function selectCompany(preAuthToken, companyId) {
 
   const membership = await directoryPrisma.companyMembership.findUnique({
     where: { userId_companyId: { userId: user.id, companyId } },
-    include: { role: true, company: { select: { id: true, name: true, currency: true } } },
+    include: {
+      role: { include: { rolePermissions: { include: { permission: true } } } },
+      company: { select: { id: true, name: true, currency: true, employeeCount: true } },
+    },
   });
   if (!membership || !membership.isActive) throw new AuthError("You do not have access to that company.");
 

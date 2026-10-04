@@ -5,6 +5,7 @@ import api from "../../api";
 import SettingsRow from "./SettingsRow";
 import MemberRow from "./MemberRow";
 import AddMemberModal from "./AddMemberModal";
+import RemoveMemberModal from "./RemoveMemberModal";
 import { CURRENCY_OPTIONS } from "../../currencyHelpers";
 import { clearCache } from "../../dataCache";
 
@@ -13,6 +14,7 @@ export default function SettingsPage() {
   const [members, setMembers] = useState([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [removingMember, setRemovingMember] = useState(null);
 
   const canManageCompany = user?.permissions?.includes("admin:settings:manage");
   const canManageUsers = user?.permissions?.includes("admin:users:manage");
@@ -60,6 +62,17 @@ export default function SettingsPage() {
     window.location.reload();
   };
 
+  const handleEmployeeCountSave = async (employeeCount) => {
+    const res = await api.patch("/settings/company/", { employeeCount: Number(employeeCount) });
+    const updated = { ...user, company_employee_count: res.data.employeeCount };
+    try {
+      localStorage.setItem("user", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+    window.location.reload();
+  };
+
   const handleAddMember = async (payload) => {
     const res = await api.post("/company/members/", payload);
     fetchMembers();
@@ -68,6 +81,11 @@ export default function SettingsPage() {
 
   const handleUpdateMember = async (userId, payload) => {
     await api.patch(`/company/members/${userId}/`, payload);
+    fetchMembers();
+  };
+
+  const handleRemoveMember = async (userId, reason) => {
+    await api.delete(`/company/members/${userId}/`, { data: { reason } });
     fetchMembers();
   };
 
@@ -109,6 +127,15 @@ export default function SettingsPage() {
               options={CURRENCY_OPTIONS}
               onSave={handleCurrencySave}
             />
+            {/* Owner-only, not shown to Manager/Team Member at all -- the API
+                itself never sends this field to anyone without
+                admin:settings:manage, this isn't just a hidden UI row. */}
+            <SettingsRow
+              label="Number of Employees"
+              type="number"
+              value={user?.company_employee_count ?? ""}
+              onSave={handleEmployeeCountSave}
+            />
           </>
         ) : (
           <>
@@ -149,7 +176,13 @@ export default function SettingsPage() {
         ) : canManageUsers ? (
           <div>
             {members.map((m) => (
-              <MemberRow key={m.id} member={m} onUpdate={handleUpdateMember} isSelf={m.id === user?.id} />
+              <MemberRow
+                key={m.id}
+                member={m}
+                onUpdate={handleUpdateMember}
+                onRemove={setRemovingMember}
+                isSelf={m.id === user?.id}
+              />
             ))}
           </div>
         ) : (
@@ -168,7 +201,10 @@ export default function SettingsPage() {
       </div>
 
       {canManageUsers && (
-        <AddMemberModal open={addOpen} onClose={() => setAddOpen(false)} onAdded={handleAddMember} />
+        <>
+          <AddMemberModal open={addOpen} onClose={() => setAddOpen(false)} onAdded={handleAddMember} />
+          <RemoveMemberModal member={removingMember} onClose={() => setRemovingMember(null)} onRemoved={handleRemoveMember} />
+        </>
       )}
 
       <button

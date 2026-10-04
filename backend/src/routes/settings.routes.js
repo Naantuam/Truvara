@@ -32,9 +32,10 @@ const companySchema = z
   .object({
     name: z.string().min(1).optional(),
     currency: z.enum(["NGN", "USD", "EUR", "GBP"]).optional(),
+    employeeCount: z.number().int().positive().optional(),
   })
-  .refine((data) => data.name !== undefined || data.currency !== undefined, {
-    message: "At least one of name or currency is required.",
+  .refine((data) => data.name !== undefined || data.currency !== undefined || data.employeeCount !== undefined, {
+    message: "At least one of name, currency, or employeeCount is required.",
   });
 
 router.patch("/company", requirePermission("admin:settings:manage"), async (req, res, next) => {

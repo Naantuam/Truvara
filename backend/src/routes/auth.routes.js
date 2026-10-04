@@ -99,10 +99,11 @@ router.post("/change-password", authenticate, async (req, res, next) => {
 
 router.get("/me", authenticate, async (req, res, next) => {
   try {
+    const canManageCompany = req.user.permissions.has("admin:settings:manage");
     const [company, membership] = await Promise.all([
       directoryPrisma.company.findUnique({
         where: { id: req.user.companyId },
-        select: { name: true, currency: true },
+        select: { name: true, currency: true, ...(canManageCompany ? { employeeCount: true } : {}) },
       }),
       directoryPrisma.companyMembership.findUnique({
         where: { userId_companyId: { userId: req.user.id, companyId: req.user.companyId } },
@@ -114,6 +115,9 @@ router.get("/me", authenticate, async (req, res, next) => {
       company_id: req.user.companyId,
       company_name: company?.name || null,
       company_currency: company?.currency || "NGN",
+      // Not sent at all to anyone without this permission -- see authService.js
+      // buildSessionResponse for the same rule applied at login.
+      ...(canManageCompany ? { company_employee_count: company?.employeeCount ?? null } : {}),
       role: req.user.role,
       permissions: Array.from(req.user.permissions),
       notifications_read_at: membership?.notificationsReadAt || null,

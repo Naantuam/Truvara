@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { User, Loader2 } from "lucide-react";
+import { User, Loader2, Plus } from "lucide-react";
+import api from "../../api";
 import DepartmentAvatar from "./DepartmentAvatar";
 import ResponsibilityDetailsModal from "./ResponsibilityDetailsModal";
+import AddActionModal from "../Actions/AddActionModal";
 import { TASKS_CACHE_KEY, fetchTasks } from "../../taskHelpers";
 import useCachedResource from "../../useCachedResource";
 
@@ -12,8 +14,20 @@ import useCachedResource from "../../useCachedResource";
 // shows the flat execution/status view of the same tasks. Same cache key as
 // Actions -- navigating between them never re-fetches within a session.
 export default function ResponsibilitiesPage() {
-  const { data: tasks, loading } = useCachedResource(TASKS_CACHE_KEY, fetchTasks);
+  const { data: tasks, setData: setTasks, loading } = useCachedResource(TASKS_CACHE_KEY, fetchTasks);
   const [detailsFor, setDetailsFor] = useState(null);
+  const [assigning, setAssigning] = useState(false);
+  const [assignToId, setAssignToId] = useState("");
+
+  const handleCreated = async (payload) => {
+    const res = await api.post("/tasks/", payload);
+    setTasks((prev) => [res.data, ...(prev || [])]);
+  };
+
+  const openAssign = (personId = "") => {
+    setAssignToId(personId);
+    setAssigning(true);
+  };
 
   const people = useMemo(() => {
     const byPerson = new Map();
@@ -38,6 +52,15 @@ export default function ResponsibilitiesPage() {
 
   return (
     <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
+      <div className="flex justify-end">
+        <button
+          onClick={() => openAssign()}
+          className="flex items-center gap-2 bg-brand-600 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-brand-700 transition-colors"
+        >
+          <Plus className="w-4 h-4" /> Assign Task
+        </button>
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-6 text-gray-400 dark:text-gray-500">
           <Loader2 className="w-4 h-4 animate-spin" /> Loading responsibilities...
@@ -73,12 +96,20 @@ export default function ResponsibilitiesPage() {
                     View Details
                   </button>
                   {p.id !== "unassigned" && (
-                    <Link
-                      to={`/actions?assignee=${encodeURIComponent(p.id)}`}
-                      className="text-sm font-medium text-brand-600 dark:text-gold-400 hover:text-brand-700 dark:hover:text-gold-300"
-                    >
-                      View Actions
-                    </Link>
+                    <>
+                      <Link
+                        to={`/actions?assignee=${encodeURIComponent(p.id)}`}
+                        className="text-sm font-medium text-brand-600 dark:text-gold-400 hover:text-brand-700 dark:hover:text-gold-300"
+                      >
+                        View Actions
+                      </Link>
+                      <button
+                        onClick={() => openAssign(p.id)}
+                        className="text-sm font-medium text-brand-600 dark:text-gold-400 hover:text-brand-700 dark:hover:text-gold-300"
+                      >
+                        Assign Task
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -117,6 +148,12 @@ export default function ResponsibilitiesPage() {
       )}
 
       <ResponsibilityDetailsModal person={detailsFor} index={people.findIndex((p) => p.id === detailsFor?.id)} onClose={() => setDetailsFor(null)} />
+      <AddActionModal
+        open={assigning}
+        onClose={() => setAssigning(false)}
+        onCreated={handleCreated}
+        initialAssigneeId={assignToId}
+      />
     </div>
   );
 }

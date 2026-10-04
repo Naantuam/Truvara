@@ -1,18 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import useCachedResource from "../../useCachedResource";
 import { COMPANY_MEMBERS_CACHE_KEY, fetchCompanyMembers } from "../../companyHelpers";
 import { DECISIONS_CACHE_KEY, fetchDecisions } from "../../decisionHelpers";
 
-export default function AddActionModal({ open, onClose, onCreated }) {
+export default function AddActionModal({ open, onClose, onCreated, initialAssigneeId = "" }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [assigneeId, setAssigneeId] = useState("");
+  const [assigneeId, setAssigneeId] = useState(initialAssigneeId);
   const [decisionId, setDecisionId] = useState("");
   const [priority, setPriority] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  // One shared modal instance gets reused for different people on
+  // Responsibilities (each "Assign Task" click passes a different
+  // initialAssigneeId) -- resync whenever it's (re)opened, since plain
+  // useState only reads the prop once on mount.
+  useEffect(() => {
+    if (open) setAssigneeId(initialAssigneeId);
+  }, [open, initialAssigneeId]);
 
   // Shared cache keys -- reuses whatever Actions/Responsibilities/Decisions
   // pages already fetched this session instead of re-fetching every time the
@@ -23,7 +31,7 @@ export default function AddActionModal({ open, onClose, onCreated }) {
   const reset = () => {
     setTitle("");
     setDescription("");
-    setAssigneeId("");
+    setAssigneeId(initialAssigneeId);
     setDecisionId("");
     setPriority("");
     setDueDate("");

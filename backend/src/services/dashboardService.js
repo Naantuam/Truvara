@@ -18,6 +18,7 @@ const ACTION_DESCRIPTIONS = {
   "transaction.approved": "approved a transaction",
   "transaction.rejected": "rejected a transaction",
   "transaction.voided": "voided a transaction",
+  "member.removed": "removed a team member",
 };
 
 export function describeAction(action) {

@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 
 // Manager role limited/commented out from frontend per requirements (can be re-enabled later)
 const ROLES = ["Owner", /* "Manager", */ "Team Member"];
 
-export default function MemberRow({ member, onUpdate, isSelf }) {
+export default function MemberRow({ member, onUpdate, onRemove, isSelf }) {
   const [saving, setSaving] = useState(false);
 
   // Preserve Manager option for rendering if an existing user in DB currently has that role
@@ -60,6 +61,14 @@ export default function MemberRow({ member, onUpdate, isSelf }) {
           }`}
         >
           {member.isActive ? "Active" : "Inactive"}
+        </button>
+        <button
+          onClick={() => onRemove(member)}
+          disabled={saving || isSelf}
+          title={isSelf ? "You can't remove yourself" : "Remove from company"}
+          className="text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 disabled:opacity-50 transition-colors"
+        >
+          <Trash2 className="w-4 h-4" />
         </button>
       </div>
     </div>
