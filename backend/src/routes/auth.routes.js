@@ -99,10 +99,16 @@ router.post("/change-password", authenticate, async (req, res, next) => {
 
 router.get("/me", authenticate, async (req, res, next) => {
   try {
-    const company = await directoryPrisma.company.findUnique({
-      where: { id: req.user.companyId },
-      select: { name: true, currency: true },
-    });
+    const [company, membership] = await Promise.all([
+      directoryPrisma.company.findUnique({
+        where: { id: req.user.companyId },
+        select: { name: true, currency: true },
+      }),
+      directoryPrisma.companyMembership.findUnique({
+        where: { userId_companyId: { userId: req.user.id, companyId: req.user.companyId } },
+        select: { notificationsReadAt: true },
+      }),
+    ]);
     res.json({
       id: req.user.id,
       company_id: req.user.companyId,
@@ -110,6 +116,7 @@ router.get("/me", authenticate, async (req, res, next) => {
       company_currency: company?.currency || "NGN",
       role: req.user.role,
       permissions: Array.from(req.user.permissions),
+      notifications_read_at: membership?.notificationsReadAt || null,
     });
   } catch (err) {
     next(err);

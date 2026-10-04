@@ -43,6 +43,7 @@ async function buildSessionResponse(user, membership) {
       company_name: membership.company.name,
       company_currency: membership.company.currency || "NGN",
       role: membership.role.name,
+      notifications_read_at: membership.notificationsReadAt,
     },
   };
 }

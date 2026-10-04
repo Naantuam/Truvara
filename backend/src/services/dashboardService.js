@@ -15,6 +15,9 @@ const ACTION_DESCRIPTIONS = {
   "task.status_changed": "updated a task",
   "transaction.created": "recorded a transaction",
   "transaction.edited": "edited a transaction",
+  "transaction.approved": "approved a transaction",
+  "transaction.rejected": "rejected a transaction",
+  "transaction.voided": "voided a transaction",
 };
 
 export function describeAction(action) {
@@ -74,5 +77,25 @@ export async function getRecentActivity(db, companyId, limit = 15) {
     action: describeAction(e.action),
     target: titleMap.get(`${e.entityType}:${e.entityId}`) || null,
     createdAt: e.createdAt,
+    // Full detail for the notification details modal -- actionCode is the
+    // raw audit action ("decision.approved"), changes is whatever that
+    // action recorded (e.g. {from, to} for a status change, {reason} for a
+    // rejection/void), entityType/entityId identify the underlying record.
+    actionCode: e.action,
+    entityType: e.entityType,
+    entityId: e.entityId,
+    changes: e.changes,
   }));
+}
+
+// Unread tracking is a single timestamp per membership, not a row per
+// notification -- an item counts as unread if it happened after the last
+// time this person opened the bell, same pattern as a basic "mark all read."
+export async function markNotificationsRead(userId, companyId) {
+  const membership = await directoryPrisma.companyMembership.update({
+    where: { userId_companyId: { userId, companyId } },
+    data: { notificationsReadAt: new Date() },
+    select: { notificationsReadAt: true },
+  });
+  return membership.notificationsReadAt;
 }
