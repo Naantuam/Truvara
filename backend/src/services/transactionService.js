@@ -46,13 +46,20 @@ async function assertTaskInCompany(tx, companyId, taskId) {
   if (!task) throw new TransactionError("Task not found.", 404);
 }
 
-export async function listTransactions(db, companyId, { decisionId, taskId, type } = {}) {
+// Voided transactions are excluded by default -- Precious's explicit ask was
+// "I don't want to see them," and leaving the API returning them to anyone
+// with plain view access (even though the UI didn't render them) would be
+// exactly the kind of unchecked exposure worth closing. They're never
+// deleted -- `includeVoided` is how an Owner (the same tier that can void in
+// the first place) can still retrieve them for audit purposes.
+export async function listTransactions(db, companyId, { decisionId, taskId, type, includeVoided } = {}) {
   const transactions = await db.transaction.findMany({
     where: {
       companyId,
       ...(decisionId ? { decisionId } : {}),
       ...(taskId ? { taskId } : {}),
       ...(type ? { type } : {}),
+      ...(includeVoided ? {} : { isVoided: false }),
     },
     orderBy: { occurredAt: "desc" },
     include: includeRelated,
@@ -60,8 +67,11 @@ export async function listTransactions(db, companyId, { decisionId, taskId, type
   return hydrate(db, transactions);
 }
 
-export async function getTransaction(db, companyId, id) {
-  const transaction = await db.transaction.findFirst({ where: { id, companyId }, include: includeRelated });
+export async function getTransaction(db, companyId, id, { includeVoided } = {}) {
+  const transaction = await db.transaction.findFirst({
+    where: { id, companyId, ...(includeVoided ? {} : { isVoided: false }) },
+    include: includeRelated,
+  });
   if (!transaction) throw new TransactionError("Transaction not found.", 404);
   return hydrate(db, transaction);
 }

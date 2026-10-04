@@ -34,10 +34,13 @@ export default function ExpensesPage() {
     return l;
   }, [transactions, tab, category]);
 
-  // Only posted, non-voided entries are real money moved -- matches what the
-  // server-computed summary cards above already count.
+  // Only posted entries are real money moved -- matches what the
+  // server-computed summary cards above already count. Voided transactions
+  // never reach the frontend at all (the API excludes them by default, see
+  // transactionService.js listTransactions) -- they're never deleted, just
+  // not shown, per Precious's request.
   const total = filtered
-    .filter((t) => t.status === "APPROVED" && !t.isVoided)
+    .filter((t) => t.status === "APPROVED")
     .reduce((sum, t) => sum + Number(t.amount || 0) * (t.type === "EXPENSE" ? -1 : 1), 0);
 
   const handleCreated = async (payload) => {
@@ -71,8 +74,13 @@ export default function ExpensesPage() {
   };
 
   const handleVoid = async (id, reason) => {
-    const res = await api.post(`/transactions/${id}/void/`, { reason });
-    applyUpdate(res.data);
+    await api.post(`/transactions/${id}/void/`, { reason });
+    // Voided transactions are excluded from this list by the API (not
+    // deleted, just hidden) -- drop it locally too instead of updating it in
+    // place, and close the modal since what it was showing just disappeared.
+    setTransactions((prev) => (prev || []).filter((t) => t.id !== id));
+    setSelectedTransaction(null);
+    refreshSummary();
   };
 
   const handleUploadReceipt = () => {
@@ -203,9 +211,7 @@ export default function ExpensesPage() {
                       </span>
                     </td>
                     <td className="py-3 pr-4">
-                      {t.isVoided ? (
-                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">Voided</span>
-                      ) : t.status === "PENDING_APPROVAL" ? (
+                      {t.status === "PENDING_APPROVAL" ? (
                         <span className="text-xs font-medium px-2 py-1 rounded-full bg-gold-50 dark:bg-gold-950 text-gold-700 dark:text-gold-400">Pending</span>
                       ) : t.status === "REJECTED" ? (
                         <span className="text-xs font-medium px-2 py-1 rounded-full bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400">Rejected</span>
@@ -213,7 +219,7 @@ export default function ExpensesPage() {
                         <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400">Approved</span>
                       )}
                     </td>
-                    <td className={`py-3 pr-4 font-medium ${t.isVoided ? "line-through text-gray-400 dark:text-gray-500" : t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-gray-900 dark:text-gray-100"}`}>
+                    <td className={`py-3 pr-4 font-medium ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-gray-900 dark:text-gray-100"}`}>
                       {t.type === "INCOME" ? "+" : "-"}{formatMoney(t.amount, t.currency || currency)}
                     </td>
                     <td className="py-3 text-gray-600 dark:text-gray-400">{t.recordedBy?.fullName || "—"}</td>

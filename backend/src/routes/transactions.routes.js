@@ -51,12 +51,17 @@ router.get("/summary", requirePermission("finance:transaction:view"), async (req
   }
 });
 
+// `includeVoided=true` is silently ignored for anyone without
+// finance:transaction:approve, rather than rejected -- someone without
+// access to this shouldn't even learn the flag exists.
 router.get("/", requirePermission("finance:transaction:view"), async (req, res, next) => {
   try {
+    const canSeeVoided = req.user.permissions.has("finance:transaction:approve");
     const transactions = await listTransactions(req.user.tenantDb, req.user.companyId, {
       decisionId: req.query.decisionId,
       taskId: req.query.taskId,
       type: req.query.type,
+      includeVoided: canSeeVoided && req.query.includeVoided === "true",
     });
     res.json(transactions);
   } catch (err) {
@@ -66,7 +71,10 @@ router.get("/", requirePermission("finance:transaction:view"), async (req, res, 
 
 router.get("/:id", requirePermission("finance:transaction:view"), async (req, res, next) => {
   try {
-    const transaction = await getTransaction(req.user.tenantDb, req.user.companyId, req.params.id);
+    const canSeeVoided = req.user.permissions.has("finance:transaction:approve");
+    const transaction = await getTransaction(req.user.tenantDb, req.user.companyId, req.params.id, {
+      includeVoided: canSeeVoided,
+    });
     res.json(transaction);
   } catch (err) {
     handleTransactionError(err, res, next);
