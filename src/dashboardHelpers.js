@@ -3,6 +3,19 @@ import api from "./api";
 export const DASHBOARD_ACTIVITY_CACHE_KEY = "dashboard-activity";
 export const fetchRecentActivity = () => api.get("/dashboard/activity/").then((res) => (Array.isArray(res.data) ? res.data : []));
 
+// Shared by TeamActivity and the Topbar notifications dropdown, which show
+// the same underlying activity feed in two places.
+export function getRelativeTime(dateString) {
+  const diffInSeconds = Math.floor((new Date() - new Date(dateString)) / 1000);
+  if (diffInSeconds < 60) return "just now";
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes} min ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
+}
+
 function utcDateKey(date) {
   return date.toISOString().slice(0, 10);
 }

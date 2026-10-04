@@ -12,7 +12,7 @@ export async function loadPermissionContext(userId, companyId) {
     },
   });
 
-  if (!membership) return null;
+  if (!membership || !membership.isActive) return null;
 
   const permissions = new Set(membership.role.rolePermissions.map((rp) => rp.permission.code));
 

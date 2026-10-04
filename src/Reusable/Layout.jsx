@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import TopBar from "./Topbar";
 import api from "../api";
 import { AUTH_DISABLED } from "../config";
+import { getPageHeader } from "../pageHeaders";
 
 const TEST_USER = { username: "Test User", email: "test@example.com", is_superuser: true };
 
 export default function Layout() {
+    const location = useLocation();
+    const header = getPageHeader(location.pathname);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [user, setUser] = useState(() => {
         try {
@@ -96,6 +99,15 @@ export default function Layout() {
                     className={`flex-1 min-w-0 transition-all duration-300 ease-in-out overflow-x-auto ${sidebarOpen ? "md:ml-55" : "ml-0"
                         }`}
                 >
+                    {/* Desktop shows the page title/subtitle in the Topbar instead (see
+                        pageHeaders.js) -- kept here, centered, for mobile only so the
+                        same information still has a place at small screen widths. */}
+                    {header && (
+                        <div className="md:hidden px-6 pt-6 text-center">
+                            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{header.title}</h1>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{header.subtitle}</p>
+                        </div>
+                    )}
                     <Outlet context={{ user, loadingAuth }} />
                 </main>
             </div>

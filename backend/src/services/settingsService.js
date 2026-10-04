@@ -79,33 +79,38 @@ export async function updateMember(companyId, userId, { fullName, roleName, isAc
   });
   if (!membership) throw new SettingsError("This person is not a member of this company.", 404);
 
-  if (fullName !== undefined || isActive !== undefined) {
-    await directoryPrisma.user.update({
-      where: { id: userId },
+  if (fullName !== undefined) {
+    await directoryPrisma.user.update({ where: { id: userId }, data: { fullName } });
+  }
+
+  // isActive is scoped to this one membership, not the person's whole
+  // account -- suspending them from this company never touches any other
+  // company they belong to.
+  if (roleName !== undefined || isActive !== undefined) {
+    const roleId = roleName !== undefined ? (await resolveRoleId(roleName)) : undefined;
+    await directoryPrisma.companyMembership.update({
+      where: { userId_companyId: { userId, companyId } },
       data: {
-        ...(fullName !== undefined ? { fullName } : {}),
+        ...(roleId !== undefined ? { roleId } : {}),
         ...(isActive !== undefined ? { isActive } : {}),
       },
     });
   }
 
-  if (roleName !== undefined) {
-    const role = await directoryPrisma.role.findUnique({ where: { name: roleName } });
-    if (!role) throw new SettingsError("Unknown role.", 400);
-    await directoryPrisma.companyMembership.update({
-      where: { userId_companyId: { userId, companyId } },
-      data: { roleId: role.id },
-    });
-  }
-
   const user = await directoryPrisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, fullName: true, isActive: true },
+    select: { id: true, email: true, fullName: true },
   });
   const updatedMembership = await directoryPrisma.companyMembership.findUnique({
     where: { userId_companyId: { userId, companyId } },
     include: { role: { select: { name: true } } },
   });
 
-  return { ...user, role: updatedMembership.role.name };
+  return { ...user, role: updatedMembership.role.name, isActive: updatedMembership.isActive };
+}
+
+async function resolveRoleId(roleName) {
+  const role = await directoryPrisma.role.findUnique({ where: { name: roleName } });
+  if (!role) throw new SettingsError("Unknown role.", 400);
+  return role.id;
 }

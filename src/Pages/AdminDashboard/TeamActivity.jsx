@@ -1,17 +1,6 @@
 import { Loader2 } from "lucide-react";
 import useCachedResource from "../../useCachedResource";
-import { DASHBOARD_ACTIVITY_CACHE_KEY, fetchRecentActivity } from "../../dashboardHelpers";
-
-const getRelativeTime = (dateString) => {
-  const diffInSeconds = Math.floor((new Date() - new Date(dateString)) / 1000);
-  if (diffInSeconds < 60) return "just now";
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes} min ago`;
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
-  const diffInDays = Math.floor(diffInHours / 24);
-  return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
-};
+import { DASHBOARD_ACTIVITY_CACHE_KEY, fetchRecentActivity, getRelativeTime } from "../../dashboardHelpers";
 
 export default function TeamActivity() {
   const { data: activity, loading } = useCachedResource(DASHBOARD_ACTIVITY_CACHE_KEY, fetchRecentActivity);

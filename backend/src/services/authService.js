@@ -51,13 +51,16 @@ async function buildSessionResponse(user, membership) {
 // proven (password checked, or password just set via activation), the
 // "which workspace(s) can they reach" resolution is identical either way.
 async function resolveSessionForUser(user) {
+  // Only active memberships are reachable -- suspension is scoped per
+  // company, so a user suspended from one company can still log in and use
+  // any other they belong to.
   const memberships = await directoryPrisma.companyMembership.findMany({
-    where: { userId: user.id },
+    where: { userId: user.id, isActive: true },
     include: { role: true, company: { select: { id: true, name: true, currency: true } } },
   });
 
   if (memberships.length === 0) {
-    throw new AuthError("This user is not attached to any company.");
+    throw new AuthError("You don't have active access to any company. Contact your company's Owner.");
   }
 
   if (memberships.length === 1) {
@@ -76,7 +79,7 @@ async function resolveSessionForUser(user) {
 
 export async function login(email, password) {
   const user = await directoryPrisma.user.findUnique({ where: { email } });
-  if (!user || !user.isActive) throw new AuthError("Invalid email or password.");
+  if (!user) throw new AuthError("Invalid email or password.");
 
   if (!user.passwordHash) {
     throw new AuthError(
@@ -119,13 +122,13 @@ export async function selectCompany(preAuthToken, companyId) {
   }
 
   const user = await directoryPrisma.user.findUnique({ where: { id: decoded.sub } });
-  if (!user || !user.isActive) throw new AuthError("Invalid session. Please log in again.");
+  if (!user) throw new AuthError("Invalid session. Please log in again.");
 
   const membership = await directoryPrisma.companyMembership.findUnique({
     where: { userId_companyId: { userId: user.id, companyId } },
     include: { role: true, company: { select: { id: true, name: true, currency: true } } },
   });
-  if (!membership) throw new AuthError("You do not have access to that company.");
+  if (!membership || !membership.isActive) throw new AuthError("You do not have access to that company.");
 
   return buildSessionResponse(user, membership);
 }
@@ -141,13 +144,13 @@ export async function refresh(refreshToken) {
   if (!decoded.company_id) throw new AuthError("Invalid refresh token.");
 
   const user = await directoryPrisma.user.findUnique({ where: { id: decoded.sub } });
-  if (!user || !user.isActive) throw new AuthError("Invalid refresh token.");
+  if (!user) throw new AuthError("Invalid refresh token.");
 
   const membership = await directoryPrisma.companyMembership.findUnique({
     where: { userId_companyId: { userId: user.id, companyId: decoded.company_id } },
     include: { role: true },
   });
-  if (!membership) throw new AuthError("Invalid refresh token.");
+  if (!membership || !membership.isActive) throw new AuthError("Invalid refresh token.");
 
   const access = jwt.sign(
     { sub: user.id, company_id: membership.companyId, role: membership.role.name },

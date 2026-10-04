@@ -37,11 +37,6 @@ export default function ReportsPage() {
 
   return (
     <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Export your business data — decisions, actions, finances, and recent activity</p>
-      </div>
-
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 max-w-xl">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">Export Report</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">

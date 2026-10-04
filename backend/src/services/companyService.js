@@ -9,7 +9,7 @@ export async function listCompanyMembers(companyId) {
   const memberships = await directoryPrisma.companyMembership.findMany({
     where: { companyId },
     include: {
-      user: { select: { id: true, fullName: true, email: true, isActive: true } },
+      user: { select: { id: true, fullName: true, email: true } },
       role: { select: { name: true } },
     },
   });
@@ -19,6 +19,6 @@ export async function listCompanyMembers(companyId) {
     fullName: m.user.fullName,
     email: m.user.email,
     role: m.role.name,
-    isActive: m.user.isActive,
+    isActive: m.isActive,
   }));
 }

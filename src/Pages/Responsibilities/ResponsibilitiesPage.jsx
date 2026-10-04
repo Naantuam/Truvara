@@ -38,11 +38,6 @@ export default function ResponsibilitiesPage() {
 
   return (
     <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Responsibilities</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">See who is responsible for what across the team</p>
-      </div>
-
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-6 text-gray-400 dark:text-gray-500">
           <Loader2 className="w-4 h-4 animate-spin" /> Loading responsibilities...

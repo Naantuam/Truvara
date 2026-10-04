@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { User, Building2, Users, Loader2 } from "lucide-react";
+import { User, Building2, Users, Loader2, LogOut } from "lucide-react";
 import api from "../../api";
 import SettingsRow from "./SettingsRow";
 import MemberRow from "./MemberRow";
 import AddMemberModal from "./AddMemberModal";
 import { CURRENCY_OPTIONS } from "../../currencyHelpers";
+import { clearCache } from "../../dataCache";
 
 export default function SettingsPage() {
   const { user } = useOutletContext() || {};
@@ -70,13 +71,15 @@ export default function SettingsPage() {
     fetchMembers();
   };
 
+  const handleLogout = () => {
+    clearCache();
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    window.location.href = "/";
+  };
+
   return (
     <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Manage your account and company</p>
-      </div>
-
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
         <div className="flex items-center gap-2 mb-2">
           <User className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -167,6 +170,13 @@ export default function SettingsPage() {
       {canManageUsers && (
         <AddMemberModal open={addOpen} onClose={() => setAddOpen(false)} onAdded={handleAddMember} />
       )}
+
+      <button
+        onClick={handleLogout}
+        className="flex items-center justify-center gap-2 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 text-sm font-medium rounded-lg py-2.5 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+      >
+        <LogOut className="w-4 h-4" /> Log Out
+      </button>
     </div>
   );
 }

@@ -48,11 +48,6 @@ export default function ApprovalsPage() {
 
   return (
     <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Approvals</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Review and approve pending decision requests</p>
-      </div>
-
       {actionError && (
         <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 border border-red-100 dark:border-red-900 rounded-lg px-3 py-2">
           {actionError}

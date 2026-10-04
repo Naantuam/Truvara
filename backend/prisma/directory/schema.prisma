@@ -54,7 +54,6 @@ model User {
   // rather than a generic "invalid credentials").
   passwordHash String?  @map("password_hash")
   fullName     String   @map("full_name")
-  isActive     Boolean  @default(true) @map("is_active")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -126,6 +125,11 @@ model CompanyMembership {
   roleId       String    @map("role_id")
   scopeType    ScopeType @default(COMPANY) @map("scope_type")
   departmentId String?   @map("department_id")
+  // Suspension is scoped to this one company, not the person's whole
+  // account -- a person who belongs to more than one company (e.g. an
+  // Owner of two businesses) can be suspended from one without losing
+  // access to the other. See authService.js login()/refresh().
+  isActive     Boolean   @default(true) @map("is_active")
   createdAt    DateTime  @default(now()) @map("created_at")
 
   user    User    @relation(fields: [userId], references: [id])
