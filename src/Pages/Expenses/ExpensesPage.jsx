@@ -68,19 +68,24 @@ export default function ExpensesPage() {
     applyUpdate(res.data);
   };
 
+  // Rejected and voided transactions are both excluded from this list by the
+  // API by default (not deleted, just hidden) -- drop them locally too
+  // instead of updating in place, and close the modal since what it was
+  // showing just disappeared.
+  const removeFromList = (id) => {
+    setTransactions((prev) => (prev || []).filter((t) => t.id !== id));
+    setSelectedTransaction(null);
+    refreshSummary();
+  };
+
   const handleReject = async (id, reason) => {
-    const res = await api.post(`/transactions/${id}/reject/`, { reason });
-    applyUpdate(res.data);
+    await api.post(`/transactions/${id}/reject/`, { reason });
+    removeFromList(id);
   };
 
   const handleVoid = async (id, reason) => {
     await api.post(`/transactions/${id}/void/`, { reason });
-    // Voided transactions are excluded from this list by the API (not
-    // deleted, just hidden) -- drop it locally too instead of updating it in
-    // place, and close the modal since what it was showing just disappeared.
-    setTransactions((prev) => (prev || []).filter((t) => t.id !== id));
-    setSelectedTransaction(null);
-    refreshSummary();
+    removeFromList(id);
   };
 
   const handleUploadReceipt = () => {
@@ -213,8 +218,6 @@ export default function ExpensesPage() {
                     <td className="py-3 pr-4">
                       {t.status === "PENDING_APPROVAL" ? (
                         <span className="text-xs font-medium px-2 py-1 rounded-full bg-gold-50 dark:bg-gold-950 text-gold-700 dark:text-gold-400">Pending</span>
-                      ) : t.status === "REJECTED" ? (
-                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400">Rejected</span>
                       ) : (
                         <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400">Approved</span>
                       )}

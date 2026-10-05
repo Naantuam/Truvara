@@ -51,17 +51,18 @@ router.get("/summary", requirePermission("finance:transaction:view"), async (req
   }
 });
 
-// `includeVoided=true` is silently ignored for anyone without
-// finance:transaction:approve, rather than rejected -- someone without
-// access to this shouldn't even learn the flag exists.
+// `includeVoided=true`/`includeRejected=true` are silently ignored for
+// anyone without finance:transaction:approve, rather than rejected --
+// someone without access to this shouldn't even learn the flags exist.
 router.get("/", requirePermission("finance:transaction:view"), async (req, res, next) => {
   try {
-    const canSeeVoided = req.user.permissions.has("finance:transaction:approve");
+    const canSeeHidden = req.user.permissions.has("finance:transaction:approve");
     const transactions = await listTransactions(req.user.tenantDb, req.user.companyId, {
       decisionId: req.query.decisionId,
       taskId: req.query.taskId,
       type: req.query.type,
-      includeVoided: canSeeVoided && req.query.includeVoided === "true",
+      includeVoided: canSeeHidden && req.query.includeVoided === "true",
+      includeRejected: canSeeHidden && req.query.includeRejected === "true",
     });
     res.json(transactions);
   } catch (err) {
@@ -71,9 +72,10 @@ router.get("/", requirePermission("finance:transaction:view"), async (req, res, 
 
 router.get("/:id", requirePermission("finance:transaction:view"), async (req, res, next) => {
   try {
-    const canSeeVoided = req.user.permissions.has("finance:transaction:approve");
+    const canSeeHidden = req.user.permissions.has("finance:transaction:approve");
     const transaction = await getTransaction(req.user.tenantDb, req.user.companyId, req.params.id, {
-      includeVoided: canSeeVoided,
+      includeVoided: canSeeHidden,
+      includeRejected: canSeeHidden,
     });
     res.json(transaction);
   } catch (err) {

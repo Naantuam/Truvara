@@ -46,13 +46,14 @@ async function assertTaskInCompany(tx, companyId, taskId) {
   if (!task) throw new TransactionError("Task not found.", 404);
 }
 
-// Voided transactions are excluded by default -- Precious's explicit ask was
-// "I don't want to see them," and leaving the API returning them to anyone
-// with plain view access (even though the UI didn't render them) would be
-// exactly the kind of unchecked exposure worth closing. They're never
-// deleted -- `includeVoided` is how an Owner (the same tier that can void in
+// Voided and rejected transactions are excluded by default -- same reasoning
+// for both: Precious's explicit ask was "I don't want to see them," and
+// leaving the API returning them to anyone with plain view access (even
+// though the UI didn't render them) would be exactly the kind of unchecked
+// exposure worth closing. Neither is ever deleted -- includeVoided/
+// includeRejected are how an Owner (the same tier that can void/reject in
 // the first place) can still retrieve them for audit purposes.
-export async function listTransactions(db, companyId, { decisionId, taskId, type, includeVoided } = {}) {
+export async function listTransactions(db, companyId, { decisionId, taskId, type, includeVoided, includeRejected } = {}) {
   const transactions = await db.transaction.findMany({
     where: {
       companyId,
@@ -60,6 +61,7 @@ export async function listTransactions(db, companyId, { decisionId, taskId, type
       ...(taskId ? { taskId } : {}),
       ...(type ? { type } : {}),
       ...(includeVoided ? {} : { isVoided: false }),
+      ...(includeRejected ? {} : { status: { not: "REJECTED" } }),
     },
     orderBy: { occurredAt: "desc" },
     include: includeRelated,
@@ -67,9 +69,14 @@ export async function listTransactions(db, companyId, { decisionId, taskId, type
   return hydrate(db, transactions);
 }
 
-export async function getTransaction(db, companyId, id, { includeVoided } = {}) {
+export async function getTransaction(db, companyId, id, { includeVoided, includeRejected } = {}) {
   const transaction = await db.transaction.findFirst({
-    where: { id, companyId, ...(includeVoided ? {} : { isVoided: false }) },
+    where: {
+      id,
+      companyId,
+      ...(includeVoided ? {} : { isVoided: false }),
+      ...(includeRejected ? {} : { status: { not: "REJECTED" } }),
+    },
     include: includeRelated,
   });
   if (!transaction) throw new TransactionError("Transaction not found.", 404);
