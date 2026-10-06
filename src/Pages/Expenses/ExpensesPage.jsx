@@ -1,13 +1,12 @@
 import { useState, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import { DollarSign, TrendingUp, TrendingDown, Scale, Upload, Plus, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Scale, Upload, Plus, Loader2 } from "lucide-react";
 import api from "../../api";
-import AddExpenseModal from "./AddExpenseModal";
+import TransactionRow from "./TransactionRow";
 import TransactionDetailsModal from "./TransactionDetailsModal";
 import { TRANSACTIONS_CACHE_KEY, fetchTransactions, TRANSACTIONS_SUMMARY_CACHE_KEY, fetchTransactionsSummary } from "../../transactionHelpers";
 import useCachedResource from "../../useCachedResource";
 import { formatMoney, getCurrencyIcon } from "../../currencyHelpers";
-import { formatDateOnly } from "../../dateHelpers";
 
 const TABS = ["All", "Manual", "From Actions"];
 
@@ -18,11 +17,20 @@ export default function ExpensesPage() {
   const { data: summary, refresh: refreshSummary } = useCachedResource(TRANSACTIONS_SUMMARY_CACHE_KEY, fetchTransactionsSummary);
   const [tab, setTab] = useState("All");
   const [category, setCategory] = useState("All");
-  const [modalOpen, setModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [addingNew, setAddingNew] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [savingRow, setSavingRow] = useState(false);
+
+  // Separate permissions on purpose: Manager/Team Member can create
+  // transactions but not edit existing ones (Owner-only), per the seed
+  // matrix -- gating "Add" on the edit permission would hide it from people
+  // who are actually allowed to add transactions.
+  const canCreateRows = user?.permissions?.includes("finance:transaction:create");
+  const canEditRows = user?.permissions?.includes("finance:transaction:edit");
 
   const categories = useMemo(
-    () => ["All", ...new Set((transactions || []).map((t) => t.category).filter(Boolean))],
+    () => [...new Set((transactions || []).map((t) => t.category).filter(Boolean))],
     [transactions]
   );
 
@@ -35,37 +43,43 @@ export default function ExpensesPage() {
   }, [transactions, tab, category]);
 
   // Only posted entries are real money moved -- matches what the
-  // server-computed summary cards above already count. Voided transactions
-  // never reach the frontend at all (the API excludes them by default, see
-  // transactionService.js listTransactions) -- they're never deleted, just
-  // not shown, per Precious's request.
+  // server-computed summary cards above already count. Voided and rejected
+  // transactions never reach the frontend at all (the API excludes them by
+  // default, see transactionService.js listTransactions) -- they're never
+  // deleted, just not shown, per Precious's request.
   const total = filtered
     .filter((t) => t.status === "APPROVED")
     .reduce((sum, t) => sum + Number(t.amount || 0) * (t.type === "EXPENSE" ? -1 : 1), 0);
 
-  const handleCreated = async (payload) => {
-    const res = await api.post("/transactions/", payload);
-    setTransactions((prev) => [res.data, ...(prev || [])]);
-    // Summary is a server-computed aggregate, not something we can merge
-    // client-side -- reload it now that a new transaction exists.
-    refreshSummary();
+  const handleCreateRow = async (payload) => {
+    setSavingRow(true);
+    try {
+      const res = await api.post("/transactions/", payload);
+      setTransactions((prev) => [res.data, ...(prev || [])]);
+      refreshSummary();
+      setAddingNew(false);
+    } finally {
+      setSavingRow(false);
+    }
   };
 
-  const applyUpdate = (updated) => {
-    setTransactions((prev) => (prev || []).map((t) => (t.id === updated.id ? updated : t)));
-    setSelectedTransaction(updated);
-    // Status/amount changes affect the server-computed summary -- reload it.
-    refreshSummary();
-  };
-
-  const handleUpdated = async (id, payload) => {
-    const res = await api.patch(`/transactions/${id}/`, payload);
-    applyUpdate(res.data);
+  const handleEditRow = async (id, payload) => {
+    setSavingRow(true);
+    try {
+      const res = await api.patch(`/transactions/${id}/`, payload);
+      setTransactions((prev) => (prev || []).map((t) => (t.id === id ? res.data : t)));
+      refreshSummary();
+      setEditingId(null);
+    } finally {
+      setSavingRow(false);
+    }
   };
 
   const handleApprove = async (id) => {
     const res = await api.post(`/transactions/${id}/approve/`);
-    applyUpdate(res.data);
+    setTransactions((prev) => (prev || []).map((t) => (t.id === id ? res.data : t)));
+    setSelectedTransaction(res.data);
+    refreshSummary();
   };
 
   // Rejected and voided transactions are both excluded from this list by the
@@ -90,7 +104,7 @@ export default function ExpensesPage() {
 
   const handleUploadReceipt = () => {
     alert("Receipt scanning isn't available yet — add the transaction details manually.");
-    setModalOpen(true);
+    setAddingNew(true);
   };
 
   const CurrencyIcon = getCurrencyIcon(currency);
@@ -105,18 +119,22 @@ export default function ExpensesPage() {
     <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-950 p-6 flex flex-col gap-6">
       <div className="flex justify-end">
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleUploadReceipt}
-            className="flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            <Upload className="w-4 h-4" /> Upload Receipt
-          </button>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 bg-gold-500 text-gray-900 text-sm font-medium rounded-lg px-4 py-2 hover:bg-gold-600 transition-colors"
-          >
-            <Plus className="w-4 h-4" /> Add Transaction
-          </button>
+          {canCreateRows && (
+            <button
+              onClick={handleUploadReceipt}
+              className="flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <Upload className="w-4 h-4" /> Upload Receipt
+            </button>
+          )}
+          {canCreateRows && (
+            <button
+              onClick={() => { setEditingId(null); setAddingNew(true); }}
+              className="flex items-center gap-2 bg-gold-500 text-gray-900 text-sm font-medium rounded-lg px-4 py-2 hover:bg-gold-600 transition-colors"
+            >
+              <Plus className="w-4 h-4" /> Add Transaction
+            </button>
+          )}
         </div>
       </div>
 
@@ -161,6 +179,7 @@ export default function ExpensesPage() {
               onChange={(e) => setCategory(e.target.value)}
               className="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500 max-w-full"
             >
+              <option value="All">All</option>
               {categories.map((c) => (
                 <option key={c}>{c}</option>
               ))}
@@ -168,12 +187,20 @@ export default function ExpensesPage() {
           </div>
         </div>
 
+        {/* Shared autocomplete source for the inline category input -- real
+            data (bank statements, etc.) tends to have messy/inconsistent
+            category names, so suggesting what's already in use helps keep
+            new entries consistent without forcing a fixed enum. */}
+        <datalist id="transaction-categories">
+          {categories.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
+
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-6 text-gray-400 dark:text-gray-500">
             <Loader2 className="w-4 h-4 animate-spin" /> Loading transactions...
           </div>
-        ) : filtered.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No transactions found.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -181,72 +208,68 @@ export default function ExpensesPage() {
                 <tr className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800">
                   <th className="pb-2 pr-4">Date</th>
                   <th className="pb-2 pr-4">Description</th>
+                  <th className="pb-2 pr-4">Vendor/Source</th>
                   <th className="pb-2 pr-4">Category</th>
                   <th className="pb-2 pr-4">Type</th>
                   <th className="pb-2 pr-4">Status</th>
                   <th className="pb-2 pr-4">Amount</th>
-                  <th className="pb-2">Recorded By</th>
+                  <th className="pb-2 pr-4">Recorded By</th>
+                  <th className="pb-2 w-8"></th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((t) => (
-                  <tr
-                    key={t.id}
-                    onClick={() => setSelectedTransaction(t)}
-                    className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
-                  >
-                    <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{formatDateOnly(t.occurredAt)}</td>
-                    <td className="py-3 pr-4">
-                      <p className="text-gray-900 dark:text-gray-100">{t.narration || "—"}</p>
-                      {t.task && (
-                        <p className="text-xs text-gold-600 dark:text-gold-400">Action: {t.task.title}</p>
-                      )}
-                      {t.decision && !t.task && (
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Decision: {t.decision.title}</p>
-                      )}
+                {addingNew && (
+                  <TransactionRow
+                    isNew
+                    categories={categories}
+                    currency={currency}
+                    saving={savingRow}
+                    onSave={handleCreateRow}
+                    onCancelEdit={() => setAddingNew(false)}
+                  />
+                )}
+                {filtered.length === 0 && !addingNew ? (
+                  <tr>
+                    <td colSpan={9} className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
+                      No transactions found.
                     </td>
-                    <td className="py-3 pr-4">
-                      <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                        {t.category || "Uncategorized"}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <span className={`text-xs font-medium ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"}`}>
-                        {t.type === "INCOME" ? "Income" : "Expense"}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4">
-                      {t.status === "PENDING_APPROVAL" ? (
-                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-gold-50 dark:bg-gold-950 text-gold-700 dark:text-gold-400">Pending</span>
-                      ) : (
-                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400">Approved</span>
-                      )}
-                    </td>
-                    <td className={`py-3 pr-4 font-medium ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-gray-900 dark:text-gray-100"}`}>
-                      {t.type === "INCOME" ? "+" : "-"}{formatMoney(t.amount, t.currency || currency)}
-                    </td>
-                    <td className="py-3 text-gray-600 dark:text-gray-400">{t.recordedBy?.fullName || "—"}</td>
                   </tr>
-                ))}
+                ) : (
+                  filtered.map((t) => (
+                    <TransactionRow
+                      key={t.id}
+                      transaction={t}
+                      categories={categories}
+                      currency={currency}
+                      canEdit={canEditRows && t.status === "PENDING_APPROVAL"}
+                      editing={editingId === t.id}
+                      saving={savingRow && editingId === t.id}
+                      onStartEdit={() => { setAddingNew(false); setEditingId(t.id); }}
+                      onCancelEdit={() => setEditingId(null)}
+                      onSave={(payload) => handleEditRow(t.id, payload)}
+                      onSelect={() => setSelectedTransaction(t)}
+                    />
+                  ))
+                )}
               </tbody>
-              <tfoot>
-                <tr className="border-t border-gray-200 dark:border-gray-800 font-bold text-gray-900 dark:text-gray-100">
-                  <td className="pt-3" colSpan={5}>Net (approved only)</td>
-                  <td className="pt-3" colSpan={2}>{formatMoney(total, currency)}</td>
-                </tr>
-              </tfoot>
+              {filtered.length > 0 && (
+                <tfoot>
+                  <tr className="border-t border-gray-200 dark:border-gray-800 font-bold text-gray-900 dark:text-gray-100">
+                    <td className="pt-3" colSpan={6}>Net (approved only)</td>
+                    <td className="pt-3" colSpan={3}>{formatMoney(total, currency)}</td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         )}
       </div>
 
-      <AddExpenseModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={handleCreated} currency={currency} />
       <TransactionDetailsModal
         transaction={selectedTransaction}
         user={user}
         currency={currency}
         onClose={() => setSelectedTransaction(null)}
-        onUpdated={handleUpdated}
         onApprove={handleApprove}
         onReject={handleReject}
         onVoid={handleVoid}
