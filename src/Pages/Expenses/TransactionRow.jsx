@@ -61,6 +61,9 @@ export default function TransactionRow({ transaction, isNew, categories, currenc
           <input type="date" value={draft.occurredAt} onChange={handleChange("occurredAt")} className={inputClass} />
         </td>
         <td className="py-2 pr-4">
+          <input type="text" list="transaction-categories" placeholder="Category" value={draft.category} onChange={handleChange("category")} className={inputClass} />
+        </td>
+        <td className="py-2 pr-4">
           <input type="text" placeholder="Description" value={draft.narration} onChange={handleChange("narration")} className={inputClass} />
         </td>
         <td className="py-2 pr-4">
@@ -71,9 +74,6 @@ export default function TransactionRow({ transaction, isNew, categories, currenc
             onChange={handleChange("counterparty")}
             className={inputClass}
           />
-        </td>
-        <td className="py-2 pr-4">
-          <input type="text" list="transaction-categories" placeholder="Category" value={draft.category} onChange={handleChange("category")} className={inputClass} />
         </td>
         <td className="py-2 pr-4">
           <select value={draft.type} onChange={handleChange("type")} className={inputClass}>
@@ -111,16 +111,16 @@ export default function TransactionRow({ transaction, isNew, categories, currenc
     <tr onClick={onSelect} className="border-b border-gray-50 dark:border-gray-800/60 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60 group">
       <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{formatDateOnly(t.occurredAt)}</td>
       <td className="py-3 pr-4">
+        <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+          {t.category || "Uncategorized"}
+        </span>
+      </td>
+      <td className="py-3 pr-4">
         <p className="text-gray-900 dark:text-gray-100">{t.narration || "—"}</p>
         {t.task && <p className="text-xs text-gold-600 dark:text-gold-400">Action: {t.task.title}</p>}
         {t.decision && !t.task && <p className="text-xs text-gray-400 dark:text-gray-500">Decision: {t.decision.title}</p>}
       </td>
       <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{t.counterparty || "—"}</td>
-      <td className="py-3 pr-4">
-        <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-          {t.category || "Uncategorized"}
-        </span>
-      </td>
       <td className="py-3 pr-4">
         <span className={`text-xs font-medium ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"}`}>
           {t.type === "INCOME" ? "Income" : "Expense"}
