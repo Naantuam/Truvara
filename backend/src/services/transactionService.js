@@ -135,6 +135,7 @@ export async function updateTransaction(db, actor, id, input) {
     const result = await tx.transaction.update({
       where: { id },
       data: {
+        type: input.type ?? transaction.type,
         narration: input.narration ?? transaction.narration,
         counterparty: input.counterparty ?? transaction.counterparty,
         category: input.category ?? transaction.category,

@@ -89,7 +89,7 @@ export default function DashboardStats() {
           iconColor="text-orange-600 dark:text-orange-400"
           iconBg="bg-orange-50 dark:bg-orange-950"
           value={loading ? "—" : formatMoney(totalExpense, currency)}
-          label={`Total Expenses · ${periodLabel}`}
+          label={`Total Debits · ${periodLabel}`}
           href="/expenses"
         />
         <StatCard
@@ -97,7 +97,7 @@ export default function DashboardStats() {
           iconColor="text-green-600 dark:text-green-400"
           iconBg="bg-green-50 dark:bg-green-950"
           value={loading ? "—" : formatMoney(totalIncome, currency)}
-          label={`Total Income · ${periodLabel}`}
+          label={`Total Credits · ${periodLabel}`}
           href="/expenses"
         />
       </div>
@@ -113,8 +113,8 @@ export default function DashboardStats() {
               <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => formatMoney(v, currency)} width={70} />
               <Tooltip formatter={(value) => formatMoney(value, currency)} />
               <Legend />
-              <Line type="monotone" dataKey="expense" name="Expenses" stroke="#ea580c" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="income" name="Income" stroke="#16a34a" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="expense" name="Debits" stroke="#ea580c" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="income" name="Credits" stroke="#16a34a" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         )}

@@ -77,8 +77,8 @@ export default function TransactionRow({ transaction, isNew, categories, currenc
         </td>
         <td className="py-2 pr-4">
           <select value={draft.type} onChange={handleChange("type")} className={inputClass}>
-            <option value="EXPENSE">Expense</option>
-            <option value="INCOME">Income</option>
+            <option value="EXPENSE">Debit</option>
+            <option value="INCOME">Credit</option>
           </select>
         </td>
         <td className="py-2 pr-4 text-xs text-gray-400 dark:text-gray-500">{isNew ? "New" : "Pending"}</td>
@@ -123,7 +123,7 @@ export default function TransactionRow({ transaction, isNew, categories, currenc
       <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{t.counterparty || "—"}</td>
       <td className="py-3 pr-4">
         <span className={`text-xs font-medium ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"}`}>
-          {t.type === "INCOME" ? "Income" : "Expense"}
+          {t.type === "INCOME" ? "Credit" : "Debit"}
         </span>
       </td>
       <td className="py-3 pr-4">

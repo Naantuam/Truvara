@@ -34,6 +34,7 @@ const transactionCreateSchema = z.object({
 });
 
 const transactionUpdateSchema = z.object({
+  type: z.enum(["INCOME", "EXPENSE"]).optional(),
   narration: z.string().optional(),
   counterparty: z.string().optional(),
   category: z.string().optional(),

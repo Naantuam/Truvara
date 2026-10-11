@@ -58,7 +58,7 @@ export default function TransactionDetailsModal({ transaction, user, currency, o
                     : "bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-400"
                 }`}
               >
-                {t.type === "INCOME" ? "Income" : "Expense"}
+                {t.type === "INCOME" ? "Credit" : "Debit"}
               </span>
               {t.isVoided ? (
                 <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">Voided</span>
