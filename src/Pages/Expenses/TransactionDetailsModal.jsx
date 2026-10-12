@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import { Undo2 } from "lucide-react";
 import ConfirmDialog from "../../Reusable/ConfirmDialog";
 import TransactionReasonModal from "./TransactionReasonModal";
 import { formatMoney } from "../../currencyHelpers";
 import { formatDateOnly } from "../../dateHelpers";
 
-// Pure view + approve/reject/void -- editing a pending transaction's content
-// now happens inline in the Expenses table itself (not here), since a table
-// full of bank-statement-style rows is much faster to work through inline
-// than one overlay per row.
-export default function TransactionDetailsModal({ transaction, user, currency, onClose, onApprove, onReject, onVoid }) {
+// Pure view + approve/reject/void/reverse -- editing a pending transaction's
+// content happens inline in the Expenses table itself (not here), since a
+// table full of bank-statement-style rows is much faster to work through
+// inline than one overlay per row. "Reverse" lives here instead of as
+// another icon in the table row, to keep the row actions down to three
+// (Edit/Copy/Replicate) and the table itself clean.
+export default function TransactionDetailsModal({ transaction, user, currency, onClose, onApprove, onReject, onVoid, onReverse }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [approving, setApproving] = useState(false);
@@ -23,6 +26,7 @@ export default function TransactionDetailsModal({ transaction, user, currency, o
   const canApprove =
     user?.permissions?.includes("finance:transaction:approve") &&
     (user?.role === "Owner" || t.recordedById !== user?.id);
+  const canReplicate = user?.permissions?.includes("finance:transaction:create");
 
   const handleClose = () => {
     setError(null);
@@ -150,6 +154,14 @@ export default function TransactionDetailsModal({ transaction, user, currency, o
                 className="w-full border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 Void Transaction
+              </button>
+            )}
+            {!t.isVoided && canReplicate && (
+              <button
+                onClick={() => onReverse(t)}
+                className="w-full flex items-center justify-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <Undo2 className="w-4 h-4" /> Reverse Transaction
               </button>
             )}
             <button
