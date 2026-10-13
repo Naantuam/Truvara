@@ -2,20 +2,12 @@ import { useState, useEffect } from "react";
 import { Pencil, Copy, ClipboardCopy, Check, X, Loader2, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { formatMoney } from "../../currencyHelpers";
 import { formatDateOnly, toDateInputValue } from "../../dateHelpers";
+import { transactionToClipboardText } from "../../transactionHelpers";
 
 const inputClass =
   "w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500";
 
 const blankDraft = { occurredAt: new Date().toISOString().slice(0, 10), narration: "", counterparty: "", category: "", type: "EXPENSE", amount: "" };
-
-// Tab-separated so a copied row pastes straight into real spreadsheet cells
-// (the same format Excel/Sheets use internally for copy/paste) instead of
-// one run-on string -- matches the actual workflow this is for: pulling a
-// transaction back out to compare against or re-enter into a bank sheet.
-function transactionToClipboardText(t) {
-  const signedAmount = (t.type === "EXPENSE" ? -1 : 1) * Number(t.amount || 0);
-  return [toDateInputValue(t.occurredAt), t.category || "", t.narration || "", t.counterparty || "", t.type === "INCOME" ? "Credit" : "Debit", signedAmount].join("\t");
-}
 
 // Small clipboard-copy affordance shared by both the per-cell copy icons and
 // the row-level "copy whole transaction" action -- flashes a checkmark

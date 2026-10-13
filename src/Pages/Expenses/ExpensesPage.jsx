@@ -1,10 +1,16 @@
 import { useState, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import { TrendingUp, TrendingDown, Scale, Upload, Plus, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Scale, Upload, Plus, ClipboardPaste, Loader2 } from "lucide-react";
 import api from "../../api";
 import TransactionRow from "./TransactionRow";
 import TransactionDetailsModal from "./TransactionDetailsModal";
-import { TRANSACTIONS_CACHE_KEY, fetchTransactions, TRANSACTIONS_SUMMARY_CACHE_KEY, fetchTransactionsSummary } from "../../transactionHelpers";
+import {
+  TRANSACTIONS_CACHE_KEY,
+  fetchTransactions,
+  TRANSACTIONS_SUMMARY_CACHE_KEY,
+  fetchTransactionsSummary,
+  parseClipboardTransactionText,
+} from "../../transactionHelpers";
 import useCachedResource from "../../useCachedResource";
 import { formatMoney, getCurrencyIcon } from "../../currencyHelpers";
 
@@ -108,6 +114,27 @@ export default function ExpensesPage() {
     });
     setAddingNew(true);
     setSelectedTransaction(null);
+  };
+
+  // Reads back whatever the clipboard icons put on the clipboard (a whole
+  // row's tab-separated text) and opens a pre-filled draft from it, the
+  // same way Replicate does -- the missing other half of "Copy transaction."
+  const handlePasteTransaction = async () => {
+    let text;
+    try {
+      text = await navigator.clipboard.readText();
+    } catch {
+      alert("Couldn't read the clipboard -- this browser may be blocking clipboard access on this page.");
+      return;
+    }
+    const parsed = parseClipboardTransactionText(text);
+    if (!parsed) {
+      alert("Clipboard doesn't look like a copied transaction. Use the clipboard icon on a row (or on one of its fields) to copy one first.");
+      return;
+    }
+    setEditingId(null);
+    setReplicateSource(parsed);
+    setAddingNew(true);
   };
 
   const handleEditRow = async (id, payload) => {
@@ -214,6 +241,15 @@ export default function ExpensesPage() {
                 className="flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Upload className="w-4 h-4" /> <span className="hidden sm:inline">Upload Receipt</span>
+              </button>
+            )}
+            {canCreateRows && (
+              <button
+                onClick={handlePasteTransaction}
+                title="Paste Transaction"
+                className="flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <ClipboardPaste className="w-4 h-4" /> <span className="hidden sm:inline">Paste Transaction</span>
               </button>
             )}
             {canCreateRows && (
