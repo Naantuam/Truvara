@@ -8,7 +8,7 @@ export const PAGE_HEADERS = {
   "/approvals": { title: "Approvals", subtitle: "Review and approve pending decision requests" },
   "/responsibilities": { title: "Responsibilities", subtitle: "See who is responsible for what across the team" },
   "/actions": { title: "Actions", subtitle: "Track approved decisions through to completion" },
-  "/expenses": { title: "Expenses", subtitle: "Track credits and debits, including those linked to actions" },
+  "/expenses": { title: "Transactions", subtitle: "Track credits and debits, including those linked to actions" },
   "/reports": { title: "Reports", subtitle: "Export your business data — decisions, actions, finances, and recent activity" },
   "/settings": { title: "Settings", subtitle: "Manage your account and company" },
   "/security": { title: "Security", subtitle: "Manage your password and login security" },

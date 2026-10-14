@@ -36,7 +36,7 @@ const NAV_GROUPS = [
     {
         section: 'Finance',
         items: [
-            { name: 'Expenses', href: '/expenses', icon: DollarSign, app: 'expenses' },
+            { name: 'Transactions', href: '/expenses', icon: DollarSign, app: 'expenses' },
         ],
     },
     {
