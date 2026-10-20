@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Squares2X2Icon } from '@heroicons/react/24/solid';
@@ -7,6 +8,8 @@ import SunMoonToggle from './SunMoonToggle';
 import useTheme from './useTheme';
 import { hasModuleAccess } from '../moduleAccess';
 import { getCurrencyIcon } from '../currencyHelpers';
+import useCachedResource from '../useCachedResource';
+import { PENDING_COUNTS_CACHE_KEY, fetchPendingCounts } from '../dashboardHelpers';
 
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
@@ -23,7 +26,11 @@ const NAV_GROUPS = [
         section: 'Governance',
         items: [
             { name: 'Decisions', href: '/decisions', icon: FileText, app: 'decisions' },
-            { name: 'Approvals', href: '/approvals', icon: CheckSquare, app: 'approvals' },
+            // countKey pulls from /dashboard/pending-counts -- "something was
+            // created but isn't approved yet" lives on Approvals/Transactions
+            // specifically, since those are the only two modules with an
+            // actual approval step (Decisions/Actions/Responsibilities don't).
+            { name: 'Approvals', href: '/approvals', icon: CheckSquare, app: 'approvals', countKey: 'decisionsPendingApproval' },
         ],
     },
     {
@@ -36,7 +43,7 @@ const NAV_GROUPS = [
     {
         section: 'Finance',
         items: [
-            { name: 'Transactions', href: '/expenses', icon: DollarSign, app: 'expenses' },
+            { name: 'Transactions', href: '/expenses', icon: DollarSign, app: 'expenses', countKey: 'transactionsPendingApproval' },
         ],
     },
     {
@@ -51,6 +58,15 @@ const NAV_GROUPS = [
 export default function Sidebar({ sidebarOpen, setSidebarOpen, user }) {
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
+    const { data: pendingCounts, refresh: refreshPendingCounts } = useCachedResource(PENDING_COUNTS_CACHE_KEY, fetchPendingCounts);
+
+    // Cheap COUNT(*) query, so refreshing on every navigation (not just once
+    // per session) is fine -- keeps badges reasonably current after
+    // approving/rejecting something on whatever page you were just on.
+    useEffect(() => {
+        refreshPendingCounts();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.pathname]);
 
     // Superuser fallback kept only for the AUTH_DISABLED test-user path
     // (see Layout.jsx TEST_USER); real users are gated purely by
@@ -101,6 +117,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user }) {
                                 {group.items.map((item) => {
                                     const isActive = location.pathname.startsWith(item.href);
                                     const Icon = item.app === 'expenses' ? getCurrencyIcon(user?.company_currency) : item.icon;
+                                    const count = item.countKey ? pendingCounts?.[item.countKey] : null;
                                     return (
                                         <Link
                                             key={item.name}
@@ -118,7 +135,17 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user }) {
                                                     "h-5 w-5 flex-shrink-0"
                                                 )}
                                             />
-                                            {item.name}
+                                            <span className="flex-1">{item.name}</span>
+                                            {!!count && (
+                                                <span
+                                                    className={classNames(
+                                                        isActive ? "bg-white/20 text-white" : "bg-gold-500 text-gray-900",
+                                                        "text-[11px] font-bold leading-none px-1.5 py-1 rounded-full min-w-[1.25rem] text-center"
+                                                    )}
+                                                >
+                                                    {count > 99 ? "99+" : count}
+                                                </span>
+                                            )}
                                         </Link>
                                     );
                                 })}

@@ -3,6 +3,9 @@ import api from "./api";
 export const DASHBOARD_ACTIVITY_CACHE_KEY = "dashboard-activity";
 export const fetchRecentActivity = () => api.get("/dashboard/activity/").then((res) => (Array.isArray(res.data) ? res.data : []));
 
+export const PENDING_COUNTS_CACHE_KEY = "dashboard-pending-counts";
+export const fetchPendingCounts = () => api.get("/dashboard/pending-counts/").then((res) => res.data);
+
 // Shared by TeamActivity and the Topbar notifications dropdown, which show
 // the same underlying activity feed in two places.
 export function getRelativeTime(dateString) {

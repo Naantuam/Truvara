@@ -90,6 +90,24 @@ export async function getRecentActivity(db, companyId, limit = 15) {
   }));
 }
 
+// Sidebar nav badges -- "something was created but isn't approved yet"
+// for the two modules that actually have an approval concept. Plain
+// COUNT(*) queries, not list fetches, so this stays cheap regardless of how
+// many decisions/transactions a company accumulates over time. Each count
+// is gated on the same permission its own list endpoint requires, so a
+// user who can't see transactions never learns how many are pending either.
+export async function getPendingCounts(db, companyId, permissions) {
+  const [decisionsPendingApproval, transactionsPendingApproval] = await Promise.all([
+    permissions.has("governance:decision:view")
+      ? db.decision.count({ where: { companyId, status: "PENDING_APPROVAL" } })
+      : null,
+    permissions.has("finance:transaction:view")
+      ? db.transaction.count({ where: { companyId, status: "PENDING_APPROVAL" } })
+      : null,
+  ]);
+  return { decisionsPendingApproval, transactionsPendingApproval };
+}
+
 // Unread tracking is a single timestamp per membership, not a row per
 // notification -- an item counts as unread if it happened after the last
 // time this person opened the bell, same pattern as a basic "mark all read."

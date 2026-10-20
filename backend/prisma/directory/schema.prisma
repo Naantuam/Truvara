@@ -43,6 +43,7 @@ model Company {
 
   users       User[]
   memberships CompanyMembership[]
+  feedback    ProductFeedback[]
 
   @@map("companies")
   @@schema("directory")
@@ -72,6 +73,7 @@ model User {
   primaryCompany   Company? @relation(fields: [primaryCompanyId], references: [id])
 
   memberships CompanyMembership[]
+  feedback    ProductFeedback[]
 
   @@map("users")
   @@schema("directory")
@@ -145,5 +147,49 @@ model CompanyMembership {
 
   @@unique([userId, companyId])
   @@map("company_memberships")
+  @@schema("directory")
+}
+
+enum FeedbackClassification {
+  BUG
+  UX_ISSUE
+  MISSING_CAPABILITY
+  FUTURE_IDEA
+
+  @@schema("directory")
+}
+
+enum FeedbackStatus {
+  OPEN
+  RESOLVED
+
+  @@schema("directory")
+}
+
+// Platform-level, not tenant data on purpose: feedback is about Truvara
+// itself (work-scope's Product Feedback Log), collected across every
+// company's real usage, read by the product/dev team as one list -- not a
+// business record belonging to any one company's own tenant database.
+model ProductFeedback {
+  id             String                  @id @default(uuid())
+  companyId      String                  @map("company_id")
+  reporterId     String                  @map("reporter_id")
+  // Which page/module this is about. Plain string, not an enum, matching
+  // the sidebar's own nav labels (Dashboard, Decisions, Approvals,
+  // Responsibilities, Actions, Transactions, Reports, Settings, Security)
+  // plus "General" -- so a page added later is just a new string, no
+  // migration needed to make it selectable.
+  area           String
+  classification FeedbackClassification
+  description    String
+  status         FeedbackStatus          @default(OPEN)
+  createdAt      DateTime                @default(now()) @map("created_at")
+  resolvedAt     DateTime?               @map("resolved_at")
+
+  company  Company @relation(fields: [companyId], references: [id])
+  reporter User    @relation(fields: [reporterId], references: [id])
+
+  @@index([status])
+  @@map("product_feedback")
   @@schema("directory")
 }

@@ -8,6 +8,7 @@ import companyRoutes from "./routes/company.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import reportsRoutes from "./routes/reports.routes.js";
 import settingsRoutes from "./routes/settings.routes.js";
+import feedbackRoutes from "./routes/feedback.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 // CORS_ORIGIN accepts a comma-separated list, e.g. both the local dev
@@ -44,6 +45,7 @@ export function createApp() {
   app.use("/api/reports", reportsRoutes);
   app.use("/api/settings", settingsRoutes);
   app.use("/api/company", companyRoutes);
+  app.use("/api/feedback", feedbackRoutes);
 
   app.use(errorHandler);
 

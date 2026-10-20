@@ -7,6 +7,7 @@ import useCachedResource from "../useCachedResource";
 import { DASHBOARD_ACTIVITY_CACHE_KEY, fetchRecentActivity, getRelativeTime } from "../dashboardHelpers";
 import { getPageHeader } from "../pageHeaders";
 import NotificationDetailsModal from "./NotificationDetailsModal";
+import FeedbackWidget from "./FeedbackWidget";
 
 export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { }, user = null, loadingAuth = true }) {
   const location = useLocation();
@@ -128,6 +129,8 @@ export default function TopBar({ sidebarOpen = true, setSidebarOpen = () => { },
             </div>
           )}
         </div>
+
+        <FeedbackWidget />
 
         {/* Account summary -- profile editing and logout both live in
             Settings now, no separate user-icon affordance needed here. */}
