@@ -5,8 +5,9 @@ import { MailCheck } from "lucide-react";
 // Manager role limited/commented out from frontend per requirements (can be re-enabled later)
 const ROLES = ["Owner", /* "Manager", */ "Team Member"];
 
-// New members get an activation email with a link to set their own
-// password -- nothing sensitive passes through this admin, or this screen.
+// Adding someone sends an invitation: they join only once they accept it
+// from the email (setting their own password there if they're new). The
+// result looks the same whether or not the email already has an account.
 export default function AddMemberModal({ open, onClose, onAdded }) {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -36,7 +37,7 @@ export default function AddMemberModal({ open, onClose, onAdded }) {
       const member = await onAdded({ email, fullName, roleName });
       setCreated(member);
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to add member.");
+      setError(err.response?.data?.detail || "Failed to send the invitation.");
     } finally {
       setSubmitting(false);
     }
@@ -52,12 +53,10 @@ export default function AddMemberModal({ open, onClose, onAdded }) {
               <div className="flex flex-col items-center text-center gap-2 py-2">
                 <MailCheck className="w-10 h-10 text-green-600" />
                 <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                  {created.activationSent ? "Activation email sent" : "Member added"}
+                  Invitation sent
                 </DialogTitle>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {created.activationSent
-                    ? `${created.fullName} will receive an email at ${created.email} with a link to set their password and activate their account.`
-                    : `${created.fullName} already has an account and has been added to this company.`}
+                  {`${created.fullName} will get an email at ${created.email} to accept the invitation. They'll join your company once they accept, and you can resend or withdraw it from Team Members until then.`}
                 </p>
               </div>
 
@@ -123,7 +122,7 @@ export default function AddMemberModal({ open, onClose, onAdded }) {
                     disabled={submitting}
                     className="flex-1 bg-brand-600 text-white text-sm font-medium rounded-lg py-2 hover:bg-brand-700 transition-colors disabled:opacity-50"
                   >
-                    {submitting ? "Adding..." : "Add Member"}
+                    {submitting ? "Sending..." : "Send Invitation"}
                   </button>
                 </div>
               </form>

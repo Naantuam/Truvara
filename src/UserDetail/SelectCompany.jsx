@@ -6,7 +6,7 @@ import Logo from "./AuthComponents/Logo";
 import AuthButton from "./AuthComponents/AuthButton";
 import { Building2 } from "lucide-react";
 import api from "../api";
-import { clearCache } from "../dataCache";
+import { storeSession } from "../authSession";
 
 // Reached only when login proves a password is correct but the person
 // belongs to more than one company (e.g. an Owner involved in two
@@ -23,7 +23,7 @@ const SelectCompany = () => {
 
   useEffect(() => {
     if (!companies || !preAuthToken) {
-      navigate("/");
+      navigate("/login");
     }
   }, [companies, preAuthToken, navigate]);
 
@@ -38,12 +38,7 @@ const SelectCompany = () => {
         company_id: selectedId,
       });
 
-      clearCache();
-
-      const { access, refresh, user } = res.data;
-      if (access) localStorage.setItem("access_token", access);
-      if (refresh) localStorage.setItem("refresh_token", refresh);
-      if (user) localStorage.setItem("user", JSON.stringify(user));
+      storeSession(res.data);
 
       navigate("/dashboard");
     } catch (err) {

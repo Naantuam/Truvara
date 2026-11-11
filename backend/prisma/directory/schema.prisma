@@ -67,6 +67,11 @@ model User {
   activationTokenHash      String?   @unique @map("activation_token_hash")
   activationTokenExpiresAt DateTime? @map("activation_token_expires_at")
 
+  // When this person accepted the Terms of Use and Privacy Notice at
+  // self-service signup. Null for people added by an Owner (invited), who
+  // never went through the public signup form.
+  termsAcceptedAt DateTime? @map("terms_accepted_at")
+
   // Convenience pointer only (e.g. which company to preselect on login);
   // authorization always goes through CompanyMembership, never this alone.
   primaryCompanyId String?  @map("primary_company_id")
@@ -139,6 +144,23 @@ model CompanyMembership {
   // row per event -- anything in the activity feed newer than this counts
   // as unread. Null means never opened yet (everything is unread).
   notificationsReadAt DateTime? @map("notifications_read_at")
+
+  // Invitations. An Owner adding someone creates the membership with
+  // invitePending = true, which grants NO access (see
+  // services/membershipAccess.js) until the invited person accepts from the
+  // emailed link -- nobody is put into a company without agreeing to it.
+  // Defaults to false so memberships that existed before invitations keep
+  // working unchanged. As with activation, only the token's SHA-256 hash is
+  // stored. invitedName is the name the Owner typed: shown in their member
+  // list while pending, so an invite never reveals the name an existing
+  // account holder registered with.
+  invitePending   Boolean   @default(false) @map("invite_pending")
+  inviteTokenHash String?   @unique @map("invite_token_hash")
+  inviteExpiresAt DateTime? @map("invite_expires_at")
+  invitedById     String?   @map("invited_by_id")
+  invitedName     String?   @map("invited_name")
+  invitedAt       DateTime? @map("invited_at")
+
   createdAt    DateTime  @default(now()) @map("created_at")
 
   user    User    @relation(fields: [userId], references: [id])

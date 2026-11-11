@@ -3,19 +3,23 @@ import { z } from "zod";
 import { authenticate } from "../middleware/authenticate.js";
 import { requirePermission } from "../middleware/requirePermission.js";
 import { listCompanyMembers } from "../services/companyService.js";
-import { addMember, updateMember, removeMember, SettingsError } from "../services/settingsService.js";
+import { updateMember, removeMember, SettingsError } from "../services/settingsService.js";
+import { inviteMember, resendInvitation, revokeInvitation, InvitationError } from "../services/invitationService.js";
 
 const router = Router();
 router.use(authenticate);
 
 function handleSettingsError(err, res, next) {
-  if (err instanceof SettingsError) return res.status(err.status).json({ detail: err.message });
+  if (err instanceof SettingsError || err instanceof InvitationError) {
+    return res.status(err.status).json({ detail: err.message });
+  }
   next(err);
 }
 
 router.get("/members", async (req, res, next) => {
   try {
-    const members = await listCompanyMembers(req.user.companyId);
+    const includeInvited = req.query.include === "invited" && req.user.permissions.has("admin:users:manage");
+    const members = await listCompanyMembers(req.user.companyId, { includeInvited });
     res.json(members);
   } catch (err) {
     next(err);
@@ -29,13 +33,33 @@ const addMemberSchema = z.object({
 });
 
 // MEDIUM priority, work-scope §10: Team Members - add member, assign role.
+// Sends an invitation; the person only joins once they accept it. The
+// response is the same whether or not the email already has an account.
 router.post("/members", requirePermission("admin:users:manage"), async (req, res, next) => {
   const parsed = addMemberSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ detail: "email, fullName, and a valid roleName are required." });
 
   try {
-    const member = await addMember(req.user.companyId, parsed.data);
+    const member = await inviteMember(req.user.tenantDb, req.user.companyId, req.user, parsed.data);
     res.status(201).json(member);
+  } catch (err) {
+    handleSettingsError(err, res, next);
+  }
+});
+
+router.post("/members/:userId/resend-invite", requirePermission("admin:users:manage"), async (req, res, next) => {
+  try {
+    res.json(await resendInvitation(req.user.companyId, req.params.userId));
+  } catch (err) {
+    handleSettingsError(err, res, next);
+  }
+});
+
+// Withdraws a pending invitation. No reason needed (unlike removing a
+// member): nobody lost access, since they never had any.
+router.delete("/members/:userId/invite", requirePermission("admin:users:manage"), async (req, res, next) => {
+  try {
+    res.json(await revokeInvitation(req.user.tenantDb, req.user.companyId, req.user, req.params.userId));
   } catch (err) {
     handleSettingsError(err, res, next);
   }

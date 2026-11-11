@@ -217,3 +217,28 @@ model AuditEvent {
   @@map("audit_events")
   @@schema("public")
 }
+
+// The business profile collected by the onboarding wizard (PRD section 6),
+// one row per company. Answers are stored per wizard step as JSON so partial
+// answers, "Not sure" and "Complete later" are all first-class -- nothing is
+// forced, and a step can be revisited. Each step's shape is validated on the
+// server (src/services/onboardingService.js) against an allowlist of fields.
+//
+// Lives in the tenant database, not the directory: it is business
+// information (registration status, tax position, workforce), so it gets
+// the same Row-Level Security protection as every other company record.
+model BusinessProfile {
+  id             String    @id @default(uuid())
+  companyId      String    @unique @map("company_id")
+  answers        Json      @default("{}")
+  completedSteps String[]  @default([]) @map("completed_steps")
+  // Set when the owner reviews and confirms the profile. Null = onboarding
+  // still in progress (resumable from the dashboard).
+  completedAt    DateTime? @map("completed_at")
+  updatedById    String?   @map("updated_by_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@map("business_profiles")
+  @@schema("public")
+}

@@ -1,6 +1,7 @@
 import "dotenv/config";
 import argon2 from "argon2";
 import { directoryPrisma as prisma } from "../src/db/directoryPrisma.js";
+import { encryptSecret } from "../src/utils/secretBox.js";
 
 // Namespaced so Governance/Operations/Finance/Dashboard share one permission
 // vocabulary (work-scope: "User -> Role -> Permissions -> Module Access ->
@@ -110,7 +111,7 @@ async function seedDevCompany(roleRows) {
 
   let company = await prisma.company.findFirst({ where: { name: "Truvara Dev Co" } });
   if (!company) {
-    company = await prisma.company.create({ data: { name: "Truvara Dev Co", tenantDatabaseUrl } });
+    company = await prisma.company.create({ data: { name: "Truvara Dev Co", tenantDatabaseUrl: encryptSecret(tenantDatabaseUrl) } });
   }
 
   for (const { email, fullName, role } of DEV_USERS) {

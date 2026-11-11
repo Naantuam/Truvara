@@ -1,5 +1,4 @@
 import { directoryPrisma } from "../db/directoryPrisma.js";
-import { generateActivationToken, sendActivationEmail } from "./activation.js";
 import { recordAuditEvent } from "../utils/audit.js";
 
 export class SettingsError extends Error {
@@ -34,44 +33,7 @@ export async function updateCompany(companyId, { name, currency, employeeCount }
   });
 }
 
-// MEDIUM priority: Team Members - add member. New people get an activation
-// email instead of an admin-generated password (see activation.js) -- they
-// set their own password, the admin never sees or handles it.
-export async function addMember(companyId, { email, fullName, roleName }) {
-  const role = await directoryPrisma.role.findUnique({ where: { name: roleName } });
-  if (!role) throw new SettingsError("Unknown role.", 400);
-
-  const existingUser = await directoryPrisma.user.findUnique({ where: { email } });
-  if (existingUser) {
-    const existingMembership = await directoryPrisma.companyMembership.findUnique({
-      where: { userId_companyId: { userId: existingUser.id, companyId } },
-    });
-    if (existingMembership) throw new SettingsError("This person is already a member of this company.", 409);
-
-    await directoryPrisma.companyMembership.create({
-      data: { userId: existingUser.id, companyId, roleId: role.id, scopeType: "COMPANY" },
-    });
-    return { id: existingUser.id, email: existingUser.email, fullName: existingUser.fullName, role: role.name, activationSent: false };
-  }
-
-  const { rawToken, tokenHash, expiresAt } = generateActivationToken();
-  const user = await directoryPrisma.user.create({
-    data: {
-      email,
-      fullName,
-      passwordHash: null,
-      activationTokenHash: tokenHash,
-      activationTokenExpiresAt: expiresAt,
-      primaryCompanyId: companyId,
-    },
-  });
-  await directoryPrisma.companyMembership.create({
-    data: { userId: user.id, companyId, roleId: role.id, scopeType: "COMPANY" },
-  });
-  await sendActivationEmail({ to: email, fullName, rawToken });
-
-  return { id: user.id, email: user.email, fullName: user.fullName, role: role.name, activationSent: true };
-}
+// Adding members is an invitation now -- see invitationService.js.
 
 // MEDIUM priority: Team Members - assign role, edit member info,
 // activate/deactivate.

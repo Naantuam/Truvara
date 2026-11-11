@@ -1,17 +1,83 @@
 import { Router } from "express";
 import { z } from "zod";
-import { login, selectCompany, refresh, changePassword, activateAccount, AuthError } from "../services/authService.js";
+import {
+  login,
+  selectCompany,
+  refresh,
+  changePassword,
+  activateAccount,
+  signup,
+  resendActivation,
+  requestPasswordReset,
+  selfSignupEnabled,
+  AuthError,
+} from "../services/authService.js";
+import { rateLimit } from "../utils/rateLimit.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { directoryPrisma } from "../db/directoryPrisma.js";
 
 const router = Router();
+
+// Public endpoints get per-IP limits: enough for a person retrying, not for
+// a script guessing passwords or spamming signup emails.
+const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
+const emailLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 5 });
+const SIGNUP_RECEIVED =
+  "If that email can be used, we've sent a link to it. Check your inbox (and spam folder) to continue.";
+
+// Lets the signup page show "not open yet" before anyone fills in the form.
+router.get("/signup-status", (req, res) => res.json({ open: selfSignupEnabled() }));
+
+const signupSchema = z.object({
+  fullName: z.string().trim().min(2, "Enter your full name.").max(120),
+  email: z.string().trim().email("Enter a valid email address.").max(254),
+  acceptedTerms: z.literal(true, { errorMap: () => ({ message: "You need to accept the Terms of Use and Privacy Notice." }) }),
+});
+
+router.post("/signup", emailLimit, async (req, res, next) => {
+  const parsed = signupSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ detail: parsed.error.issues[0]?.message || "Invalid details." });
+
+  try {
+    await signup(parsed.data);
+    res.status(202).json({ detail: SIGNUP_RECEIVED });
+  } catch (err) {
+    if (err instanceof AuthError) {
+      const status = err.code === "SIGNUP_CLOSED" ? 403 : 400;
+      return res.status(status).json({ detail: err.message, ...(err.code ? { code: err.code } : {}) });
+    }
+    next(err);
+  }
+});
+
+router.post("/password-reset-request", emailLimit, async (req, res, next) => {
+  const parsed = z.object({ email: z.string().trim().email() }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ detail: "Enter a valid email address." });
+  try {
+    await requestPasswordReset(parsed.data.email);
+    res.status(202).json({ detail: "If an account uses that email, we've sent it a link to reset the password." });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/resend-activation", emailLimit, async (req, res, next) => {
+  const parsed = z.object({ email: z.string().trim().email() }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ detail: "Enter a valid email address." });
+  try {
+    await resendActivation(parsed.data.email);
+    res.status(202).json({ detail: SIGNUP_RECEIVED });
+  } catch (err) {
+    next(err);
+  }
+});
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 });
 
-router.post("/login", async (req, res, next) => {
+router.post("/login", loginLimit, async (req, res, next) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ detail: "Email and password are required." });
 
@@ -31,7 +97,7 @@ const activateSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
-router.post("/activate", async (req, res, next) => {
+router.post("/activate", loginLimit, async (req, res, next) => {
   const parsed = activateSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ detail: parsed.error.issues[0]?.message || "Invalid payload." });

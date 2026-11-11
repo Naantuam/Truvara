@@ -9,7 +9,7 @@ export default function Unauthorized() {
 
     const handleHomeClick = () => {
         if (!user || !roles || !appPermissions) {
-            navigate("/");
+            navigate("/login");
             return;
         }
 
@@ -33,7 +33,7 @@ export default function Unauthorized() {
         }
 
         // Fallback
-        navigate("/");
+        navigate("/login");
     };
 
     return (

@@ -14,6 +14,7 @@
 // final.
 import "dotenv/config";
 import { directoryPrisma as prisma } from "../src/db/directoryPrisma.js";
+import { encryptSecret } from "../src/utils/secretBox.js";
 import { generateActivationToken, sendActivationEmail } from "../src/services/activation.js";
 
 const COMPANIES = [
@@ -80,7 +81,7 @@ async function main() {
         data: {
           name: companyDef.name,
           currency: companyDef.currency || "NGN",
-          tenantDatabaseUrl,
+          tenantDatabaseUrl: encryptSecret(tenantDatabaseUrl),
         },
       });
       console.log(`Created company: ${companyDef.name}`);

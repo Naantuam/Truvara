@@ -1,4 +1,6 @@
 import { directoryPrisma } from "../db/directoryPrisma.js";
+import { decryptSecret } from "../utils/secretBox.js";
+import { grantsAccess } from "./membershipAccess.js";
 
 // Loaded fresh per request rather than cached in the JWT: a permission change
 // (or a role change) must take effect on the user's very next request, not
@@ -12,7 +14,7 @@ export async function loadPermissionContext(userId, companyId) {
     },
   });
 
-  if (!membership || !membership.isActive) return null;
+  if (!grantsAccess(membership)) return null;
 
   const permissions = new Set(membership.role.rolePermissions.map((rp) => rp.permission.code));
 
@@ -22,7 +24,9 @@ export async function loadPermissionContext(userId, companyId) {
     scopeType: membership.scopeType,
     departmentId: membership.departmentId,
     permissions,
-    tenantDatabaseUrl: membership.company.tenantDatabaseUrl,
+    // Stored encrypted at rest (see utils/secretBox.js); decrypted only here,
+    // in memory, right before the request needs a tenant connection.
+    tenantDatabaseUrl: decryptSecret(membership.company.tenantDatabaseUrl),
     companyCurrency: membership.company.currency,
   };
 }

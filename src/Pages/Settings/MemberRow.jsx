@@ -1,11 +1,36 @@
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Send, X } from "lucide-react";
 
 // Manager role limited/commented out from frontend per requirements (can be re-enabled later)
 const ROLES = ["Owner", /* "Manager", */ "Team Member"];
 
-export default function MemberRow({ member, onUpdate, onRemove, isSelf }) {
+export default function MemberRow({ member, onUpdate, onRemove, onResendInvite, onRevokeInvite, isSelf }) {
   const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState(null);
+
+  if (member.status === "invited") {
+    return (
+      <InvitedRow
+        member={member}
+        saving={saving}
+        notice={notice}
+        run={async (action, doneMessage) => {
+          setSaving(true);
+          setNotice(null);
+          try {
+            await action();
+            if (doneMessage) setNotice(doneMessage);
+          } catch (err) {
+            setNotice(err.response?.data?.detail || "Something went wrong. Please try again.");
+          } finally {
+            setSaving(false);
+          }
+        }}
+        onResend={() => onResendInvite(member.id)}
+        onRevoke={() => onRevokeInvite(member.id)}
+      />
+    );
+  }
 
   // Preserve Manager option for rendering if an existing user in DB currently has that role
   const roleOptions = member?.role === "Manager" && !ROLES.includes("Manager")
@@ -69,6 +94,50 @@ export default function MemberRow({ member, onUpdate, onRemove, isSelf }) {
           className="text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 disabled:opacity-50 transition-colors"
         >
           <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// A pending invitation: no role/active controls yet (they aren't a member
+// until they accept), just resend and withdraw.
+function InvitedRow({ member, saving, notice, run, onResend, onRevoke }) {
+  const expired = member.inviteExpiresAt && new Date(member.inviteExpiresAt) < new Date();
+
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800 last:border-0 gap-3">
+      <div className="min-w-0">
+        <p className="text-sm text-gray-900 dark:text-gray-100 truncate">{member.fullName}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{member.email}</p>
+        {notice && <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{notice}</p>}
+      </div>
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <span className="text-xs text-gray-500 dark:text-gray-400">{member.role}</span>
+        <span
+          className={`text-xs font-medium px-2 py-1 rounded-full ${
+            expired
+              ? "bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400"
+              : "bg-gold-50 dark:bg-gold-950 text-gold-700 dark:text-gold-400"
+          }`}
+        >
+          {expired ? "Invite expired" : "Invited"}
+        </span>
+        <button
+          onClick={() => run(onResend, "Invitation re-sent.")}
+          disabled={saving}
+          title="Resend invitation"
+          className="text-gray-400 hover:text-brand-700 dark:text-gray-500 dark:hover:text-gold-400 disabled:opacity-50 transition-colors"
+        >
+          <Send className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => run(onRevoke)}
+          disabled={saving}
+          title="Withdraw invitation"
+          className="text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 disabled:opacity-50 transition-colors"
+        >
+          <X className="w-4 h-4" />
         </button>
       </div>
     </div>

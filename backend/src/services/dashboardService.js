@@ -4,6 +4,9 @@ import { directoryPrisma } from "../db/directoryPrisma.js";
 // not be a separately-populated data source, so this just narrates the
 // append-only audit_events log (§8), which already records every action.
 const ACTION_DESCRIPTIONS = {
+  "company.created": "created this workspace",
+  "business_profile.updated": "updated the business profile",
+  "business_profile.completed": "completed the business profile",
   "decision.created": "created a decision",
   "decision.edited": "edited a decision",
   "decision.submitted": "submitted a decision for approval",
@@ -20,6 +23,10 @@ const ACTION_DESCRIPTIONS = {
   "transaction.rejected": "rejected a transaction",
   "transaction.voided": "voided a transaction",
   "member.removed": "removed a team member",
+  "member.invited": "invited a team member",
+  "member.invite_revoked": "withdrew an invitation",
+  "member.joined": "joined the company",
+  "member.invite_declined": "declined an invitation",
 };
 
 export function describeAction(action) {

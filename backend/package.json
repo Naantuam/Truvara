@@ -30,6 +30,14 @@
     "prisma:push:directory": "HOSTALIASES=$(pwd)/.hostaliases NODE_OPTIONS=--dns-result-order=ipv4first prisma db push --schema=prisma/directory/schema.prisma",
     "preprisma:push:tenant": "node scripts/resolve-db-host.js",
     "prisma:push:tenant": "HOSTALIASES=$(pwd)/.hostaliases NODE_OPTIONS=--dns-result-order=ipv4first prisma db push --schema=prisma/tenant/schema.prisma",
+    "preencrypt:tenant-urls": "node scripts/resolve-db-host.js",
+    "encrypt:tenant-urls": "HOSTALIASES=$(pwd)/.hostaliases node --dns-result-order=ipv4first scripts/encryptTenantUrls.js",
+    "presecure:tenant": "node scripts/resolve-db-host.js",
+    "secure:tenant": "HOSTALIASES=$(pwd)/.hostaliases node --dns-result-order=ipv4first scripts/secureTenantDatabase.js",
+    "precopy:directory": "node scripts/resolve-db-host.js",
+    "copy:directory": "HOSTALIASES=$(pwd)/.hostaliases node --dns-result-order=ipv4first scripts/copyDirectory.js",
+    "premigrate:tenants": "node scripts/resolve-db-host.js",
+    "migrate:tenants": "HOSTALIASES=$(pwd)/.hostaliases NODE_OPTIONS=--dns-result-order=ipv4first node scripts/migrateTenants.js",
     "test": "vitest run"
   },
   "dependencies": {

@@ -145,7 +145,7 @@ export async function setDecisionCoAuthor(db, actor, id, coAuthorId) {
       const membership = await directoryPrisma.companyMembership.findUnique({
         where: { userId_companyId: { userId: coAuthorId, companyId: actor.companyId } },
       });
-      if (!membership) throw new DecisionError("Co-author must be a member of this company.", 400);
+      if (!membership || membership.invitePending) throw new DecisionError("Co-author must be a member of this company.", 400);
     }
 
     const result = await tx.decision.update({

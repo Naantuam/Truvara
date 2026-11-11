@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { loadPermissionContext } from "../services/permissions.js";
-import { getTenantClient } from "../db/tenantPrisma.js";
+import { getVerifiedTenantClient } from "../db/tenantPrisma.js";
+import { scopeToCompany } from "../db/companyScopedClient.js";
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
 
@@ -9,7 +10,10 @@ const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
 // downstream query filters by req.user.companyId, AND now also only ever
 // touches req.user.tenantDb -- the specific physical database this
 // company's data lives in, resolved from the directory, never guessable or
-// overridable by the client.
+// overridable by the client. tenantDb is additionally scoped to this one
+// company at the database level (see db/companyScopedClient.js): Postgres
+// Row-Level Security refuses any row belonging to another company, even if a
+// service forgot its companyId filter.
 export async function authenticate(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -29,6 +33,13 @@ export async function authenticate(req, res, next) {
   const ctx = await loadPermissionContext(decoded.sub, decoded.company_id);
   if (!ctx) return res.status(401).json({ detail: "Invalid session." });
 
+  let tenantClient;
+  try {
+    tenantClient = await getVerifiedTenantClient(ctx.tenantDatabaseUrl);
+  } catch {
+    return res.status(503).json({ detail: "Your company's workspace is temporarily unavailable." });
+  }
+
   req.user = {
     id: decoded.sub,
     userId: decoded.sub,
@@ -38,7 +49,7 @@ export async function authenticate(req, res, next) {
     departmentId: ctx.departmentId,
     permissions: ctx.permissions,
     companyCurrency: ctx.companyCurrency,
-    tenantDb: getTenantClient(ctx.tenantDatabaseUrl),
+    tenantDb: scopeToCompany(tenantClient, decoded.company_id),
   };
 
   next();

@@ -79,7 +79,7 @@ async function assertAssigneeInCompany(companyId, assigneeId) {
   const membership = await directoryPrisma.companyMembership.findUnique({
     where: { userId_companyId: { userId: assigneeId, companyId } },
   });
-  if (!membership) throw new TaskError("Assignee is not a member of this company.", 400);
+  if (!membership || membership.invitePending) throw new TaskError("Assignee is not a member of this company.", 400);
 }
 
 export async function createTask(db, actor, input) {

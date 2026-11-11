@@ -33,7 +33,7 @@ export default function ResetPassword() {
       await api.post(`/auth/password-reset-confirm/${uid}/${token}/`, { password: form.password });
       setSuccess(true);
       setMessage("✅ Password has been reset successfully! Redirecting to login...");
-      setTimeout(() => navigate("/"), 3000);
+      setTimeout(() => navigate("/login"), 3000);
     } catch (error) {
       console.error(error);
       setMessage(error.response?.data?.detail || "Failed to reset password. The link may be expired.");

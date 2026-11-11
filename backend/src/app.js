@@ -9,6 +9,8 @@ import dashboardRoutes from "./routes/dashboard.routes.js";
 import reportsRoutes from "./routes/reports.routes.js";
 import settingsRoutes from "./routes/settings.routes.js";
 import feedbackRoutes from "./routes/feedback.routes.js";
+import onboardingRoutes from "./routes/onboarding.routes.js";
+import invitationRoutes from "./routes/invitations.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 // CORS_ORIGIN accepts a comma-separated list, e.g. both the local dev
@@ -21,6 +23,9 @@ function parseAllowedOrigins() {
 
 export function createApp() {
   const app = express();
+  // Behind Render's proxy: trust its X-Forwarded-For so rate limits key on
+  // the real client IP, not the proxy's.
+  app.set("trust proxy", 1);
 
   const allowedOrigins = parseAllowedOrigins();
   app.use(
@@ -33,7 +38,7 @@ export function createApp() {
       credentials: true,
     })
   );
-  app.use(express.json());
+  app.use(express.json({ limit: "100kb" }));
 
   app.get("/health", (req, res) => res.json({ status: "ok" }));
 
@@ -46,6 +51,8 @@ export function createApp() {
   app.use("/api/settings", settingsRoutes);
   app.use("/api/company", companyRoutes);
   app.use("/api/feedback", feedbackRoutes);
+  app.use("/api/onboarding", onboardingRoutes);
+  app.use("/api/invitations", invitationRoutes);
 
   app.use(errorHandler);
 

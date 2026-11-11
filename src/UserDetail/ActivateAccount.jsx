@@ -7,11 +7,16 @@ import AuthButton from "./AuthComponents/AuthButton";
 import InputField from "./AuthComponents/InputField";
 import Logo from "./AuthComponents/Logo";
 import { Lock } from "lucide-react";
-import { clearCache } from "../dataCache";
+import { routeForAuthResponse } from "../authSession";
 
 export default function ActivateAccount() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
+  // Same endpoint for both, different wording: invited team members are
+  // "activating", self-signups are confirming their email.
+  const isSignup = searchParams.get("signup") === "1";
+  const isReset = searchParams.get("reset") === "1";
+  const title = isSignup ? "Create your password" : isReset ? "Choose a new password" : "Activate Your Account";
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ password: "", confirmPassword: "" });
@@ -33,23 +38,15 @@ export default function ActivateAccount() {
     try {
       const res = await api.post("/auth/activate/", { token, password: form.password });
 
-      if (res.data.companies_available) {
-        // Same edge case as Login -- rare for a brand-new user, but possible
-        // if they were added to more than one company before activating.
-        navigate("/select-company", {
-          state: { companies: res.data.companies_available, preAuthToken: res.data.pre_auth_token },
-        });
-        return;
-      }
-
-      clearCache();
-      if (res.data?.access) localStorage.setItem("access_token", res.data.access);
-      if (res.data?.refresh) localStorage.setItem("refresh_token", res.data.refresh);
-      if (res.data?.user) localStorage.setItem("user", JSON.stringify(res.data.user));
-
-      navigate("/dashboard");
+      // Self-signups (no company yet) go on to create their workspace;
+      // invited people land in their company, or pick one if several.
+      const { to, state } = routeForAuthResponse(res.data);
+      navigate(to, { state });
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to activate your account. The link may be invalid or expired.");
+      setError(
+        err.response?.data?.detail ||
+          "This link didn't work. It may have expired or been replaced by a newer one; request a new link from the sign-in page."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -61,7 +58,7 @@ export default function ActivateAccount() {
         <AuthCard>
           <div className="flex flex-col items-center justify-center mt-4 md:mt-0">
             <Logo />
-            <h1 className="text-gray-900 text-xl font-bold text-center mt-6 mb-2">Activate Your Account</h1>
+            <h1 className="text-gray-900 text-xl font-bold text-center mt-6 mb-2">{title}</h1>
             <p className="text-red-600 text-sm text-center mb-6">
               This activation link is missing its token. Please use the link from your email exactly as it was sent.
             </p>
@@ -76,8 +73,14 @@ export default function ActivateAccount() {
       <AuthCard>
         <div className="flex flex-col items-center justify-center mt-4 md:mt-0">
           <Logo />
-          <h1 className="text-gray-900 text-xl font-bold text-center mt-6 mb-2">Activate Your Account</h1>
-          <p className="text-gray-500 text-sm text-center mb-6">Set a password to finish setting up your account.</p>
+          <h1 className="text-gray-900 text-xl font-bold text-center mt-6 mb-2">{title}</h1>
+          <p className="text-gray-500 text-sm text-center mb-6">
+            {isSignup
+              ? "Choose a password to verify your email and finish creating your account. Use at least 8 characters."
+              : isReset
+                ? "Enter a new password for your account. Use at least 8 characters."
+                : "Set a password to finish setting up your account."}
+          </p>
         </div>
 
         <div className="flex-grow flex flex-col justify-center py-6">
@@ -105,7 +108,7 @@ export default function ActivateAccount() {
             {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
             <div className="mt-4">
-              <AuthButton type="submit" label="Set Password & Activate" isLoading={submitting} />
+              <AuthButton type="submit" label={isSignup ? "Create account" : isReset ? "Reset password" : "Set Password & Activate"} isLoading={submitting} />
             </div>
           </form>
         </div>

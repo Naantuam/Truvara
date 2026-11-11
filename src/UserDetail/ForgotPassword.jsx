@@ -48,7 +48,7 @@ const ForgotPassword = () => {
           {message ? (
             <div className="text-center">
               <p className="text-gray-600 text-sm mb-6">{message}</p>
-              <AuthButton label="Back to Login" onClick={() => window.location.href = "/"} />
+              <AuthButton label="Back to Login" onClick={() => window.location.href = "/login"} />
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -71,7 +71,7 @@ const ForgotPassword = () => {
 
         {/* Bottom Section: Back to Login */}
         <div className="flex justify-center items-center pb-4 md:pb-0">
-          <AuthLink to="/">Back to Login</AuthLink>
+          <AuthLink to="/login">Back to Login</AuthLink>
         </div>
       </AuthCard>
     </AuthLayout>

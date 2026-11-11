@@ -21,13 +21,14 @@ export default function SettingsPage() {
 
   const fetchMembers = () => {
     setLoadingMembers(true);
-    api.get("/company/members/")
+    // Owners also see pending invitations, so they can resend or withdraw them.
+    api.get("/company/members/", { params: canManageUsers ? { include: "invited" } : {} })
       .then((res) => setMembers(Array.isArray(res.data) ? res.data : []))
       .catch((err) => console.error("Failed to fetch team members:", err))
       .finally(() => setLoadingMembers(false));
   };
 
-  useEffect(fetchMembers, []);
+  useEffect(fetchMembers, [canManageUsers]);
 
   const handleProfileSave = async (fullName) => {
     const res = await api.patch("/settings/profile/", { fullName });
@@ -89,11 +90,21 @@ export default function SettingsPage() {
     fetchMembers();
   };
 
+  const handleResendInvite = async (userId) => {
+    await api.post(`/company/members/${userId}/resend-invite`);
+    fetchMembers();
+  };
+
+  const handleRevokeInvite = async (userId) => {
+    await api.delete(`/company/members/${userId}/invite`);
+    fetchMembers();
+  };
+
   const handleLogout = () => {
     clearCache();
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
-    window.location.href = "/";
+    window.location.href = "/login";
   };
 
   return (
@@ -181,6 +192,8 @@ export default function SettingsPage() {
                 member={m}
                 onUpdate={handleUpdateMember}
                 onRemove={setRemovingMember}
+                onResendInvite={handleResendInvite}
+                onRevokeInvite={handleRevokeInvite}
                 isSelf={m.id === user?.id}
               />
             ))}

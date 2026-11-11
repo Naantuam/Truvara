@@ -12,7 +12,7 @@ const ProtectedRoute = ({ children, app }) => {
 
   // If no token, redirect to login
   if (!token) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (context) {
@@ -38,7 +38,7 @@ const ProtectedRoute = ({ children, app }) => {
       );
     }
 
-    if (!user && !loadingAuth) return <Navigate to="/" replace />;
+    if (!user && !loadingAuth) return <Navigate to="/login" replace />;
     if (!user) return children;
 
     if (app && !hasModuleAccess(user, app) && !loadingAuth) {

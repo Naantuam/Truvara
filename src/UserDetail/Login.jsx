@@ -9,11 +9,14 @@ import InputField from "./AuthComponents/InputField";
 import { Mail, Lock } from "lucide-react";
 import api from "../api";
 import { AUTH_DISABLED } from "../config";
-import { clearCache } from "../dataCache";
+import { routeForAuthResponse } from "../authSession";
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  // Set when the account exists but its emailed link was never used.
+  const [notActivated, setNotActivated] = useState(false);
+  const [resendNotice, setResendNotice] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) =>
@@ -28,6 +31,8 @@ const Login = () => {
     }
 
     setLoading(true);
+    setNotActivated(false);
+    setResendNotice(null);
 
     try {
       const res = await api.post("/auth/login/", form);
@@ -38,34 +43,9 @@ const Login = () => {
         return;
       }
 
-      if (res.data.companies_available) {
-        // This person belongs to more than one company (e.g. an Owner
-        // involved in two businesses) -- password is already verified, they
-        // just need to pick which workspace to enter.
-        navigate("/select-company", {
-          state: { companies: res.data.companies_available, preAuthToken: res.data.pre_auth_token },
-        });
-        return;
-      }
-
-      const access = res.data?.access;
-      const refresh = res.data?.refresh;
-      const user = res.data?.user || {};
-
-      // Fresh session -- any cached data from a previous session (or a
-      // different user, if this tab was left logged out) must not leak in.
-      clearCache();
-
-      if (access) localStorage.setItem("access_token", access);
-      if (refresh) localStorage.setItem("refresh_token", refresh);
-      if (res.data?.user) {
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-      }
-
-      // Determine redirect URL dynamically based on permissions sent from backend
-      const redirectUrl = user?.default_redirect || "/dashboard";
-
-      navigate(redirectUrl);
+      // No company yet -> workspace creation; several -> pick one.
+      const { to, state } = routeForAuthResponse(res.data);
+      navigate(to, { state });
     } catch (err) {
       let errorMessage = "Login failed due to an unknown error.";
 
@@ -85,13 +65,24 @@ const Login = () => {
 
       console.error("Login failed:", errorMessage);
 
-      if (!err.response) {
+      if (err.response?.data?.code === "ACCOUNT_NOT_ACTIVATED") {
+        setNotActivated(true);
+      } else if (!err.response) {
         alert("Could not connect to the server. Check your internet connection or server status.");
       } else {
         alert(errorMessage);
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    try {
+      await api.post("/auth/resend-activation", { email: form.email });
+      setResendNotice("We've sent a new link. Check your inbox.");
+    } catch {
+      setResendNotice("We couldn't resend the email. Please try again shortly.");
     }
   };
 
@@ -131,6 +122,17 @@ const Login = () => {
               Icon={Lock}
             />
 
+            {notActivated && (
+              <div className="rounded-xl bg-gold-50 border border-gold-200 px-4 py-3 text-sm text-gray-800">
+                This account hasn't been activated yet. Use the link we emailed you, or{" "}
+                <button type="button" onClick={handleResend} className="font-semibold text-brand-700 hover:underline">
+                  send a new link
+                </button>
+                .
+                {resendNotice && <p className="mt-1 text-gray-600">{resendNotice}</p>}
+              </div>
+            )}
+
             {/* Added margin top to separate button slightly */}
             <div className="mt-4">
               <AuthButton
@@ -143,8 +145,11 @@ const Login = () => {
         </div>
 
         {/* Bottom Section: Links */}
-        <div className="flex justify-center items-center pb-4 md:pb-0">
+        <div className="flex flex-col justify-center items-center gap-2 pb-4 md:pb-0">
           <AuthLink to="/forgot-password">Forgot Password?</AuthLink>
+          <p className="text-sm text-gray-600">
+            New to Truvara? <AuthLink to="/signup">Create an account</AuthLink>
+          </p>
         </div>
 
       </AuthCard>

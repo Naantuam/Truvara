@@ -22,7 +22,7 @@ const Mfa = () => {
   useEffect(() => {
     // Redirect back to login if they bypassed it
     if (!userId) {
-      navigate("/");
+      navigate("/login");
     }
   }, [userId, navigate]);
 
