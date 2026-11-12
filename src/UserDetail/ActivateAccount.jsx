@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../api";
+import AuthIconTile from "./AuthComponents/AuthIconTile";
+import AuthOutlineButton from "./AuthComponents/AuthOutlineButton";
 import AuthLayout from "./AuthComponents/AuthLayout";
 import AuthCard from "./AuthComponents/AuthCard";
 import AuthButton from "./AuthComponents/AuthButton";
 import InputField from "./AuthComponents/InputField";
 import Logo from "./AuthComponents/Logo";
-import { Lock } from "lucide-react";
+import { Lock, KeyRound, UserCheck, ShieldCheck, LinkIcon, ArrowRight, ArrowLeft } from "lucide-react";
 import { routeForAuthResponse } from "../authSession";
 
 export default function ActivateAccount() {
@@ -18,6 +20,8 @@ export default function ActivateAccount() {
   const isReset = searchParams.get("reset") === "1";
   const title = isSignup ? "Create your password" : isReset ? "Choose a new password" : "Activate Your Account";
   const navigate = useNavigate();
+  // Same black tile + gold icon as the other auth pages, picked per link type.
+  const ModeIcon = isSignup ? UserCheck : isReset ? KeyRound : ShieldCheck;
 
   const [form, setForm] = useState({ password: "", confirmPassword: "" });
   const [submitting, setSubmitting] = useState(false);
@@ -58,11 +62,13 @@ export default function ActivateAccount() {
         <AuthCard>
           <div className="flex flex-col items-center justify-center mt-4 md:mt-0">
             <Logo />
-            <h1 className="text-gray-900 text-xl font-bold text-center mt-6 mb-2">{title}</h1>
+            <AuthIconTile className="mt-6 md:mt-0"><LinkIcon className="w-7 h-7" strokeWidth={2.25} /></AuthIconTile>
+            <h1 className="text-gray-900 text-xl font-bold text-center mt-4 mb-2">{title}</h1>
             <p className="text-red-600 text-sm text-center mb-6">
               This activation link is missing its token. Please use the link from your email exactly as it was sent.
             </p>
           </div>
+          <BackToLogin />
         </AuthCard>
       </AuthLayout>
     );
@@ -73,8 +79,9 @@ export default function ActivateAccount() {
       <AuthCard>
         <div className="flex flex-col items-center justify-center mt-4 md:mt-0">
           <Logo />
-          <h1 className="text-gray-900 text-xl font-bold text-center mt-6 mb-2">{title}</h1>
-          <p className="text-gray-500 text-sm text-center mb-6">
+          <AuthIconTile className="mt-6 md:mt-0"><ModeIcon className="w-7 h-7" strokeWidth={2.25} /></AuthIconTile>
+          <h1 className="text-gray-900 text-xl font-bold text-center mt-4 mb-2">{title}</h1>
+          <p className="text-gray-500 text-sm text-center">
             {isSignup
               ? "Choose a password to verify your email and finish creating your account. Use at least 8 characters."
               : isReset
@@ -83,7 +90,7 @@ export default function ActivateAccount() {
           </p>
         </div>
 
-        <div className="flex-grow flex flex-col justify-center py-6">
+        <div className="flex-grow flex flex-col justify-center py-8">
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             <InputField
               id="password"
@@ -105,14 +112,29 @@ export default function ActivateAccount() {
               Icon={Lock}
             />
 
-            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+            {error && <p className="text-sm text-red-600">{error}</p>}
 
-            <div className="mt-4">
-              <AuthButton type="submit" label={isSignup ? "Create account" : isReset ? "Reset password" : "Set Password & Activate"} isLoading={submitting} />
-            </div>
+            <AuthButton
+              type="submit"
+              label={isSignup ? "Create account" : isReset ? "Reset password" : "Set Password & Activate"}
+              isLoading={submitting}
+              TrailingIcon={ArrowRight}
+            />
           </form>
         </div>
+
+        <BackToLogin />
       </AuthCard>
     </AuthLayout>
+  );
+}
+
+function BackToLogin() {
+  return (
+    <div className="pb-4 md:pb-0">
+      <AuthOutlineButton to="/login" nudge="left" icon={<ArrowLeft className="h-5 w-5" strokeWidth={2.25} />}>
+        Back to Login
+      </AuthOutlineButton>
+    </div>
   );
 }

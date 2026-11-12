@@ -37,7 +37,7 @@ export default function Nav({ theme, toggleTheme }) {
             Sign In
           </Link>
           <Link
-            to="/signup"
+            to="/register"
             className="group flex items-center gap-1.5 text-sm font-semibold bg-brand-600 dark:bg-brand-400 text-white px-4 py-2 rounded-lg ring-1 ring-gold-400/60 dark:ring-gold-300/90 shadow-md shadow-brand-900/20 hover:bg-brand-500 dark:hover:bg-brand-300 hover:ring-gold-300 hover:-translate-y-0.5 transition-all"
           >
             Create a Business Account

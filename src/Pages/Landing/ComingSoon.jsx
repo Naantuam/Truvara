@@ -3,7 +3,7 @@ import { Clock } from "lucide-react";
 import BrandMark from "../../Reusable/BrandMark";
 
 // Shared placeholder for pages the landing page links to that don't have
-// real content yet -- /signup (full account-creation flow is later work,
+// real content yet -- /register (full account-creation flow is later work,
 // pending the separate document-security conversation) and the footer's
 // /privacy, /terms, /support (real legal copy needs actual review, not
 // something to draft confidently here). Keeps every link on the landing

@@ -102,7 +102,7 @@ export default function Hero() {
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
-            to="/signup"
+            to="/register"
             className="bg-brand-600 dark:bg-brand-400 text-white font-semibold px-6 py-3 rounded-xl ring-1 ring-gold-400/60 dark:ring-gold-300/90 shadow-lg shadow-brand-900/25 hover:bg-brand-500 dark:hover:bg-brand-300 hover:ring-gold-300 hover:-translate-y-0.5 transition-all"
           >
             Get Started

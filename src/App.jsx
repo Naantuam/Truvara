@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 
 import LandingPage from "./Pages/Landing/LandingPage";
@@ -9,7 +9,6 @@ import Signup from "./UserDetail/Signup";
 import OnboardingPage from "./Pages/Onboarding/OnboardingPage";
 import MFA from "./UserDetail/MFA";
 import ForgotPassword from "./UserDetail/ForgotPassword";
-import ResetPassword from "./UserDetail/ResetPassword";
 import ActivateAccount from './UserDetail/ActivateAccount';
 import AcceptInvitation from './UserDetail/AcceptInvitation';
 import SecuritySettings from "./UserDetail/SecuritySettings";
@@ -32,7 +31,9 @@ function App() {
     <Routes>
       {/* Public marketing site */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/signup" element={<Signup />} />
+      <Route path="/register" element={<Signup />} />
+      {/* Old address, kept so links already shared still work */}
+      <Route path="/signup" element={<Navigate to="/register" replace />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/privacy" element={<ComingSoon title="Privacy Notice" message="Our Privacy Notice is being finalized. Check back soon, or get in touch if you have questions now." />} />
       <Route path="/terms" element={<ComingSoon title="Terms of Use" message="Our Terms of Use are being finalized. Check back soon, or get in touch if you have questions now." />} />
@@ -44,7 +45,6 @@ function App() {
       <Route path="/select-company" element={<SelectCompany />} />
       <Route path="/mfa" element={<MFA />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
       <Route path="/activate" element={<ActivateAccount />} />
       <Route path="/invite" element={<AcceptInvitation />} />
       {/* Main Pages with Unified Layout */}

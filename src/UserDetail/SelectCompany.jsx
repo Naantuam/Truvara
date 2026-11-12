@@ -4,7 +4,9 @@ import AuthLayout from "./AuthComponents/AuthLayout";
 import AuthCard from "./AuthComponents/AuthCard";
 import Logo from "./AuthComponents/Logo";
 import AuthButton from "./AuthComponents/AuthButton";
-import { Building2 } from "lucide-react";
+import AuthIconTile from "./AuthComponents/AuthIconTile";
+import AuthOutlineButton from "./AuthComponents/AuthOutlineButton";
+import { Building2, Layers, ArrowRight, ArrowLeft, Check } from "lucide-react";
 import api from "../api";
 import { storeSession } from "../authSession";
 
@@ -55,7 +57,10 @@ const SelectCompany = () => {
       <AuthCard>
         <div className="flex flex-col items-center mt-4 md:mt-0">
           <Logo />
-          <h2 className="text-xl font-bold text-gray-900 text-center mt-6">
+          <AuthIconTile className="mt-6 md:mt-0">
+            <Layers className="w-7 h-7" strokeWidth={2.25} />
+          </AuthIconTile>
+          <h2 className="text-xl font-bold text-gray-900 text-center mt-4">
             Choose a workspace
           </h2>
           <p className="text-sm text-gray-500 text-center mt-2">
@@ -64,21 +69,32 @@ const SelectCompany = () => {
         </div>
 
         <div className="flex-grow flex flex-col justify-center py-6 gap-3">
-          {companies.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setSelectedId(c.id)}
-              className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl border transition-colors ${
-                selectedId === c.id
-                  ? "border-gold-500 bg-gold-50 ring-2 ring-gold-500"
-                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              <Building2 className="w-5 h-5 text-brand-600 flex-shrink-0" />
-              <span className="font-medium text-gray-900">{c.name}</span>
-            </button>
-          ))}
+          {/* Each company looks like an input row: gold icon tile that turns
+              black when chosen, as a field's tile does when focused. */}
+          {companies.map((c) => {
+            const selected = selectedId === c.id;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setSelectedId(c.id)}
+                aria-pressed={selected}
+                className={`flex items-center gap-3 w-full text-left p-2 pr-4 rounded-xl bg-white border shadow-sm transition-all ${
+                  selected ? "border-transparent ring-2 ring-black" : "border-gray-300 hover:border-black"
+                }`}
+              >
+                <span
+                  className={`h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                    selected ? "bg-black text-gold-300" : "bg-gold-100 text-gold-800"
+                  }`}
+                >
+                  <Building2 size={18} strokeWidth={2.25} />
+                </span>
+                <span className="flex-1 font-medium text-gray-900">{c.name}</span>
+                {selected && <Check className="h-5 w-5 text-black" strokeWidth={2.5} />}
+              </button>
+            );
+          })}
 
           {error && <p className="text-sm text-red-600 text-center">{error}</p>}
 
@@ -89,8 +105,15 @@ const SelectCompany = () => {
               isLoading={loading}
               disabled={!selectedId}
               onClick={handleSelect}
+              TrailingIcon={ArrowRight}
             />
           </div>
+        </div>
+
+        <div className="pb-4 md:pb-0">
+          <AuthOutlineButton to="/login" nudge="left" icon={<ArrowLeft className="h-5 w-5" strokeWidth={2.25} />}>
+            Back to Login
+          </AuthOutlineButton>
         </div>
       </AuthCard>
     </AuthLayout>

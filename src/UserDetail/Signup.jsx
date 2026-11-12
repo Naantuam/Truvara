@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, User, MailCheck, Clock } from "lucide-react";
+import { Mail, User, MailCheck, Clock, ArrowRight, LogIn, RotateCw } from "lucide-react";
+import AuthIconTile from "./AuthComponents/AuthIconTile";
+import AuthOutlineButton from "./AuthComponents/AuthOutlineButton";
 import AuthLayout from "./AuthComponents/AuthLayout";
 import AuthCard from "./AuthComponents/AuthCard";
 import AuthButton from "./AuthComponents/AuthButton";
-import AuthLink from "./AuthComponents/AuthLink";
 import InputField from "./AuthComponents/InputField";
 import Logo from "./AuthComponents/Logo";
 import api from "../api";
@@ -80,25 +81,25 @@ export default function Signup() {
 
         {status === "closed" && (
           <div className="flex flex-col items-center text-center py-8 gap-4">
-            <div className="w-12 h-12 rounded-full bg-gold-50 text-gold-600 flex items-center justify-center">
-              <Clock className="w-6 h-6" />
-            </div>
+            <AuthIconTile>
+              <Clock className="w-7 h-7" strokeWidth={2.25} />
+            </AuthIconTile>
             <h1 className="text-gray-900 text-xl font-bold">Sign-up opens soon</h1>
             <p className="text-sm text-gray-600 leading-relaxed">
               We're finishing the final security checks before businesses can create their own workspace.
               Already been invited by your company? Sign in instead.
             </p>
             <div className="w-full mt-2">
-              <AuthButton type="button" label="Sign in" onClick={() => navigate("/login")} />
+              <AuthButton type="button" label="Sign in" onClick={() => navigate("/login")} TrailingIcon={ArrowRight} />
             </div>
           </div>
         )}
 
         {status === "sent" && (
           <div className="flex flex-col items-center text-center py-8 gap-4">
-            <div className="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center">
-              <MailCheck className="w-6 h-6" />
-            </div>
+            <AuthIconTile>
+              <MailCheck className="w-7 h-7" strokeWidth={2.25} />
+            </AuthIconTile>
             <h1 className="text-gray-900 text-xl font-bold">Check your inbox</h1>
             <p className="text-sm text-gray-600 leading-relaxed">
               If <span className="font-semibold text-gray-900">{form.email}</span> can be used, we've sent it a link.
@@ -109,8 +110,9 @@ export default function Signup() {
               type="button"
               onClick={handleResend}
               disabled={resending}
-              className="text-sm font-semibold text-brand-700 hover:text-gold-600 hover:underline disabled:opacity-60"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:underline disabled:opacity-60"
             >
+              <RotateCw className={`h-4 w-4 ${resending ? "animate-spin" : ""}`} strokeWidth={2.25} />
               {resending ? "Sending..." : "Didn't get it? Send a new link"}
             </button>
           </div>
@@ -118,7 +120,7 @@ export default function Signup() {
 
         {status === "open" && (
           <>
-            <h1 className="text-gray-900 text-xl font-bold text-center mt-6 md:mt-0">Create your account</h1>
+            <h1 className="text-gray-900 text-xl font-bold text-center mt-6 md:mt-0">Create your business account</h1>
             <p className="text-sm text-gray-500 text-center mt-2">
               Start with your details. You'll set up your business next.
             </p>
@@ -146,7 +148,7 @@ export default function Signup() {
                     type="checkbox"
                     checked={form.acceptedTerms}
                     onChange={(e) => setForm({ ...form, acceptedTerms: e.target.checked })}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-brand-600"
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-black"
                   />
                   <span>
                     I agree to the{" "}
@@ -164,16 +166,28 @@ export default function Signup() {
                 {error && <p className="text-sm text-red-600">{error}</p>}
 
                 <div className="mt-2">
-                  <AuthButton type="submit" label="Continue" isLoading={submitting} />
+                  <AuthButton type="submit" label="Continue" isLoading={submitting} TrailingIcon={ArrowRight} />
                 </div>
+
+                <p className="text-xs text-gray-500 text-center leading-relaxed">
+                  Joining your company's existing workspace? Ask its Owner to invite you.
+                </p>
               </form>
             </div>
           </>
         )}
 
+        {/* Mirrors the Login page's second call to action, the other way round */}
         {status !== "closed" && (
-          <div className="flex justify-center items-center gap-1 pb-4 md:pb-0 text-sm text-gray-600">
-            Already have an account? <AuthLink to="/login">Sign in</AuthLink>
+          <div className="flex flex-col gap-4 pb-4 md:pb-0">
+            <div className="flex items-center gap-3">
+              <span className="h-px flex-1 bg-black/20" />
+              <span className="text-sm text-gray-600">Already have an account?</span>
+              <span className="h-px flex-1 bg-black/20" />
+            </div>
+            <AuthOutlineButton to="/login" icon={<LogIn className="h-5 w-5" strokeWidth={2.25} />}>
+              Sign in
+            </AuthOutlineButton>
           </div>
         )}
       </AuthCard>

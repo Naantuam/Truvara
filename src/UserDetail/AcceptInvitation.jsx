@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Lock, Users, CheckCircle2, XCircle } from "lucide-react";
+import { Lock, Users, CheckCircle2, XCircle, ArrowRight, X } from "lucide-react";
 import api from "../api";
 import AuthLayout from "./AuthComponents/AuthLayout";
 import AuthCard from "./AuthComponents/AuthCard";
 import AuthButton from "./AuthComponents/AuthButton";
 import InputField from "./AuthComponents/InputField";
 import Logo from "./AuthComponents/Logo";
+import AuthIconTile from "./AuthComponents/AuthIconTile";
+import AuthOutlineButton from "./AuthComponents/AuthOutlineButton";
 import { routeForAuthResponse, apiErrorMessage } from "../authSession";
 
 // /invite?token=... from an invitation email. The person sees which company
@@ -91,19 +93,17 @@ export default function AcceptInvitation() {
 
         {status === "invalid" && (
           <Message
-            icon={<XCircle className="w-6 h-6" />}
-            tone="red"
+            icon={<XCircle className="w-7 h-7" strokeWidth={2.25} />}
             title="This invitation can't be used"
             body="The link is invalid, has expired, or has already been used. Ask the person who invited you to send a new invitation."
           >
-            <AuthButton type="button" label="Go to sign in" onClick={() => navigate("/login")} />
+            <AuthButton type="button" label="Go to sign in" onClick={() => navigate("/login")} TrailingIcon={ArrowRight} />
           </Message>
         )}
 
         {status === "declined" && (
           <Message
-            icon={<CheckCircle2 className="w-6 h-6" />}
-            tone="gray"
+            icon={<CheckCircle2 className="w-7 h-7" strokeWidth={2.25} />}
             title="Invitation declined"
             body={`You haven't been added to ${invite?.companyName}. You can close this page.`}
           />
@@ -111,21 +111,20 @@ export default function AcceptInvitation() {
 
         {status === "accepted" && (
           <Message
-            icon={<CheckCircle2 className="w-6 h-6" />}
-            tone="brand"
+            icon={<CheckCircle2 className="w-7 h-7" strokeWidth={2.25} />}
             title={`You've joined ${joinedCompany}`}
             body="Sign in with your existing password to start working with your team."
           >
-            <AuthButton type="button" label="Sign in" onClick={() => navigate("/login")} />
+            <AuthButton type="button" label="Sign in" onClick={() => navigate("/login")} TrailingIcon={ArrowRight} />
           </Message>
         )}
 
         {status === "ready" && (
           <>
             <div className="flex flex-col items-center text-center mt-6 md:mt-0">
-              <div className="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
-                <Users className="w-6 h-6" />
-              </div>
+              <AuthIconTile className="mb-4">
+                <Users className="w-7 h-7" strokeWidth={2.25} />
+              </AuthIconTile>
               <h1 className="text-gray-900 text-xl font-bold">Join {invite.companyName}</h1>
               <p className="text-sm text-gray-600 mt-2 leading-relaxed">
                 {invite.inviterName ? `${invite.inviterName} has invited you` : "You've been invited"} to join{" "}
@@ -161,15 +160,14 @@ export default function AcceptInvitation() {
 
                 {error && <p className="text-sm text-red-600">{error}</p>}
 
-                <AuthButton type="submit" label="Accept invitation" isLoading={busy === "accept"} />
-                <button
-                  type="button"
+                <AuthButton type="submit" label="Accept invitation" isLoading={busy === "accept"} TrailingIcon={ArrowRight} />
+                <AuthOutlineButton
                   onClick={handleDecline}
                   disabled={Boolean(busy)}
-                  className="text-sm font-semibold text-gray-500 hover:text-red-600 hover:underline disabled:opacity-60"
+                  icon={<X className="h-5 w-5" strokeWidth={2.5} />}
                 >
                   {busy === "decline" ? "Declining..." : "Decline invitation"}
-                </button>
+                </AuthOutlineButton>
               </form>
             </div>
           </>
@@ -179,18 +177,10 @@ export default function AcceptInvitation() {
   );
 }
 
-const TONES = {
-  red: "bg-red-50 text-red-600",
-  gray: "bg-gray-100 text-gray-500",
-  brand: "bg-brand-50 text-brand-600",
-};
-
-function Message({ icon, tone, title, body, children }) {
+function Message({ icon, title, body, children }) {
   return (
     <div className="flex flex-col items-center text-center py-8 gap-4">
-      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${TONES[tone]}`}>
-        {icon}
-      </div>
+      <AuthIconTile>{icon}</AuthIconTile>
       <h1 className="text-gray-900 text-xl font-bold">{title}</h1>
       <p className="text-sm text-gray-600 leading-relaxed">{body}</p>
       {children && <div className="w-full mt-2">{children}</div>}

@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import AuthOutlineButton from "./AuthComponents/AuthOutlineButton";
 import AuthLayout from "./AuthComponents/AuthLayout";
 import AuthCard from "./AuthComponents/AuthCard";
 import AuthLink from "./AuthComponents/AuthLink";
 import AuthButton from "./AuthComponents/AuthButton";
 import Logo from "./AuthComponents/Logo";
 import InputField from "./AuthComponents/InputField";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, ArrowRight, Building2, MailWarning } from "lucide-react";
 import api from "../api";
 import { AUTH_DISABLED } from "../config";
 import { routeForAuthResponse } from "../authSession";
@@ -122,34 +123,38 @@ const Login = () => {
               Icon={Lock}
             />
 
+            <div className="flex justify-start -mt-3">
+              <AuthLink to="/forgot-password">Forgot Password?</AuthLink>
+            </div>
+
             {notActivated && (
-              <div className="rounded-xl bg-gold-50 border border-gold-200 px-4 py-3 text-sm text-gray-800">
+              <div className="flex gap-3 rounded-xl bg-gold-50 border border-gold-200 px-4 py-3 text-sm text-gray-800">
+                <MailWarning className="h-5 w-5 flex-shrink-0 text-gold-800" />
+                <div>
                 This account hasn't been activated yet. Use the link we emailed you, or{" "}
                 <button type="button" onClick={handleResend} className="font-semibold text-brand-700 hover:underline">
                   send a new link
                 </button>
                 .
                 {resendNotice && <p className="mt-1 text-gray-600">{resendNotice}</p>}
+                </div>
               </div>
             )}
 
-            {/* Added margin top to separate button slightly */}
-            <div className="mt-4">
-              <AuthButton
-                type="submit"
-                label="Login"
-                isLoading={loading}
-              />
-            </div>
+            <AuthButton type="submit" label="Login" isLoading={loading} TrailingIcon={ArrowRight} />
           </form>
         </div>
 
-        {/* Bottom Section: Links */}
-        <div className="flex flex-col justify-center items-center gap-2 pb-4 md:pb-0">
-          <AuthLink to="/forgot-password">Forgot Password?</AuthLink>
-          <p className="text-sm text-gray-600">
-            New to Truvara? <AuthLink to="/signup">Create an account</AuthLink>
-          </p>
+        {/* Second call to action: businesses not on Truvara yet */}
+        <div className="flex flex-col gap-4 pb-4 md:pb-0">
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-black/20" />
+            <span className="text-sm text-gray-600">New to Truvara?</span>
+            <span className="h-px flex-1 bg-black/20" />
+          </div>
+          <AuthOutlineButton to="/register" icon={<Building2 className="h-5 w-5" strokeWidth={2.25} />}>
+            Create a business account
+          </AuthOutlineButton>
         </div>
 
       </AuthCard>

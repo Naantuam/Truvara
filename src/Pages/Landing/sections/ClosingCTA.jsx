@@ -18,7 +18,7 @@ export default function ClosingCTA() {
           Truvara shouldn't only help a business run. It should help a business get ready to run well.
         </h2>
         <Link
-          to="/signup"
+          to="/register"
           className="relative group inline-flex items-center gap-2 mt-2 text-lg sm:text-xl font-bold text-brand-600 dark:text-gold-300 underline decoration-2 underline-offset-4 decoration-gold-400/80 hover:decoration-gold-400 transition-colors"
         >
           Create a Business Account
