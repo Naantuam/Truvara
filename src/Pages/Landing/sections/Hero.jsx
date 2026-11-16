@@ -105,9 +105,14 @@ export default function Hero() {
             to="/register"
             className="bg-brand-600 dark:bg-brand-400 text-white font-semibold px-6 py-3 rounded-xl ring-1 ring-gold-400/60 dark:ring-gold-300/90 shadow-lg shadow-brand-900/25 hover:bg-brand-500 dark:hover:bg-brand-300 hover:ring-gold-300 hover:-translate-y-0.5 transition-all"
           >
-            Get Started
+            Set up your business
           </Link>
         </div>
+        {/* Says who the button is for, so the people who click it are
+            owners ready to set up -- staff join through an invitation. */}
+        <p className="mt-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+          For business owners. Team members join by invitation from their company.
+        </p>
       </div>
 
       {/* Post-login workspace desktop & mobile layout preview */}

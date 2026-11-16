@@ -149,11 +149,11 @@ const Login = () => {
         <div className="flex flex-col gap-4 pb-4 md:pb-0">
           <div className="flex items-center gap-3">
             <span className="h-px flex-1 bg-black/20" />
-            <span className="text-sm text-gray-600">New to Truvara?</span>
+            <span className="text-sm text-gray-600">Own a business?</span>
             <span className="h-px flex-1 bg-black/20" />
           </div>
           <AuthOutlineButton to="/register" icon={<Building2 className="h-5 w-5" strokeWidth={2.25} />}>
-            Create a business account
+            Set up your business
           </AuthOutlineButton>
         </div>
 

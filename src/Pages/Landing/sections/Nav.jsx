@@ -40,7 +40,7 @@ export default function Nav({ theme, toggleTheme }) {
             to="/register"
             className="group flex items-center gap-1.5 text-sm font-semibold bg-brand-600 dark:bg-brand-400 text-white px-4 py-2 rounded-lg ring-1 ring-gold-400/60 dark:ring-gold-300/90 shadow-md shadow-brand-900/20 hover:bg-brand-500 dark:hover:bg-brand-300 hover:ring-gold-300 hover:-translate-y-0.5 transition-all"
           >
-            Create a Business Account
+            Set up your business
             <ArrowRight className="w-4 h-4 text-gold-300 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>

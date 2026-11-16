@@ -120,9 +120,9 @@ export default function Signup() {
 
         {status === "open" && (
           <>
-            <h1 className="text-gray-900 text-xl font-bold text-center mt-6 md:mt-0">Create your business account</h1>
+            <h1 className="text-gray-900 text-xl font-bold text-center mt-6 md:mt-0">Set up your business</h1>
             <p className="text-sm text-gray-500 text-center mt-2">
-              Start with your details. You'll set up your business next.
+              For business owners. Start with your own details, then describe your business.
             </p>
 
             <div className="flex-grow flex flex-col justify-center py-6">
