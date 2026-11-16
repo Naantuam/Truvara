@@ -30,7 +30,15 @@ export async function authenticate(req, res, next) {
     return res.status(401).json({ detail: "No company selected for this session." });
   }
 
-  const ctx = await loadPermissionContext(decoded.sub, decoded.company_id);
+  // Express 4 does not catch errors thrown by async middleware: an exception
+  // here (directory unreachable, credentials that can't be decrypted) used to
+  // crash the whole server for every company. Hand it to the error handler.
+  let ctx;
+  try {
+    ctx = await loadPermissionContext(decoded.sub, decoded.company_id);
+  } catch (err) {
+    return next(err);
+  }
   if (!ctx) return res.status(401).json({ detail: "Invalid session." });
 
   let tenantClient;
