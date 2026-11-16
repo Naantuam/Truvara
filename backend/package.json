@@ -34,6 +34,8 @@
     "encrypt:tenant-urls": "HOSTALIASES=$(pwd)/.hostaliases node --dns-result-order=ipv4first scripts/encryptTenantUrls.js",
     "presecure:tenant": "node scripts/resolve-db-host.js",
     "secure:tenant": "HOSTALIASES=$(pwd)/.hostaliases node --dns-result-order=ipv4first scripts/secureTenantDatabase.js",
+    "predecrypt:tenant-urls": "node scripts/resolve-db-host.js",
+    "decrypt:tenant-urls": "HOSTALIASES=$(pwd)/.hostaliases node --dns-result-order=ipv4first scripts/decryptTenantUrls.js",
     "precopy:directory": "node scripts/resolve-db-host.js",
     "copy:directory": "HOSTALIASES=$(pwd)/.hostaliases node --dns-result-order=ipv4first scripts/copyDirectory.js",
     "premigrate:tenants": "node scripts/resolve-db-host.js",
